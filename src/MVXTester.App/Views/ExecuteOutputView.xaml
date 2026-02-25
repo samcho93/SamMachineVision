@@ -1,0 +1,62 @@
+<UserControl x:Class="MVXTester.App.Views.ExecuteOutputView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:MVXTester.App.Converters"
+             Focusable="True"
+             MouseMove="OnMouseMove"
+             MouseLeftButtonDown="OnMouseLeftButtonDown"
+             MouseLeftButtonUp="OnMouseLeftButtonUp"
+             MouseRightButtonDown="OnMouseRightButtonDown"
+             MouseRightButtonUp="OnMouseRightButtonUp"
+             MouseWheel="OnMouseWheel"
+             KeyDown="OnKeyDown"
+             KeyUp="OnKeyUp">
+
+    <UserControl.Resources>
+        <conv:NullToVisibilityConverter x:Key="NullToVis" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="150" />
+        </Grid.RowDefinitions>
+
+        <!-- Output image display -->
+        <Border Grid.Row="0" Background="#1E1E2E">
+            <Grid>
+                <TextBlock Text="Execute output will appear here"
+                           Foreground="{DynamicResource ForegroundDimBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="14" />
+                <Image Source="{Binding OutputImage}" Stretch="Uniform" Margin="4"
+                       Visibility="{Binding OutputImage, Converter={StaticResource NullToVis}}" />
+            </Grid>
+        </Border>
+
+        <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch"
+                      Background="{DynamicResource BorderBrush}" />
+
+        <!-- Log output -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <DockPanel Grid.Row="0" Background="{DynamicResource SurfaceBrush}" Margin="0,0,0,1">
+                <Button DockPanel.Dock="Right" Content="Clear" Command="{Binding ClearLogCommand}"
+                        Padding="8,2" Margin="2" FontSize="10" />
+                <TextBlock Text="Output Log" FontWeight="SemiBold" FontSize="11"
+                           Foreground="{DynamicResource ForegroundBrush}"
+                           VerticalAlignment="Center" Margin="8,2" />
+            </DockPanel>
+            <ListBox Grid.Row="1" ItemsSource="{Binding LogMessages}"
+                     Background="{DynamicResource BackgroundBrush}"
+                     Foreground="{DynamicResource ForegroundBrush}"
+                     FontFamily="Consolas" FontSize="10"
+                     BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+        </Grid>
+    </Grid>
+</UserControl>

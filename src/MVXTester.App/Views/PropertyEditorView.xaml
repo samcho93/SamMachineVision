@@ -1,0 +1,210 @@
+<UserControl x:Class="MVXTester.App.Views.PropertyEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MVXTester.App.ViewModels"
+             xmlns:core="clr-namespace:MVXTester.Core.Models;assembly=MVXTester.Core"
+             xmlns:conv="clr-namespace:MVXTester.App.Converters">
+
+    <UserControl.Resources>
+        <conv:NullToVisibilityConverter x:Key="NullToVis" />
+        <conv:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVis" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
+        <StackPanel>
+            <!-- No selection message -->
+            <TextBlock Text="Select a node to view properties"
+                       Foreground="{DynamicResource ForegroundDimBrush}"
+                       HorizontalAlignment="Center" Margin="0,20"
+                       FontSize="12">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedNode}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- Node info header -->
+            <StackPanel Visibility="{Binding SelectedNode, Converter={StaticResource NullToVis}}"
+                        Margin="8,4">
+                <TextBlock Text="{Binding NodeName}" FontWeight="Bold" FontSize="14"
+                           Foreground="{DynamicResource ForegroundBrush}" />
+                <TextBlock Text="{Binding NodeCategory}" FontSize="10"
+                           Foreground="{DynamicResource AccentBrush}" Margin="0,2,0,0" />
+                <TextBlock Text="{Binding NodeDescription}" FontSize="10"
+                           Foreground="{DynamicResource ForegroundDimBrush}" TextWrapping="Wrap"
+                           Margin="0,4,0,8"
+                           Visibility="{Binding NodeDescription, Converter={StaticResource StringNotEmptyToVis}}" />
+
+                <!-- Properties list -->
+                <ItemsControl ItemsSource="{Binding Properties}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:PropertyItem}">
+                            <StackPanel Margin="0,3">
+                                <TextBlock Text="{Binding Name}" FontSize="10"
+                                           Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,0,0,2" />
+
+                                <!-- Integer with slider -->
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.Integer}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="50" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Value="{Binding Value}" Minimum="{Binding MinValue}" Maximum="{Binding MaxValue}"
+                                            IsSnapToTickEnabled="True" TickFrequency="1" />
+                                    <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="4,0,0,0" HorizontalContentAlignment="Center" FontSize="11" />
+                                </Grid>
+
+                                <!-- Double with slider -->
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.Double}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontSize="11" />
+                                </Grid>
+
+                                <!-- Float -->
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.Float}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontSize="11" />
+                                </Grid>
+
+                                <!-- Boolean -->
+                                <CheckBox IsChecked="{Binding Value}" Content="{Binding Name}"
+                                          Foreground="{DynamicResource ForegroundBrush}" FontSize="11">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.Boolean}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </CheckBox.Style>
+                                </CheckBox>
+
+                                <!-- String -->
+                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontSize="11">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.String}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+
+                                <!-- Enum -->
+                                <ComboBox ItemsSource="{Binding EnumValues}" SelectedItem="{Binding Value}" FontSize="11">
+                                    <ComboBox.Style>
+                                        <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.Enum}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ComboBox.Style>
+                                </ComboBox>
+
+                                <!-- FilePath -->
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.FilePath}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontSize="10" />
+                                    <Button Grid.Column="1" Content="..." Width="30"
+                                            Command="{Binding BrowseFileCommand}" Margin="2,0,0,0" />
+                                </Grid>
+
+                                <!-- MultilineString -->
+                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxHeight="150"
+                                         FontFamily="Consolas" FontSize="10"
+                                         VerticalScrollBarVisibility="Auto">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.MultilineString}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+
+                                <!-- Description -->
+                                <TextBlock Text="{Binding Description}" FontSize="9"
+                                           Foreground="{DynamicResource ForegroundDimBrush}"
+                                           TextWrapping="Wrap" Margin="0,2,0,0"
+                                           Visibility="{Binding Description, Converter={StaticResource StringNotEmptyToVis}}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Result image -->
+                <Border Margin="0,8,0,0"
+                        Visibility="{Binding ResultImage, Converter={StaticResource NullToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="Result" FontWeight="SemiBold" FontSize="11"
+                                   Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,4" />
+                        <Image Source="{Binding ResultImage}" Stretch="Uniform" MaxHeight="240" />
+                        <TextBlock Text="{Binding ResultImageInfo}" FontSize="9"
+                                   Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,2,0,0"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

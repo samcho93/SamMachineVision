@@ -1,0 +1,279 @@
+<Window x:Class="MVXTester.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:MVXTester.App.Views"
+        xmlns:vm="clr-namespace:MVXTester.App.ViewModels"
+        xmlns:conv="clr-namespace:MVXTester.App.Converters"
+        Title="{Binding Title}" Height="800" Width="1400"
+        WindowState="Maximized"
+        Background="{DynamicResource BackgroundBrush}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisConv" />
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewGraphCommand}" />
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{Binding SaveAsCommand}" />
+        <KeyBinding Key="F5" Command="{Binding ExecuteGraphCommand}" />
+        <KeyBinding Key="F5" Modifiers="Ctrl" Command="{Binding ForceExecuteGraphCommand}" />
+        <KeyBinding Key="Delete" Command="{Binding Editor.DeleteSelectedNodesCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CancelExecutionCommand}" />
+        <KeyBinding Key="F6" Command="{Binding StreamGraphCommand}" />
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding Editor.CopyCommand}" />
+        <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding Editor.CutCommand}" />
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding Editor.PasteCommand}" />
+        <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding Editor.DuplicateCommand}" />
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding Editor.UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding Editor.RedoCommand}" />
+        <KeyBinding Key="Z" Modifiers="Ctrl+Shift" Command="{Binding Editor.RedoCommand}" />
+        <KeyBinding Key="A" Modifiers="Ctrl" Command="{Binding Editor.SelectAllCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                Padding="4">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Button Content="New" Command="{Binding NewGraphCommand}" Margin="2" ToolTip="Ctrl+N" />
+                    <Button Content="Open" Command="{Binding OpenCommand}" Margin="2" ToolTip="Ctrl+O" />
+                    <Button Content="Save" Command="{Binding SaveCommand}" Margin="2" ToolTip="Ctrl+S" />
+                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
+                    <Button Content="Python Code" Command="{Binding GeneratePythonCodeCommand}" Margin="2" ToolTip="Generate Python Code" />
+                    <Button Content="C# Code" Command="{Binding GenerateCSharpCodeCommand}" Margin="2" ToolTip="Generate C# Code" />
+                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
+                    <Button Content="Execute" Command="{Binding ExecuteGraphCommand}" Margin="2"
+                            ToolTip="F5" FontWeight="Bold" />
+                    <Button Content="Force Execute" Command="{Binding ForceExecuteGraphCommand}" Margin="2"
+                            ToolTip="Ctrl+F5" />
+                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
+                    <Button Command="{Binding StreamGraphCommand}" Margin="2" ToolTip="F6 - Toggle Stream">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Content" Value="&#x25B6; Stream" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStreaming}" Value="True">
+                                        <Setter Property="Content" Value="&#x25A0; Stop" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="Cancel" Command="{Binding CancelExecutionCommand}" Margin="2"
+                            ToolTip="Esc" Foreground="{DynamicResource ErrorBrush}"
+                            Visibility="{Binding IsExecuting, Converter={StaticResource BoolToVis}}" />
+                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
+                    <Button Content="Output" Command="{Binding ToggleExecuteOutputCommand}" Margin="2"
+                            ToolTip="Toggle Execute Output Window" />
+                    <CheckBox Content="Auto Execute" IsChecked="{Binding AutoExecute}" Margin="8,0"
+                              VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" />
+                </StackPanel>
+                <TextBlock Text="MVXTester" DockPanel.Dock="Right"
+                           Foreground="{DynamicResource ForegroundDimBrush}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right"
+                           FontSize="13" FontWeight="Bold" Margin="0,0,8,0" />
+            </DockPanel>
+        </Border>
+
+        <!-- Main content area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Node Palette -->
+            <Grid Grid.Column="0"
+                  Visibility="{Binding IsPaletteVisible, Converter={StaticResource BoolToVisConv}}">
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                        MinWidth="200" MaxWidth="400">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <DockPanel Grid.Row="0" Margin="8,8,4,4">
+                            <Button DockPanel.Dock="Right" Content="&#x25C0;"
+                                    Command="{Binding DataContext.TogglePaletteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Width="24" Height="24" FontSize="10" Padding="0"
+                                    ToolTip="Hide Node Palette"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Text="Node Palette" FontWeight="Bold" FontSize="13"
+                                       Foreground="{DynamicResource ForegroundBrush}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+                        <views:NodePaletteView Grid.Row="1" DataContext="{Binding Palette}" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Palette show button (when hidden) -->
+            <Border Grid.Column="0"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                    Width="24">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPaletteVisible}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Button Content="&#x25B6;" Command="{Binding TogglePaletteCommand}"
+                        Width="22" Height="60" FontSize="10" Padding="0"
+                        ToolTip="Show Node Palette"
+                        VerticalAlignment="Top" Margin="0,8,0,0" />
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center"
+                          Background="{DynamicResource BorderBrush}" />
+
+            <!-- Center: Node Editor + Execute Output -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Node editor canvas -->
+                <views:EditorView Grid.Row="0" DataContext="{Binding Editor}" />
+
+                <!-- Execute Output splitter -->
+                <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch"
+                              Background="{DynamicResource BorderBrush}"
+                              Visibility="{Binding IsExecuteOutputVisible, Converter={StaticResource BoolToVisConv}}" />
+
+                <!-- Execute Output panel -->
+                <Border Grid.Row="2" Height="300"
+                        Visibility="{Binding IsExecuteOutputVisible, Converter={StaticResource BoolToVisConv}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <DockPanel Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                                   Margin="0,0,0,1">
+                            <Button DockPanel.Dock="Right" Content="X"
+                                    Command="{Binding ToggleExecuteOutputCommand}"
+                                    Width="24" Height="24" FontSize="10" Padding="0"
+                                    ToolTip="Close Execute Output"
+                                    Margin="4,2" />
+                            <TextBlock Text="Execute Output" FontWeight="Bold" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundBrush}"
+                                       VerticalAlignment="Center" Margin="8,4" />
+                        </DockPanel>
+                        <views:ExecuteOutputView Grid.Row="1" DataContext="{Binding ExecuteOutput}" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Column="3" Width="3" HorizontalAlignment="Center"
+                          Background="{DynamicResource BorderBrush}" />
+
+            <!-- Right: Properties panel -->
+            <Grid Grid.Column="4" Width="280"
+                  Visibility="{Binding IsPropertiesVisible, Converter={StaticResource BoolToVisConv}}">
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0" Margin="0,4,4,0">
+                            <Button DockPanel.Dock="Right" Content="&#x25B6;"
+                                    Command="{Binding DataContext.TogglePropertiesCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Width="24" Height="24" FontSize="10" Padding="0"
+                                    ToolTip="Hide Panel"
+                                    VerticalAlignment="Center" />
+                            <Border />
+                        </DockPanel>
+
+                        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0"
+                                    Padding="0" Margin="0,-2,0,0"
+                                    SelectedIndex="{Binding SelectedRightTab}">
+                            <TabControl.Resources>
+                                <Style TargetType="TabItem">
+                                    <Setter Property="Foreground" Value="{DynamicResource ForegroundDimBrush}" />
+                                    <Setter Property="FontSize" Value="12" />
+                                    <Setter Property="Padding" Value="10,5" />
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TabControl.Resources>
+
+                            <TabItem Header="Properties">
+                                <views:PropertyEditorView DataContext="{Binding PropertyEditor}" />
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Panel show button (when hidden) -->
+            <Border Grid.Column="4"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0"
+                    Width="24">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPropertiesVisible}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Button Content="&#x25C0;" Command="{Binding TogglePropertiesCommand}"
+                        Width="22" Height="60" FontSize="10" Padding="0"
+                        ToolTip="Show Panel"
+                        VerticalAlignment="Top" Margin="0,8,0,0" />
+            </Border>
+        </Grid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                Padding="8,4">
+            <DockPanel>
+                <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource ForegroundBrush}"
+                           FontSize="11" DockPanel.Dock="Left" />
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <TextBlock Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11">
+                        <Run Text="Nodes: " /><Run Text="{Binding NodeCount, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Foreground="{DynamicResource ForegroundDimBrush}" FontSize="11" Margin="16,0,0,0">
+                        <Run Text="Execution: " /><Run Text="{Binding ExecutionTime, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
