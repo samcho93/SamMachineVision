@@ -57,3 +57,21 @@ public class InverseBoolConverter : IValueConverter
         return value is bool b && !b;
     }
 }
+
+/// <summary>
+/// Converts boxed numeric (int, float, double, etc.) to double for Slider Minimum/Maximum binding.
+/// </summary>
+public class ObjectToDoubleConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null) return 0.0;
+        try { return System.Convert.ToDouble(value); }
+        catch { return 0.0; }
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

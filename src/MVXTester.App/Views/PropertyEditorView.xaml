@@ -8,6 +8,7 @@
     <UserControl.Resources>
         <conv:NullToVisibilityConverter x:Key="NullToVis" />
         <conv:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVis" />
+        <conv:ObjectToDoubleConverter x:Key="ObjToDouble" />
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
@@ -65,7 +66,9 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="50" />
                                     </Grid.ColumnDefinitions>
-                                    <Slider Value="{Binding Value}" Minimum="{Binding MinValue}" Maximum="{Binding MaxValue}"
+                                    <Slider Value="{Binding Value}"
+                                            Minimum="{Binding MinValue, Converter={StaticResource ObjToDouble}}"
+                                            Maximum="{Binding MaxValue, Converter={StaticResource ObjToDouble}}"
                                             IsSnapToTickEnabled="True" TickFrequency="1" />
                                     <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
                                              Margin="4,0,0,0" HorizontalContentAlignment="Center" FontSize="11" />
@@ -83,7 +86,16 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Grid.Style>
-                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontSize="11" />
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="60" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Value="{Binding Value}"
+                                            Minimum="{Binding MinValue, Converter={StaticResource ObjToDouble}}"
+                                            Maximum="{Binding MaxValue, Converter={StaticResource ObjToDouble}}"
+                                            SmallChange="0.1" LargeChange="1" />
+                                    <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:F2}}"
+                                             Margin="4,0,0,0" HorizontalContentAlignment="Center" FontSize="11" />
                                 </Grid>
 
                                 <!-- Float -->
