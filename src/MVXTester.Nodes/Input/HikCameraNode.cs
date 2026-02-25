@@ -198,39 +198,127 @@ public class HikCameraNode : BaseNode, IStreamingSource
                     return;
                 }
 
-                // Determine pixel format
+                // Determine pixel format from actual frame data
                 var pixelType = _frameInfo_enPixelType?.GetValue(stFrameInfo);
-                int pixelTypeInt = pixelType != null ? (int)Convert.ChangeType(pixelType, typeof(int)) : 0;
-                bool isMono = (pixelTypeInt & 0x01000000) != 0;
+                int pxType = pixelType != null ? Convert.ToInt32(pixelType) : 0;
+
+                // GigE Vision pixel format constants
+                const int PX_MONO8     = 0x01080001;
+                const int PX_MONO10    = 0x01100003;
+                const int PX_MONO12    = 0x01100005;
+                const int PX_BAYER_RG8 = 0x01080009;
+                const int PX_BAYER_BG8 = 0x0108000A;
+                const int PX_BAYER_GB8 = 0x0108000B;
+                const int PX_BAYER_GR8 = 0x01080010;
+                const int PX_RGB8      = 0x02180014;
+                const int PX_BGR8      = 0x02180015;
+                // const int PX_YUV422_8  = 0x02100032;
 
                 Mat frame;
-                if (isMono)
+                int iw = (int)w, ih = (int)h;
+
+                switch (pxType)
                 {
-                    int size = (int)(w * h);
-                    byte[] data = new byte[size];
-                    Marshal.Copy(pBufAddr, data, 0, size);
-                    frame = new Mat((int)h, (int)w, MatType.CV_8UC1);
-                    Marshal.Copy(data, 0, frame.Data, size);
-                }
-                else
-                {
-                    int expectedLen = (int)(w * h * 3);
-                    if (frameLen >= (uint)expectedLen)
+                    case PX_MONO8:
+                    case PX_MONO10:
+                    case PX_MONO12:
                     {
-                        byte[] data = new byte[expectedLen];
-                        Marshal.Copy(pBufAddr, data, 0, expectedLen);
-                        frame = new Mat((int)h, (int)w, MatType.CV_8UC3);
-                        Marshal.Copy(data, 0, frame.Data, expectedLen);
-                        Cv2.CvtColor(frame, frame, ColorConversionCodes.RGB2BGR);
-                    }
-                    else
-                    {
-                        int size = (int)(w * h);
+                        // True mono - single channel grayscale
+                        int size = iw * ih;
                         byte[] data = new byte[size];
                         Marshal.Copy(pBufAddr, data, 0, size);
-                        frame = new Mat((int)h, (int)w, MatType.CV_8UC1);
+                        frame = new Mat(ih, iw, MatType.CV_8UC1);
                         Marshal.Copy(data, 0, frame.Data, size);
-                        Cv2.CvtColor(frame, frame, ColorConversionCodes.BayerRG2BGR);
+                        break;
+                    }
+                    case PX_BAYER_RG8:
+                    {
+                        int size = iw * ih;
+                        byte[] data = new byte[size];
+                        Marshal.Copy(pBufAddr, data, 0, size);
+                        var bayer = new Mat(ih, iw, MatType.CV_8UC1);
+                        Marshal.Copy(data, 0, bayer.Data, size);
+                        frame = new Mat();
+                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerRG2BGR);
+                        bayer.Dispose();
+                        break;
+                    }
+                    case PX_BAYER_BG8:
+                    {
+                        int size = iw * ih;
+                        byte[] data = new byte[size];
+                        Marshal.Copy(pBufAddr, data, 0, size);
+                        var bayer = new Mat(ih, iw, MatType.CV_8UC1);
+                        Marshal.Copy(data, 0, bayer.Data, size);
+                        frame = new Mat();
+                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerBG2BGR);
+                        bayer.Dispose();
+                        break;
+                    }
+                    case PX_BAYER_GR8:
+                    {
+                        int size = iw * ih;
+                        byte[] data = new byte[size];
+                        Marshal.Copy(pBufAddr, data, 0, size);
+                        var bayer = new Mat(ih, iw, MatType.CV_8UC1);
+                        Marshal.Copy(data, 0, bayer.Data, size);
+                        frame = new Mat();
+                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerGR2BGR);
+                        bayer.Dispose();
+                        break;
+                    }
+                    case PX_BAYER_GB8:
+                    {
+                        int size = iw * ih;
+                        byte[] data = new byte[size];
+                        Marshal.Copy(pBufAddr, data, 0, size);
+                        var bayer = new Mat(ih, iw, MatType.CV_8UC1);
+                        Marshal.Copy(data, 0, bayer.Data, size);
+                        frame = new Mat();
+                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerGB2BGR);
+                        bayer.Dispose();
+                        break;
+                    }
+                    case PX_RGB8:
+                    {
+                        int size = iw * ih * 3;
+                        byte[] data = new byte[size];
+                        Marshal.Copy(pBufAddr, data, 0, size);
+                        frame = new Mat(ih, iw, MatType.CV_8UC3);
+                        Marshal.Copy(data, 0, frame.Data, size);
+                        Cv2.CvtColor(frame, frame, ColorConversionCodes.RGB2BGR);
+                        break;
+                    }
+                    case PX_BGR8:
+                    {
+                        int size = iw * ih * 3;
+                        byte[] data = new byte[size];
+                        Marshal.Copy(pBufAddr, data, 0, size);
+                        frame = new Mat(ih, iw, MatType.CV_8UC3);
+                        Marshal.Copy(data, 0, frame.Data, size);
+                        break;
+                    }
+                    default:
+                    {
+                        // Fallback: guess by frame length
+                        int monoSize = iw * ih;
+                        int rgbSize = iw * ih * 3;
+                        if (frameLen >= (uint)rgbSize)
+                        {
+                            byte[] data = new byte[rgbSize];
+                            Marshal.Copy(pBufAddr, data, 0, rgbSize);
+                            frame = new Mat(ih, iw, MatType.CV_8UC3);
+                            Marshal.Copy(data, 0, frame.Data, rgbSize);
+                            Cv2.CvtColor(frame, frame, ColorConversionCodes.RGB2BGR);
+                        }
+                        else
+                        {
+                            byte[] data = new byte[monoSize];
+                            Marshal.Copy(pBufAddr, data, 0, monoSize);
+                            frame = new Mat(ih, iw, MatType.CV_8UC1);
+                            Marshal.Copy(data, 0, frame.Data, monoSize);
+                        }
+                        break;
                     }
                 }
 
