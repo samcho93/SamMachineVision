@@ -22,4 +22,6 @@ public static class NodeCategories
     public const string Data = "Data Processing";
     public const string Event = "Event";
     public const string Script = "Script";
+    public const string Inspection = "Inspection";
+    public const string Measurement = "Measurement";
 }
