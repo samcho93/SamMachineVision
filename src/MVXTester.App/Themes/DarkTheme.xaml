@@ -402,11 +402,6 @@
         </Style.Triggers>
     </Style>
 
-    <!-- TabControl Style -->
-    <Style TargetType="TabControl">
-        <Setter Property="Background" Value="Transparent" />
-    </Style>
-
     <!-- ListBox Style -->
     <Style TargetType="ListBox">
         <Setter Property="Background" Value="Transparent" />
