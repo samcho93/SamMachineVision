@@ -305,21 +305,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
                 SetOutputValue(_frameOutput, frame);
                 SetPreview(frame);
 
-                // Show actual pixel format info for debugging
-                string pxName = pxType switch
-                {
-                    PX_MONO8 => "Mono8",
-                    PX_MONO10 => "Mono10",
-                    PX_MONO12 => "Mono12",
-                    PX_BAYER_RG8 => "BayerRG8",
-                    PX_BAYER_BG8 => "BayerBG8",
-                    PX_BAYER_GB8 => "BayerGB8",
-                    PX_BAYER_GR8 => "BayerGR8",
-                    PX_RGB8 => "RGB8",
-                    PX_BGR8 => "BGR8",
-                    _ => $"0x{pxType:X8}"
-                };
-                Error = $"{iw}x{ih} {pxName} {frame.Channels()}ch";
+                Error = null;
             }
             finally
             {
