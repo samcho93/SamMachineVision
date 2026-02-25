@@ -17,6 +17,9 @@ public enum HikPixelFormat
 {
     Mono8,
     BayerRG8,
+    BayerGR8,
+    BayerBG8,
+    BayerGB8,
     RGB8,
     BGR8,
     YUV422_8
@@ -51,7 +54,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
     private bool _isOpen;
     private int _lastDeviceIndex = -1;
     private int _lastTriggerValue;
-    private HikPixelFormat _lastPixelFormat = HikPixelFormat.Mono8;
+    private HikPixelFormat _lastPixelFormat = HikPixelFormat.BayerGR8;
 
     // Cached method references
     private MethodInfo? _setFloatValue;
@@ -89,7 +92,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
         _gain = AddDoubleProperty("Gain", "Gain (dB)", 0.0, 0.0, 20.0, "Analog gain in dB");
         _width = AddIntProperty("Width", "Width", 0, 0, 10000, "Image width (0 = max)");
         _height = AddIntProperty("Height", "Height", 0, 0, 10000, "Image height (0 = max)");
-        _pixelFormat = AddEnumProperty("PixelFormat", "Pixel Format", HikPixelFormat.Mono8, "Camera pixel format");
+        _pixelFormat = AddEnumProperty("PixelFormat", "Pixel Format", HikPixelFormat.BayerGR8, "Camera pixel format");
         _gammaEnable = AddBoolProperty("GammaEnable", "Gamma Enable", false, "Enable gamma correction");
         _gamma = AddDoubleProperty("Gamma", "Gamma", 0.7, 0.1, 4.0, "Gamma value (0.1~4.0)");
         _autoExposure = AddBoolProperty("AutoExposure", "Auto Exposure", false, "Enable auto exposure");
@@ -206,10 +209,10 @@ public class HikCameraNode : BaseNode, IStreamingSource
                 const int PX_MONO8     = 0x01080001;
                 const int PX_MONO10    = 0x01100003;
                 const int PX_MONO12    = 0x01100005;
+                const int PX_BAYER_GR8 = 0x01080008;
                 const int PX_BAYER_RG8 = 0x01080009;
-                const int PX_BAYER_BG8 = 0x0108000A;
-                const int PX_BAYER_GB8 = 0x0108000B;
-                const int PX_BAYER_GR8 = 0x01080010;
+                const int PX_BAYER_GB8 = 0x0108000A;
+                const int PX_BAYER_BG8 = 0x0108000B;
                 const int PX_RGB8      = 0x02180014;
                 const int PX_BGR8      = 0x02180015;
                 // const int PX_YUV422_8  = 0x02100032;
@@ -567,11 +570,14 @@ public class HikCameraNode : BaseNode, IStreamingSource
             uint pixelFormatValue = pixelFormat switch
             {
                 HikPixelFormat.Mono8 => 0x01080001,
+                HikPixelFormat.BayerGR8 => 0x01080008,
                 HikPixelFormat.BayerRG8 => 0x01080009,
+                HikPixelFormat.BayerGB8 => 0x0108000A,
+                HikPixelFormat.BayerBG8 => 0x0108000B,
                 HikPixelFormat.RGB8 => 0x02180014,
                 HikPixelFormat.BGR8 => 0x02180015,
                 HikPixelFormat.YUV422_8 => 0x02100032,
-                _ => 0x01080001
+                _ => 0x01080008  // Default to BayerGR8
             };
             _setEnumValue?.Invoke(_camera, new object[] { "PixelFormat", pixelFormatValue });
 
