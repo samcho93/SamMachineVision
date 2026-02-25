@@ -47,14 +47,13 @@ public class GraphExecutor
         // Initial force execution
         foreach (var node in order)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) return;
             try
             {
                 node.Error = null;
                 node.Process();
                 node.IsDirty = false;
             }
-            catch (OperationCanceledException) { throw; }
             catch (Exception ex) { node.Error = ex.Message; }
         }
 
@@ -77,7 +76,7 @@ public class GraphExecutor
 
             foreach (var node in order)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                if (cancellationToken.IsCancellationRequested) return;
 
                 if (node.IsDirty)
                 {
@@ -87,7 +86,6 @@ public class GraphExecutor
                         node.Process();
                         node.IsDirty = false;
                     }
-                    catch (OperationCanceledException) { throw; }
                     catch (Exception ex) { node.Error = ex.Message; }
                 }
             }
@@ -98,7 +96,10 @@ public class GraphExecutor
 
             var remaining = delay - sw.Elapsed;
             if (remaining > TimeSpan.Zero)
-                Thread.Sleep(remaining);
+            {
+                try { Task.Delay(remaining, cancellationToken).Wait(); }
+                catch { return; }
+            }
         }
     }
 
