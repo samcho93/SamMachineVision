@@ -37,10 +37,10 @@ public class GraphExecutor
     public void ExecuteContinuous(NodeGraph graph, CancellationToken cancellationToken,
         Action? onFrameComplete = null, int targetFps = 30)
     {
-        var order = TopologicalSort(graph.Nodes, graph.Connections);
         var delay = TimeSpan.FromMilliseconds(1000.0 / targetFps);
 
         // Initial force execution
+        var order = TopologicalSort(graph.Nodes, graph.Connections);
         foreach (var node in order)
         {
             if (cancellationToken.IsCancellationRequested) return;
@@ -60,6 +60,10 @@ public class GraphExecutor
         while (!cancellationToken.IsCancellationRequested)
         {
             sw.Restart();
+
+            // Re-sort every frame to pick up newly added/connected nodes
+            try { order = TopologicalSort(graph.Nodes, graph.Connections); }
+            catch { continue; } // skip frame if graph is temporarily invalid (e.g. mid-edit cycle)
 
             foreach (var node in order)
             {
