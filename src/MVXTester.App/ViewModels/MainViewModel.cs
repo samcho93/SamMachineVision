@@ -374,7 +374,6 @@ public partial class MainViewModel : ObservableObject
         else
         {
             StatusText = "Streaming...";
-            IsExecuteOutputVisible = true;
             await Editor.StartStreaming();
             StatusText = "Stream ended";
         }
