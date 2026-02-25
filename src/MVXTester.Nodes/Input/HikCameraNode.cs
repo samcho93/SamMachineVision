@@ -96,7 +96,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
         _gammaEnable = AddBoolProperty("GammaEnable", "Gamma Enable", false, "Enable gamma correction");
         _gamma = AddDoubleProperty("Gamma", "Gamma", 0.7, 0.1, 4.0, "Gamma value (0.1~4.0)");
         _autoExposure = AddBoolProperty("AutoExposure", "Auto Exposure", false, "Enable auto exposure");
-        _autoGain = AddBoolProperty("AutoGain", "Auto Gain", false, "Enable auto gain");
+        _autoGain = AddBoolProperty("AutoGain", "Auto Gain", true, "Enable auto gain");
         _reverseX = AddBoolProperty("ReverseX", "Reverse X", false, "Flip image horizontally");
         _reverseY = AddBoolProperty("ReverseY", "Reverse Y", false, "Flip image vertically");
     }

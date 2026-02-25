@@ -43,7 +43,8 @@
                         <DataTemplate>
                             <Border Margin="0,1" Padding="6,3" CornerRadius="3" Cursor="Hand"
                                     Background="Transparent"
-                                    MouseLeftButtonDown="NodeItem_MouseLeftButtonDown">
+                                    MouseLeftButtonDown="NodeItem_MouseLeftButtonDown"
+                                    MouseMove="NodeItem_MouseMove">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>

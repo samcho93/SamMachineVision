@@ -34,7 +34,10 @@
                          ItemsDragCompletedCommand="{Binding ItemsDragCompletedCommand}"
                          Background="#1E1E2E"
                          GridCellSize="20"
-                         DisableAutoPanning="False">
+                         DisableAutoPanning="False"
+                         AllowDrop="True"
+                         Drop="Editor_Drop"
+                         DragOver="Editor_DragOver">
 
         <nodify:NodifyEditor.PendingConnectionTemplate>
             <DataTemplate DataType="{x:Type vm:PendingConnectionViewModel}">
