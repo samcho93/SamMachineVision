@@ -1,8 +1,8 @@
 using OpenCvSharp;
 using MVXTester.Core.Models;
 using MVXTester.Core.Registry;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using MvCamCtrl.NET;
 
 namespace MVXTester.Nodes.Input;
 
@@ -13,6 +13,10 @@ public enum HikTriggerMode
     Hardware
 }
 
+/// <summary>
+/// HIK Camera node using dynamic assembly loading to avoid startup crash
+/// when MvCameraControl.Net.dll (.NET Framework 4.x) is referenced from .NET 8.
+/// </summary>
 [NodeInfo("HIK Camera", NodeCategories.Input, Description = "HIK GigE camera capture using MvCameraControl.Net SDK")]
 public class HikCameraNode : BaseNode, IStreamingSource
 {
@@ -25,11 +29,37 @@ public class HikCameraNode : BaseNode, IStreamingSource
     private NodeProperty _width = null!;
     private NodeProperty _height = null!;
 
-    private MyCamera? _camera;
+    private object? _camera; // MyCamera instance
+    private Type? _myCameraType;
+    private Assembly? _sdkAssembly;
     private bool _isOpen;
     private int _lastDeviceIndex = -1;
     private int _lastTriggerValue;
-    private static bool _sdkInitialized;
+
+    // Cached method references
+    private MethodInfo? _setFloatValue;
+    private MethodInfo? _setEnumValue;
+    private MethodInfo? _setIntValueEx;
+    private MethodInfo? _setCommandValue;
+    private MethodInfo? _getImageBuffer;
+    private MethodInfo? _freeImageBuffer;
+    private MethodInfo? _startGrabbing;
+    private MethodInfo? _stopGrabbing;
+    private MethodInfo? _closeDevice;
+    private MethodInfo? _destroyDevice;
+    private MethodInfo? _getOptimalPacketSize;
+
+    // Cached type/field references
+    private Type? _frameOutType;
+    private Type? _frameInfoType;
+    private FieldInfo? _frameOut_stFrameInfo;
+    private FieldInfo? _frameOut_pBufAddr;
+    private FieldInfo? _frameInfo_nWidth;
+    private FieldInfo? _frameInfo_nHeight;
+    private FieldInfo? _frameInfo_nFrameLen;
+    private FieldInfo? _frameInfo_enPixelType;
+
+    private int _mvOk;
 
     protected override void Setup()
     {
@@ -57,47 +87,55 @@ public class HikCameraNode : BaseNode, IStreamingSource
             }
 
             if (!_isOpen || _camera == null)
-            {
-                Error = "Camera not opened";
-                return;
-            }
+                return; // Error already set in OpenCamera
 
             // Set exposure
             var exposureTime = _exposureTime.GetValue<double>();
-            _camera.MV_CC_SetFloatValue_NET("ExposureTime", (float)exposureTime);
+            _setFloatValue?.Invoke(_camera, new object[] { "ExposureTime", (float)exposureTime });
 
             // Set gain
             var gain = _gain.GetValue<double>();
-            _camera.MV_CC_SetFloatValue_NET("Gain", (float)gain);
+            _setFloatValue?.Invoke(_camera, new object[] { "Gain", (float)gain });
 
-            // Software trigger - only fire when trigger input value changes
+            // Software trigger
             var triggerMode = _triggerMode.GetValue<HikTriggerMode>();
             if (triggerMode == HikTriggerMode.Software)
             {
                 var triggerVal = GetInputValue(_triggerInput);
                 if (triggerVal != _lastTriggerValue || _triggerInput.Connection == null)
                 {
-                    _camera.MV_CC_SetCommandValue_NET("TriggerSoftware");
+                    _setCommandValue?.Invoke(_camera, new object[] { "TriggerSoftware" });
                     _lastTriggerValue = triggerVal;
                 }
             }
 
-            // Get frame
-            MyCamera.MV_FRAME_OUT stFrameOut = new MyCamera.MV_FRAME_OUT();
-            int ret = _camera.MV_CC_GetImageBuffer_NET(ref stFrameOut, 1000);
+            // Get frame - MV_CC_GetImageBuffer_NET(ref MV_FRAME_OUT, int timeout)
+            var frameOut = Activator.CreateInstance(_frameOutType!)!;
+            var getArgs = new object[] { frameOut, 1000 };
+            int ret = (int)(_getImageBuffer?.Invoke(_camera, getArgs) ?? -1);
 
-            if (ret != MyCamera.MV_OK)
+            if (ret != _mvOk)
             {
                 Error = $"Get frame failed: 0x{ret:X8}";
                 return;
             }
 
+            // Read back ref parameter
+            frameOut = getArgs[0];
+
             try
             {
-                uint w = stFrameOut.stFrameInfo.nWidth;
-                uint h = stFrameOut.stFrameInfo.nHeight;
-                uint frameLen = stFrameOut.stFrameInfo.nFrameLen;
-                IntPtr pBufAddr = stFrameOut.pBufAddr;
+                var stFrameInfo = _frameOut_stFrameInfo?.GetValue(frameOut);
+                if (stFrameInfo == null)
+                {
+                    Error = "Cannot read frame info";
+                    return;
+                }
+
+                uint w = (uint)(_frameInfo_nWidth?.GetValue(stFrameInfo) ?? 0u);
+                uint h = (uint)(_frameInfo_nHeight?.GetValue(stFrameInfo) ?? 0u);
+                uint frameLen = (uint)(_frameInfo_nFrameLen?.GetValue(stFrameInfo) ?? 0u);
+                IntPtr pBufAddr = (IntPtr)(_frameOut_pBufAddr?.GetValue(frameOut) ?? IntPtr.Zero);
 
                 if (w == 0 || h == 0 || pBufAddr == IntPtr.Zero)
                 {
@@ -106,7 +144,8 @@ public class HikCameraNode : BaseNode, IStreamingSource
                 }
 
                 // Determine pixel format
-                int pixelTypeInt = (int)stFrameOut.stFrameInfo.enPixelType;
+                var pixelType = _frameInfo_enPixelType?.GetValue(stFrameInfo);
+                int pixelTypeInt = pixelType != null ? (int)Convert.ChangeType(pixelType, typeof(int)) : 0;
                 bool isMono = (pixelTypeInt & 0x01000000) != 0;
 
                 Mat frame;
@@ -131,7 +170,6 @@ public class HikCameraNode : BaseNode, IStreamingSource
                     }
                     else
                     {
-                        // Bayer pattern
                         int size = (int)(w * h);
                         byte[] data = new byte[size];
                         Marshal.Copy(pBufAddr, data, 0, size);
@@ -147,123 +185,224 @@ public class HikCameraNode : BaseNode, IStreamingSource
             }
             finally
             {
-                _camera.MV_CC_FreeImageBuffer_NET(ref stFrameOut);
+                // Free buffer - MV_CC_FreeImageBuffer_NET(ref MV_FRAME_OUT)
+                var freeArgs = new object[] { frameOut };
+                _freeImageBuffer?.Invoke(_camera, freeArgs);
             }
         }
         catch (Exception ex)
         {
-            Error = $"HIK Camera error: {ex.Message}";
+            Error = $"HIK Camera error: {ex.InnerException?.Message ?? ex.Message}";
         }
+    }
+
+    private bool LoadSdk()
+    {
+        if (_sdkAssembly != null) return true;
+
+        try
+        {
+            // Try loading from app directory first
+            var dllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MvCameraControl.Net.dll");
+            if (!File.Exists(dllPath))
+            {
+                // Try MVS SDK installation paths
+                var sdkPaths = new[]
+                {
+                    @"C:\Program Files (x86)\MVS\Development\DotNet\AnyCpu\MvCameraControl.Net.dll",
+                    @"C:\Program Files (x86)\MVS\Development\DotNet\win64\MvCameraControl.Net.dll",
+                    @"C:\Program Files\MVS\Development\DotNet\AnyCpu\MvCameraControl.Net.dll",
+                };
+                dllPath = sdkPaths.FirstOrDefault(File.Exists) ?? dllPath;
+            }
+
+            if (!File.Exists(dllPath))
+            {
+                Error = $"MvCameraControl.Net.dll not found at {dllPath}";
+                return false;
+            }
+
+            _sdkAssembly = Assembly.LoadFrom(dllPath);
+            _myCameraType = _sdkAssembly.GetType("MvCamCtrl.NET.MyCamera");
+            if (_myCameraType == null)
+            {
+                Error = "MyCamera type not found in SDK assembly";
+                return false;
+            }
+
+            // Cache MV_OK constant
+            var mvOkField = _myCameraType.GetField("MV_OK", BindingFlags.Static | BindingFlags.Public);
+            _mvOk = mvOkField != null ? (int)mvOkField.GetValue(null)! : 0;
+
+            // Cache frame types and fields
+            _frameOutType = _sdkAssembly.GetType("MvCamCtrl.NET.MyCamera+MV_FRAME_OUT");
+            if (_frameOutType != null)
+            {
+                _frameOut_stFrameInfo = _frameOutType.GetField("stFrameInfo");
+                _frameOut_pBufAddr = _frameOutType.GetField("pBufAddr");
+            }
+
+            var frameInfoExType = _sdkAssembly.GetType("MvCamCtrl.NET.MyCamera+MV_FRAME_OUT_INFO_EX");
+            if (frameInfoExType != null)
+            {
+                _frameInfo_nWidth = frameInfoExType.GetField("nWidth");
+                _frameInfo_nHeight = frameInfoExType.GetField("nHeight");
+                _frameInfo_nFrameLen = frameInfoExType.GetField("nFrameLen");
+                _frameInfo_enPixelType = frameInfoExType.GetField("enPixelType");
+                _frameInfoType = frameInfoExType;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Error = $"Failed to load HIK SDK: {ex.Message}";
+            return false;
+        }
+    }
+
+    private void CacheMethodReferences()
+    {
+        if (_camera == null) return;
+        var camType = _camera.GetType();
+        _setFloatValue = camType.GetMethod("MV_CC_SetFloatValue_NET");
+        _setEnumValue = camType.GetMethod("MV_CC_SetEnumValue_NET");
+        _setIntValueEx = camType.GetMethod("MV_CC_SetIntValueEx_NET");
+        _setCommandValue = camType.GetMethod("MV_CC_SetCommandValue_NET");
+        _getImageBuffer = camType.GetMethod("MV_CC_GetImageBuffer_NET");
+        _freeImageBuffer = camType.GetMethod("MV_CC_FreeImageBuffer_NET");
+        _startGrabbing = camType.GetMethod("MV_CC_StartGrabbing_NET");
+        _stopGrabbing = camType.GetMethod("MV_CC_StopGrabbing_NET");
+        _closeDevice = camType.GetMethod("MV_CC_CloseDevice_NET");
+        _destroyDevice = camType.GetMethod("MV_CC_DestroyDevice_NET");
+        _getOptimalPacketSize = camType.GetMethod("MV_CC_GetOptimalPacketSize_NET");
     }
 
     private void OpenCamera(int deviceIndex)
     {
         try
         {
-            // Initialize SDK once
-            if (!_sdkInitialized)
-            {
-                MyCamera.MV_CC_Initialize_NET();
-                _sdkInitialized = true;
-            }
+            if (!LoadSdk()) return;
+
+            // Initialize SDK
+            var initMethod = _myCameraType!.GetMethod("MV_CC_Initialize_NET",
+                BindingFlags.Static | BindingFlags.Public);
+            initMethod?.Invoke(null, null);
 
             // Enumerate devices
-            MyCamera.MV_CC_DEVICE_INFO_LIST stDevList = new MyCamera.MV_CC_DEVICE_INFO_LIST();
-            int ret = MyCamera.MV_CC_EnumDevices_NET(
-                MyCamera.MV_GIGE_DEVICE | MyCamera.MV_USB_DEVICE, ref stDevList);
+            var deviceListType = _sdkAssembly!.GetType("MvCamCtrl.NET.MyCamera+MV_CC_DEVICE_INFO_LIST");
+            if (deviceListType == null) { Error = "Device list type not found"; return; }
 
-            if (ret != MyCamera.MV_OK)
+            var deviceList = Activator.CreateInstance(deviceListType)!;
+
+            // Get device type constants
+            var gigeField = _myCameraType.GetField("MV_GIGE_DEVICE", BindingFlags.Static | BindingFlags.Public);
+            var usbField = _myCameraType.GetField("MV_USB_DEVICE", BindingFlags.Static | BindingFlags.Public);
+            uint deviceFlags = 0x1 | 0x4; // defaults
+            if (gigeField != null && usbField != null)
+                deviceFlags = (uint)(int)gigeField.GetValue(null)! | (uint)(int)usbField.GetValue(null)!;
+
+            var enumMethod = _myCameraType.GetMethod("MV_CC_EnumDevices_NET",
+                BindingFlags.Static | BindingFlags.Public);
+            if (enumMethod == null) { Error = "EnumDevices method not found"; return; }
+
+            // Call with ref: args array captures modified ref value
+            var enumArgs = new object[] { deviceFlags, deviceList };
+            int ret = (int)(enumMethod.Invoke(null, enumArgs) ?? -1);
+            deviceList = enumArgs[1]; // Read back ref parameter
+
+            if (ret != _mvOk) { Error = $"Enumerate failed: 0x{ret:X8}"; return; }
+
+            var nDeviceNum = (uint)(deviceListType.GetField("nDeviceNum")?.GetValue(deviceList) ?? 0u);
+            if (nDeviceNum == 0) { Error = "No HIK cameras found"; return; }
+            if (deviceIndex >= (int)nDeviceNum)
             {
-                Error = $"Enumerate devices failed: 0x{ret:X8}";
+                Error = $"Index {deviceIndex} out of range ({nDeviceNum} found)";
                 return;
             }
 
-            if (stDevList.nDeviceNum == 0)
+            // Get device info via Marshal.PtrToStructure
+            var deviceInfoType = _sdkAssembly.GetType("MvCamCtrl.NET.MyCamera+MV_CC_DEVICE_INFO");
+            if (deviceInfoType == null) { Error = "DeviceInfo type not found"; return; }
+
+            var pDeviceInfo = deviceListType.GetField("pDeviceInfo")?.GetValue(deviceList) as IntPtr[];
+            if (pDeviceInfo == null || pDeviceInfo.Length <= deviceIndex)
             {
-                Error = "No HIK cameras found";
+                Error = "Failed to get device info";
                 return;
             }
 
-            if (deviceIndex >= (int)stDevList.nDeviceNum)
-            {
-                Error = $"Device index {deviceIndex} out of range (found {stDevList.nDeviceNum})";
-                return;
-            }
-
-            // Get device info
-            MyCamera.MV_CC_DEVICE_INFO stDevInfo =
-                (MyCamera.MV_CC_DEVICE_INFO)Marshal.PtrToStructure(
-                    stDevList.pDeviceInfo[deviceIndex],
-                    typeof(MyCamera.MV_CC_DEVICE_INFO))!;
+            var deviceInfo = Marshal.PtrToStructure(pDeviceInfo[deviceIndex], deviceInfoType)!;
 
             // Create camera instance
-            _camera = new MyCamera();
+            _camera = Activator.CreateInstance(_myCameraType);
+            if (_camera == null) { Error = "Failed to create camera"; return; }
+            CacheMethodReferences();
 
-            // Create device
-            ret = _camera.MV_CC_CreateDevice_NET(ref stDevInfo);
-            if (ret != MyCamera.MV_OK)
+            // Create device (ref parameter)
+            var createMethod = _camera.GetType().GetMethod("MV_CC_CreateDevice_NET");
+            if (createMethod != null)
             {
-                Error = $"Create device failed: 0x{ret:X8}";
-                _camera = null;
-                return;
+                var createArgs = new object[] { deviceInfo };
+                ret = (int)(createMethod.Invoke(_camera, createArgs) ?? -1);
+                if (ret != _mvOk) { Error = $"CreateDevice failed: 0x{ret:X8}"; _camera = null; return; }
             }
 
             // Open device
-            ret = _camera.MV_CC_OpenDevice_NET();
-            if (ret != MyCamera.MV_OK)
+            var openMethod = _camera.GetType().GetMethod("MV_CC_OpenDevice_NET");
+            if (openMethod != null)
             {
-                Error = $"Open device failed: 0x{ret:X8}";
-                _camera.MV_CC_DestroyDevice_NET();
-                _camera = null;
-                return;
+                ret = (int)(openMethod.Invoke(_camera, null) ?? -1);
+                if (ret != _mvOk)
+                {
+                    Error = $"OpenDevice failed: 0x{ret:X8}";
+                    _destroyDevice?.Invoke(_camera, null);
+                    _camera = null;
+                    return;
+                }
             }
 
-            // Set optimal packet size for GigE cameras
-            if (stDevInfo.nTLayerType == MyCamera.MV_GIGE_DEVICE)
+            // Set optimal packet size for GigE
+            var nTLayerType = (uint)(deviceInfoType.GetField("nTLayerType")?.GetValue(deviceInfo) ?? 0u);
+            if (nTLayerType == 0x1 && _getOptimalPacketSize != null) // MV_GIGE_DEVICE
             {
-                int packetSize = _camera.MV_CC_GetOptimalPacketSize_NET();
+                int packetSize = (int)(_getOptimalPacketSize.Invoke(_camera, null) ?? 0);
                 if (packetSize > 0)
-                {
-                    _camera.MV_CC_SetIntValueEx_NET("GevSCPSPacketSize", packetSize);
-                }
+                    _setIntValueEx?.Invoke(_camera, new object[] { "GevSCPSPacketSize", (long)packetSize });
             }
 
             // Set trigger mode
             var triggerMode = _triggerMode.GetValue<HikTriggerMode>();
             if (triggerMode == HikTriggerMode.Continuous)
             {
-                _camera.MV_CC_SetEnumValue_NET("TriggerMode", 0); // Off
+                _setEnumValue?.Invoke(_camera, new object[] { "TriggerMode", 0u });
             }
             else
             {
-                _camera.MV_CC_SetEnumValue_NET("TriggerMode", 1); // On
-                if (triggerMode == HikTriggerMode.Software)
-                    _camera.MV_CC_SetEnumValue_NET("TriggerSource", 7); // Software
-                else
-                    _camera.MV_CC_SetEnumValue_NET("TriggerSource", 0); // Line0
+                _setEnumValue?.Invoke(_camera, new object[] { "TriggerMode", 1u });
+                _setEnumValue?.Invoke(_camera, new object[] { "TriggerSource",
+                    triggerMode == HikTriggerMode.Software ? 7u : 0u });
             }
 
-            // Set ROI if specified
+            // Set ROI
             var width = _width.GetValue<int>();
             var height = _height.GetValue<int>();
             if (width > 0)
-                _camera.MV_CC_SetIntValueEx_NET("Width", width);
+                _setIntValueEx?.Invoke(_camera, new object[] { "Width", (long)width });
             if (height > 0)
-                _camera.MV_CC_SetIntValueEx_NET("Height", height);
+                _setIntValueEx?.Invoke(_camera, new object[] { "Height", (long)height });
 
-            // Set initial exposure and gain
-            var exposureTime = _exposureTime.GetValue<double>();
-            _camera.MV_CC_SetFloatValue_NET("ExposureTime", (float)exposureTime);
-            var gain = _gain.GetValue<double>();
-            _camera.MV_CC_SetFloatValue_NET("Gain", (float)gain);
+            // Set initial params
+            _setFloatValue?.Invoke(_camera, new object[] { "ExposureTime", (float)_exposureTime.GetValue<double>() });
+            _setFloatValue?.Invoke(_camera, new object[] { "Gain", (float)_gain.GetValue<double>() });
 
             // Start grabbing
-            ret = _camera.MV_CC_StartGrabbing_NET();
-            if (ret != MyCamera.MV_OK)
+            ret = (int)(_startGrabbing?.Invoke(_camera, null) ?? -1);
+            if (ret != _mvOk)
             {
-                Error = $"Start grabbing failed: 0x{ret:X8}";
-                _camera.MV_CC_CloseDevice_NET();
-                _camera.MV_CC_DestroyDevice_NET();
+                Error = $"StartGrabbing failed: 0x{ret:X8}";
+                _closeDevice?.Invoke(_camera, null);
+                _destroyDevice?.Invoke(_camera, null);
                 _camera = null;
                 return;
             }
@@ -273,7 +412,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
         }
         catch (Exception ex)
         {
-            Error = $"Failed to open HIK camera: {ex.Message}";
+            Error = $"Open camera failed: {ex.InnerException?.Message ?? ex.Message}";
             _isOpen = false;
         }
     }
@@ -284,9 +423,9 @@ public class HikCameraNode : BaseNode, IStreamingSource
         {
             if (_camera != null && _isOpen)
             {
-                _camera.MV_CC_StopGrabbing_NET();
-                _camera.MV_CC_CloseDevice_NET();
-                _camera.MV_CC_DestroyDevice_NET();
+                _stopGrabbing?.Invoke(_camera, null);
+                _closeDevice?.Invoke(_camera, null);
+                _destroyDevice?.Invoke(_camera, null);
             }
         }
         catch { }

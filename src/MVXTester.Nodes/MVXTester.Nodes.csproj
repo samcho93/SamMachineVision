@@ -17,11 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="MvCameraControl.Net">
-      <HintPath>..\..\libs\MvCameraControl.Net.dll</HintPath>
-      <Private>true</Private>
-      <CopyLocal>true</CopyLocal>
-    </Reference>
+    <None Include="..\..\libs\MvCameraControl.Net.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MvCameraControl.Net.dll</Link>
+    </None>
   </ItemGroup>
 
 </Project>
