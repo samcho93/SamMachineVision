@@ -37,8 +37,12 @@
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type vm:NodeCategoryItem}"
                                           ItemsSource="{Binding Nodes}">
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
-                               Foreground="{DynamicResource ForegroundBrush}" Margin="0,2" />
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <Ellipse Width="8" Height="8" Fill="{Binding CategoryColor}"
+                                 VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource ForegroundBrush}" />
+                    </StackPanel>
                     <HierarchicalDataTemplate.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,1" Padding="6,3" CornerRadius="3" Cursor="Hand"

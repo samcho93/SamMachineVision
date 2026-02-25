@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MVXTester.Core.Registry;
@@ -10,6 +11,7 @@ public class NodeCategoryItem
     public string Name { get; init; } = "";
     public ObservableCollection<NodeRegistryEntry> Nodes { get; init; } = new();
     public bool IsExpanded { get; set; }
+    public SolidColorBrush CategoryColor => CategoryColorHelper.GetBrush(Name);
 }
 
 public partial class NodePaletteViewModel : ObservableObject

@@ -59,8 +59,8 @@
                                  HeaderBrush="{Binding CategoryColor}"
                                  Foreground="{DynamicResource ForegroundBrush}"
                                  Background="{DynamicResource SurfaceBrush}"
-                                 BorderBrush="{DynamicResource BorderBrush}"
-                                 BorderThickness="1">
+                                 BorderBrush="{Binding CategoryBorderColor}"
+                                 BorderThickness="1.5">
                         <nodify:Node.Footer>
                             <StackPanel>
                                 <Image Source="{Binding PreviewImage}"
@@ -149,11 +149,11 @@
 
         <nodify:NodifyEditor.ConnectionTemplate>
             <DataTemplate DataType="{x:Type vm:ConnectionViewModel}">
-                <nodify:CircuitConnection Source="{Binding Source.Anchor}"
-                                          Target="{Binding Target.Anchor}"
-                                          Stroke="{Binding Source.TypeColor}"
-                                          StrokeThickness="2"
-                                          MouseRightButtonDown="Connection_MouseRightButtonDown" />
+                <nodify:Connection Source="{Binding Source.Anchor}"
+                                   Target="{Binding Target.Anchor}"
+                                   Stroke="{Binding Source.TypeColor}"
+                                   StrokeThickness="2"
+                                   MouseRightButtonDown="Connection_MouseRightButtonDown" />
             </DataTemplate>
         </nodify:NodifyEditor.ConnectionTemplate>
     </nodify:NodifyEditor>

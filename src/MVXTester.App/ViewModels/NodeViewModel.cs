@@ -25,6 +25,7 @@ public partial class NodeViewModel : ObservableObject
     public ObservableCollection<ConnectorViewModel> OutputConnectors { get; } = new();
 
     public SolidColorBrush CategoryColor => CategoryColorHelper.GetHeaderBrush(Category);
+    public SolidColorBrush CategoryBorderColor => CategoryColorHelper.GetBorderBrush(Category);
 
     public NodeViewModel(INode model)
     {
@@ -131,6 +132,15 @@ public static class CategoryColorHelper
         var g = (byte)(c.G * 0.4 + 0x2B * 0.6);
         var b = (byte)(c.B * 0.4 + 0x3D * 0.6);
         var brush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
+    public static SolidColorBrush GetBorderBrush(string category)
+    {
+        var src = GetBrush(category);
+        var c = src.Color;
+        var brush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0x60, c.R, c.G, c.B));
         brush.Freeze();
         return brush;
     }
