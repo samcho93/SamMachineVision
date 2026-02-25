@@ -49,12 +49,9 @@ public partial class NodeViewModel : ObservableObject
 
         try
         {
-            var mat = Model.PreviewMat;
-            if (mat != null && !mat.IsDisposed && !mat.Empty())
+            using var snapshot = Model.ClonePreview();
+            if (snapshot != null)
             {
-                // Clone to avoid race condition with streaming thread
-                using var snapshot = mat.Clone();
-
                 Mat preview;
                 var scale = Math.Min(160.0 / snapshot.Width, 120.0 / snapshot.Height);
                 if (scale < 1.0)

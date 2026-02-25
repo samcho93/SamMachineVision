@@ -157,12 +157,9 @@ public partial class PropertyEditorViewModel : ObservableObject
 
         try
         {
-            var mat = SelectedNode.Model.PreviewMat;
-            if (mat != null && !mat.IsDisposed && !mat.Empty())
+            using var snapshot = SelectedNode.Model.ClonePreview();
+            if (snapshot != null)
             {
-                // Clone immediately to avoid race condition with streaming thread
-                using var snapshot = mat.Clone();
-
                 Mat display;
                 var maxW = 240.0;
                 var maxH = 240.0;

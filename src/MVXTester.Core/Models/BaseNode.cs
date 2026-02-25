@@ -32,6 +32,7 @@ public abstract class BaseNode : INode
     public bool IsDirty { get; set; } = true;
     public string? Error { get; set; }
     public Mat? PreviewMat { get; protected set; }
+    public readonly object PreviewLock = new();
 
     protected BaseNode()
     {
@@ -107,18 +108,29 @@ public abstract class BaseNode : INode
 
     protected void SetPreview(Mat? mat)
     {
-        // Swap pattern: set new value first, then dispose old
-        // to avoid AccessViolationException when UI thread reads PreviewMat
-        var old = PreviewMat;
-        if (mat != null && !mat.Empty())
+        lock (PreviewLock)
         {
-            PreviewMat = mat.Clone();
+            var old = PreviewMat;
+            if (mat != null && !mat.Empty())
+                PreviewMat = mat.Clone();
+            else
+                PreviewMat = null;
+            try { old?.Dispose(); } catch { }
         }
-        else
+    }
+
+    /// <summary>
+    /// Thread-safe clone of PreviewMat. Returns null if no preview available.
+    /// </summary>
+    public Mat? ClonePreview()
+    {
+        lock (PreviewLock)
         {
-            PreviewMat = null;
+            var mat = PreviewMat;
+            if (mat != null && !mat.IsDisposed && !mat.Empty())
+                return mat.Clone();
+            return null;
         }
-        try { old?.Dispose(); } catch { }
     }
 
     protected T? GetInputValue<T>(InputPort<T> port)

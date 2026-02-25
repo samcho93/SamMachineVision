@@ -152,14 +152,16 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdateExecuteOutput()
     {
-        // Find the last node with a preview image (prefer ImageShow nodes)
-        var showNode = Editor.Nodes
-            .Where(n => n.Model.PreviewMat != null && !n.Model.PreviewMat.IsDisposed && !n.Model.PreviewMat.Empty())
-            .LastOrDefault();
-
-        if (showNode != null)
+        // Find the last node with a preview image
+        foreach (var n in Editor.Nodes.Reverse())
         {
-            ExecuteOutput.UpdateImage(showNode.Model.PreviewMat);
+            var snapshot = n.Model.ClonePreview();
+            if (snapshot != null)
+            {
+                ExecuteOutput.UpdateImage(snapshot);
+                snapshot.Dispose();
+                break;
+            }
         }
     }
 

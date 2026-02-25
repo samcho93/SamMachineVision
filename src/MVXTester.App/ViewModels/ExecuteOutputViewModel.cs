@@ -29,16 +29,19 @@ public partial class ExecuteOutputViewModel : ObservableObject
 
         try
         {
-            var display = mat.Clone();
-            if (display.Channels() == 1)
+            // mat is expected to be a safe snapshot (already cloned by caller)
+            Mat display;
+            if (mat.Channels() == 1)
             {
-                var bgr = new Mat();
-                Cv2.CvtColor(display, bgr, ColorConversionCodes.GRAY2BGR);
-                display.Dispose();
-                display = bgr;
+                display = new Mat();
+                Cv2.CvtColor(mat, display, ColorConversionCodes.GRAY2BGR);
+            }
+            else
+            {
+                display = mat;
             }
             OutputImage = display.ToWriteableBitmap();
-            display.Dispose();
+            if (display != mat) display.Dispose();
         }
         catch
         {

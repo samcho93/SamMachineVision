@@ -40,6 +40,7 @@ public interface INode
     bool IsDirty { get; set; }
     string? Error { get; set; }
     Mat? PreviewMat { get; }
+    Mat? ClonePreview();
     void Process();
 }
 
