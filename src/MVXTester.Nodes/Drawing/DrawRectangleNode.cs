@@ -9,6 +9,10 @@ public class DrawRectangleNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
     private OutputPort<Mat> _resultOutput = null!;
+    private InputPort<int> _xInput = null!;
+    private InputPort<int> _yInput = null!;
+    private InputPort<int> _widthInput = null!;
+    private InputPort<int> _heightInput = null!;
     private NodeProperty _x = null!;
     private NodeProperty _y = null!;
     private NodeProperty _width = null!;
@@ -21,6 +25,10 @@ public class DrawRectangleNode : BaseNode
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
+        _xInput = AddInput<int>("X");
+        _yInput = AddInput<int>("Y");
+        _widthInput = AddInput<int>("Width");
+        _heightInput = AddInput<int>("Height");
         _resultOutput = AddOutput<Mat>("Result");
         _x = AddIntProperty("X", "X", 10, 0, 10000);
         _y = AddIntProperty("Y", "Y", 10, 0, 10000);
@@ -44,7 +52,11 @@ public class DrawRectangleNode : BaseNode
             }
 
             var result = image.Clone();
-            var rect = new Rect(_x.GetValue<int>(), _y.GetValue<int>(), _width.GetValue<int>(), _height.GetValue<int>());
+            var rect = new Rect(
+                GetPortOrProperty(_xInput, _x),
+                GetPortOrProperty(_yInput, _y),
+                GetPortOrProperty(_widthInput, _width),
+                GetPortOrProperty(_heightInput, _height));
             var color = new Scalar(_colorB.GetValue<int>(), _colorG.GetValue<int>(), _colorR.GetValue<int>());
             var thickness = _thickness.GetValue<int>();
 

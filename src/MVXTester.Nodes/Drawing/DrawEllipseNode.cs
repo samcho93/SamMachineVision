@@ -9,6 +9,11 @@ public class DrawEllipseNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
     private OutputPort<Mat> _resultOutput = null!;
+    private InputPort<int> _centerXInput = null!;
+    private InputPort<int> _centerYInput = null!;
+    private InputPort<int> _axisWInput = null!;
+    private InputPort<int> _axisHInput = null!;
+    private InputPort<double> _angleInput = null!;
     private NodeProperty _centerX = null!;
     private NodeProperty _centerY = null!;
     private NodeProperty _axisW = null!;
@@ -22,6 +27,11 @@ public class DrawEllipseNode : BaseNode
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
+        _centerXInput = AddInput<int>("CenterX");
+        _centerYInput = AddInput<int>("CenterY");
+        _axisWInput = AddInput<int>("AxisW");
+        _axisHInput = AddInput<int>("AxisH");
+        _angleInput = AddInput<double>("Angle");
         _resultOutput = AddOutput<Mat>("Result");
         _centerX = AddIntProperty("CenterX", "Center X", 100, 0, 10000);
         _centerY = AddIntProperty("CenterY", "Center Y", 100, 0, 10000);
@@ -46,9 +56,13 @@ public class DrawEllipseNode : BaseNode
             }
 
             var result = image.Clone();
-            var center = new Point(_centerX.GetValue<int>(), _centerY.GetValue<int>());
-            var axes = new Size(_axisW.GetValue<int>(), _axisH.GetValue<int>());
-            var angle = _angle.GetValue<double>();
+            var center = new Point(
+                GetPortOrProperty(_centerXInput, _centerX),
+                GetPortOrProperty(_centerYInput, _centerY));
+            var axes = new Size(
+                GetPortOrProperty(_axisWInput, _axisW),
+                GetPortOrProperty(_axisHInput, _axisH));
+            var angle = GetPortOrProperty(_angleInput, _angle);
             var color = new Scalar(_colorB.GetValue<int>(), _colorG.GetValue<int>(), _colorR.GetValue<int>());
             var thickness = _thickness.GetValue<int>();
 

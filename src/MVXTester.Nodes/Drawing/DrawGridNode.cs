@@ -9,6 +9,8 @@ public class DrawGridNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
     private OutputPort<Mat> _resultOutput = null!;
+    private InputPort<int> _cellWidthInput = null!;
+    private InputPort<int> _cellHeightInput = null!;
     private NodeProperty _cellWidth = null!;
     private NodeProperty _cellHeight = null!;
     private NodeProperty _thickness = null!;
@@ -19,6 +21,8 @@ public class DrawGridNode : BaseNode
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
+        _cellWidthInput = AddInput<int>("CellWidth");
+        _cellHeightInput = AddInput<int>("CellHeight");
         _resultOutput = AddOutput<Mat>("Result");
         _cellWidth = AddIntProperty("CellWidth", "Cell Width", 50, 5, 500, "Grid cell width in pixels");
         _cellHeight = AddIntProperty("CellHeight", "Cell Height", 50, 5, 500, "Grid cell height in pixels");
@@ -39,8 +43,8 @@ public class DrawGridNode : BaseNode
                 return;
             }
 
-            var cellWidth = _cellWidth.GetValue<int>();
-            var cellHeight = _cellHeight.GetValue<int>();
+            var cellWidth = GetPortOrProperty(_cellWidthInput, _cellWidth);
+            var cellHeight = GetPortOrProperty(_cellHeightInput, _cellHeight);
             var thickness = _thickness.GetValue<int>();
             var r = _colorR.GetValue<int>();
             var g = _colorG.GetValue<int>();

@@ -9,6 +9,9 @@ public class DrawTextNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
     private OutputPort<Mat> _resultOutput = null!;
+    private InputPort<int> _posXInput = null!;
+    private InputPort<int> _posYInput = null!;
+    private InputPort<string> _textInput = null!;
     private NodeProperty _text = null!;
     private NodeProperty _posX = null!;
     private NodeProperty _posY = null!;
@@ -22,6 +25,9 @@ public class DrawTextNode : BaseNode
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
+        _posXInput = AddInput<int>("PosX");
+        _posYInput = AddInput<int>("PosY");
+        _textInput = AddInput<string>("Text");
         _resultOutput = AddOutput<Mat>("Result");
         _text = AddStringProperty("Text", "Text", "Hello", "Text to draw");
         _posX = AddIntProperty("PosX", "Position X", 10, 0, 10000);
@@ -46,8 +52,10 @@ public class DrawTextNode : BaseNode
             }
 
             var result = image.Clone();
-            var text = _text.GetValue<string>();
-            var pos = new Point(_posX.GetValue<int>(), _posY.GetValue<int>());
+            var text = GetPortOrPropertyString(_textInput, _text);
+            var pos = new Point(
+                GetPortOrProperty(_posXInput, _posX),
+                GetPortOrProperty(_posYInput, _posY));
             var font = _font.GetValue<HersheyFonts>();
             var scale = _scale.GetValue<double>();
             var color = new Scalar(_colorB.GetValue<int>(), _colorG.GetValue<int>(), _colorR.GetValue<int>());

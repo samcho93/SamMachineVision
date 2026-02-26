@@ -9,6 +9,9 @@ public class DrawCrosshairNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
     private OutputPort<Mat> _resultOutput = null!;
+    private InputPort<int> _centerXInput = null!;
+    private InputPort<int> _centerYInput = null!;
+    private InputPort<int> _sizeInput = null!;
     private NodeProperty _centerX = null!;
     private NodeProperty _centerY = null!;
     private NodeProperty _size = null!;
@@ -20,6 +23,9 @@ public class DrawCrosshairNode : BaseNode
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
+        _centerXInput = AddInput<int>("CenterX");
+        _centerYInput = AddInput<int>("CenterY");
+        _sizeInput = AddInput<int>("Size");
         _resultOutput = AddOutput<Mat>("Result");
         _centerX = AddIntProperty("CenterX", "Center X", -1, -1, 10000, "X position (-1 for auto center)");
         _centerY = AddIntProperty("CenterY", "Center Y", -1, -1, 10000, "Y position (-1 for auto center)");
@@ -41,9 +47,9 @@ public class DrawCrosshairNode : BaseNode
                 return;
             }
 
-            var cx = _centerX.GetValue<int>();
-            var cy = _centerY.GetValue<int>();
-            var size = _size.GetValue<int>();
+            var cx = GetPortOrProperty(_centerXInput, _centerX);
+            var cy = GetPortOrProperty(_centerYInput, _centerY);
+            var size = GetPortOrProperty(_sizeInput, _size);
             var thickness = _thickness.GetValue<int>();
             var r = _colorR.GetValue<int>();
             var g = _colorG.GetValue<int>();

@@ -9,6 +9,9 @@ public class DrawCircleNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
     private OutputPort<Mat> _resultOutput = null!;
+    private InputPort<int> _centerXInput = null!;
+    private InputPort<int> _centerYInput = null!;
+    private InputPort<int> _radiusInput = null!;
     private NodeProperty _centerX = null!;
     private NodeProperty _centerY = null!;
     private NodeProperty _radius = null!;
@@ -20,6 +23,9 @@ public class DrawCircleNode : BaseNode
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
+        _centerXInput = AddInput<int>("CenterX");
+        _centerYInput = AddInput<int>("CenterY");
+        _radiusInput = AddInput<int>("Radius");
         _resultOutput = AddOutput<Mat>("Result");
         _centerX = AddIntProperty("CenterX", "Center X", 100, 0, 10000);
         _centerY = AddIntProperty("CenterY", "Center Y", 100, 0, 10000);
@@ -42,8 +48,10 @@ public class DrawCircleNode : BaseNode
             }
 
             var result = image.Clone();
-            var center = new Point(_centerX.GetValue<int>(), _centerY.GetValue<int>());
-            var radius = _radius.GetValue<int>();
+            var center = new Point(
+                GetPortOrProperty(_centerXInput, _centerX),
+                GetPortOrProperty(_centerYInput, _centerY));
+            var radius = GetPortOrProperty(_radiusInput, _radius);
             var color = new Scalar(_colorB.GetValue<int>(), _colorG.GetValue<int>(), _colorR.GetValue<int>());
             var thickness = _thickness.GetValue<int>();
 

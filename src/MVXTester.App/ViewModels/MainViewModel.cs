@@ -83,6 +83,10 @@ public partial class MainViewModel : ObservableObject
                     ? 1000.0 / Editor.LastExecutionTime.TotalMilliseconds : 0;
                 StatusText = $"Streaming ({ExecutionTime} / {fps:F1} FPS)";
             }
+            else if (Editor.IsExecuting)
+            {
+                StatusText = $"Runtime ({ExecutionTime})";
+            }
             else
             {
                 StatusText = $"Executed ({ExecutionTime})";
@@ -354,8 +358,17 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ExecuteGraph()
     {
-        StatusText = "Executing...";
-        await Editor.Execute();
+        if (Editor.IsExecuting)
+        {
+            Editor.CancelExecution();
+            StatusText = "Stopped";
+        }
+        else
+        {
+            StatusText = "Runtime...";
+            await Editor.Execute();
+            StatusText = "Stopped";
+        }
     }
 
     [RelayCommand]

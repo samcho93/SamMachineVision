@@ -779,20 +779,37 @@ public partial class EditorViewModel : ObservableObject
 
         try
         {
-            await Task.Run(() => _executor.Execute(_graph, cancellationToken: _executionCts.Token));
-            foreach (var nodeVm in Nodes)
-                nodeVm.UpdatePreview();
-            GraphExecuted?.Invoke();
+            _uiUpdatePending = 0;
+            await Task.Run(() => _executor.ExecuteRuntime(
+                _graph, _executionCts.Token,
+                onFrameComplete: () =>
+                {
+                    if (Interlocked.CompareExchange(ref _uiUpdatePending, 1, 0) == 0)
+                    {
+                        var app = Application.Current;
+                        if (app == null)
+                        {
+                            Interlocked.Exchange(ref _uiUpdatePending, 0);
+                            return;
+                        }
+                        app.Dispatcher.BeginInvoke(() =>
+                        {
+                            foreach (var nodeVm in Nodes)
+                                nodeVm.UpdatePreview();
+                            GraphExecuted?.Invoke();
+                            Interlocked.Exchange(ref _uiUpdatePending, 0);
+                        });
+                    }
+                }
+            ));
         }
-        catch (OperationCanceledException)
-        {
-            foreach (var nodeVm in Nodes)
-                nodeVm.UpdatePreview();
-            GraphExecuted?.Invoke();
-        }
+        catch (OperationCanceledException) { }
         finally
         {
             IsExecuting = false;
+            foreach (var nodeVm in Nodes)
+                nodeVm.UpdatePreview();
+            GraphExecuted?.Invoke();
         }
     }
 

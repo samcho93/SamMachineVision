@@ -103,6 +103,90 @@ public class GraphExecutor
         }
     }
 
+    public void ExecuteRuntime(NodeGraph graph, CancellationToken cancellationToken,
+        Action? onFrameComplete = null, int pollIntervalMs = 16)
+    {
+        // Phase 1: Initial force execution of all nodes
+        var order = TopologicalSort(graph.Nodes, graph.Connections);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        foreach (var node in order)
+        {
+            if (cancellationToken.IsCancellationRequested) return;
+            try
+            {
+                node.Error = null;
+                node.Process();
+                node.IsDirty = false;
+            }
+            catch (Exception ex) { node.Error = ex.Message; }
+        }
+
+        sw.Stop();
+        LastExecutionTime = sw.Elapsed;
+        onFrameComplete?.Invoke();
+
+        // Phase 2: Reactive event loop - only re-execute when nodes become dirty
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            // Re-sort to pick up graph changes (new connections, etc.)
+            try { order = TopologicalSort(graph.Nodes, graph.Connections); }
+            catch { continue; }
+
+            // Also mark IStreamingSource nodes dirty so cameras/video work in runtime mode too
+            foreach (var node in order)
+            {
+                if (node is IStreamingSource)
+                {
+                    node.IsDirty = true;
+                    graph.MarkDirtyDownstream(node);
+                }
+            }
+
+            // Scan for dirty nodes and propagate downstream
+            bool anyDirty = false;
+            foreach (var node in order)
+            {
+                if (node.IsDirty)
+                {
+                    anyDirty = true;
+                    graph.MarkDirtyDownstream(node);
+                }
+            }
+
+            if (anyDirty)
+            {
+                sw.Restart();
+
+                foreach (var node in order)
+                {
+                    if (cancellationToken.IsCancellationRequested) return;
+
+                    if (node.IsDirty)
+                    {
+                        try
+                        {
+                            node.Error = null;
+                            node.Process();
+                            node.IsDirty = false;
+                        }
+                        catch (Exception ex) { node.Error = ex.Message; }
+                    }
+                }
+
+                sw.Stop();
+                LastExecutionTime = sw.Elapsed;
+                onFrameComplete?.Invoke();
+            }
+            else
+            {
+                // Nothing dirty: sleep briefly to avoid busy-waiting
+                try { Task.Delay(pollIntervalMs, cancellationToken).Wait(); }
+                catch { return; }
+            }
+        }
+    }
+
     public static List<INode> TopologicalSort(IReadOnlyList<INode> nodes, IReadOnlyList<IConnection> connections)
     {
         var inDegree = new Dictionary<INode, int>();

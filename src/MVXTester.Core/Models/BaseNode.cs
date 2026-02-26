@@ -142,6 +142,30 @@ public abstract class BaseNode : INode
         return port.TypedValue;
     }
 
+    /// <summary>
+    /// Returns the value from the input port if connected, otherwise falls back to the property value.
+    /// Use for parameters that have both an optional input port and a manual property.
+    /// </summary>
+    protected T GetPortOrProperty<T>(InputPort<T> port, NodeProperty property) where T : struct
+    {
+        if (port.IsConnected)
+            return port.GetValue() is T val ? val : property.GetValue<T>();
+        return property.GetValue<T>();
+    }
+
+    /// <summary>
+    /// String version of GetPortOrProperty. Returns port value if connected and non-empty, otherwise property value.
+    /// </summary>
+    protected string GetPortOrPropertyString(InputPort<string> port, NodeProperty property)
+    {
+        if (port.IsConnected)
+        {
+            var val = port.GetValue() as string;
+            if (!string.IsNullOrEmpty(val)) return val;
+        }
+        return property.GetValue<string>();
+    }
+
     protected void SetOutputValue<T>(OutputPort<T> port, T? value)
     {
         var old = port.TypedValue;
