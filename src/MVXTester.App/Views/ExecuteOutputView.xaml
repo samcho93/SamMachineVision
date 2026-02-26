@@ -30,7 +30,7 @@
                            Foreground="{DynamicResource ForegroundDimBrush}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            FontSize="14" />
-                <Image Source="{Binding OutputImage}" Stretch="Uniform" Margin="4"
+                <Image x:Name="OutputImageElement" Source="{Binding OutputImage}" Stretch="Uniform" Margin="4"
                        Visibility="{Binding OutputImage, Converter={StaticResource NullToVis}}" />
             </Grid>
         </Border>

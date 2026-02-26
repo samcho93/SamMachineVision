@@ -365,6 +365,7 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
+            IsExecuteOutputVisible = true;
             StatusText = "Runtime...";
             await Editor.Execute();
             StatusText = "Stopped";
