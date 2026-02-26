@@ -23,12 +23,31 @@ public class IfSelectNode : BaseNode
     {
         try
         {
-            var condition = GetInputValue(_conditionInput);
-            var trueValue = GetInputValue(_trueInput);
-            var falseValue = GetInputValue(_falseInput);
+            var trueConnected = _trueInput.IsConnected;
+            var falseConnected = _falseInput.IsConnected;
 
-            var result = condition ? trueValue : falseValue;
-            SetOutputValue(_resultOutput, result);
+            // Only True connected → pass-through True Value (no selection)
+            if (trueConnected && !falseConnected)
+            {
+                SetOutputValue(_resultOutput, GetInputValue(_trueInput));
+            }
+            // Only False connected → pass-through False Value (no selection)
+            else if (!trueConnected && falseConnected)
+            {
+                SetOutputValue(_resultOutput, GetInputValue(_falseInput));
+            }
+            // Both connected → select based on Condition
+            else if (trueConnected && falseConnected)
+            {
+                var condition = GetInputValue(_conditionInput);
+                var result = condition ? GetInputValue(_trueInput) : GetInputValue(_falseInput);
+                SetOutputValue(_resultOutput, result);
+            }
+            else
+            {
+                SetOutputValue(_resultOutput, (object?)null);
+            }
+
             Error = null;
         }
         catch (Exception ex)

@@ -768,8 +768,38 @@ public partial class EditorViewModel : ObservableObject
 
     // ===== Execution =====
 
+    /// <summary>
+    /// One-shot execution: executes all dirty nodes once and returns immediately.
+    /// Used by ConnectionChanged, property changes, AutoExecute, etc.
+    /// </summary>
     [RelayCommand]
     public async Task Execute()
+    {
+        if (IsExecuting) return;
+
+        _executionCts?.Dispose();
+        _executionCts = new CancellationTokenSource();
+        IsExecuting = true;
+
+        try
+        {
+            await Task.Run(() => _executor.Execute(_graph, cancellationToken: _executionCts.Token));
+            foreach (var nodeVm in Nodes)
+                nodeVm.UpdatePreview();
+            GraphExecuted?.Invoke();
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            IsExecuting = false;
+        }
+    }
+
+    /// <summary>
+    /// Continuous runtime execution: runs until explicitly cancelled (F5 → Stop).
+    /// Opens ImageShow windows, processes mouse/keyboard events, re-executes on dirty nodes.
+    /// </summary>
+    public async Task StartRuntime()
     {
         if (IsExecuting) return;
 
