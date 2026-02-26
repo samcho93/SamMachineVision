@@ -53,16 +53,25 @@
                     <Button Content="Python Code" Command="{Binding GeneratePythonCodeCommand}" Margin="2" ToolTip="Generate Python Code" />
                     <Button Content="C# Code" Command="{Binding GenerateCSharpCodeCommand}" Margin="2" ToolTip="Generate C# Code" />
                     <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
-                    <Button Content="Execute" Command="{Binding ExecuteGraphCommand}" Margin="2"
-                            ToolTip="F5" FontWeight="Bold" />
+                    <Button Command="{Binding ExecuteGraphCommand}" Margin="2"
+                            ToolTip="F5 - Execute / Stop" FontWeight="Bold">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Content" Value="▶ Execute" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsExecuting}" Value="True">
+                                        <Setter Property="Content" Value="■ Stop" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <Button Content="Force Execute" Command="{Binding ForceExecuteGraphCommand}" Margin="2"
                             ToolTip="Ctrl+F5" />
                     <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
                     <Button Style="{DynamicResource StreamButton}"
                             Command="{Binding StreamGraphCommand}" Margin="2" ToolTip="F6 - Toggle Stream" />
-                    <Button Content="Cancel" Command="{Binding CancelExecutionCommand}" Margin="2"
-                            ToolTip="Esc" Foreground="{DynamicResource ErrorBrush}"
-                            Visibility="{Binding IsExecuting, Converter={StaticResource BoolToVis}}" />
                     <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
                     <Button Content="Output" Command="{Binding ToggleExecuteOutputCommand}" Margin="2"
                             ToolTip="Toggle Execute Output Window" />

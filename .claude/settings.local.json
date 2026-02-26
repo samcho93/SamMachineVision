@@ -13,7 +13,11 @@
       "Bash(git config user.name \"samcho93\")",
       "Bash(git push origin main)",
       "Bash(dotnet build MVXTester.sln -c Debug -p:Platform=x64)",
-      "Bash(dotnet run --project src/MVXTester.App/MVXTester.App.csproj -c Debug -p:Platform=x64)"
+      "Bash(dotnet run --project src/MVXTester.App/MVXTester.App.csproj -c Debug -p:Platform=x64)",
+      "Bash(dotnet build MVXTester.sln --configuration Release)",
+      "Bash(dotnet build MVXTester.sln --configuration Debug)",
+      "Bash(dotnet build D:WorkCSharpMVXTestersrcMVXTester.AppMVXTester.App.csproj --configuration Debug -o D:WorkCSharpMVXTestertemp_build)",
+      "Bash(dotnet build \"D:\\\\Work\\\\CSharp\\\\MVXTester\\\\src\\\\MVXTester.App\\\\MVXTester.App.csproj\" --configuration Debug -o \"D:\\\\Work\\\\CSharp\\\\MVXTester\\\\temp_build\")"
     ]
   }
 }
