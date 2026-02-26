@@ -30,6 +30,10 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
     private readonly object _imageLock = new();
     private string _activeWindowName = "Image";
 
+    // Must keep a strong reference to prevent GC from collecting the delegate
+    // passed to native OpenCV via P/Invoke (Cv2.SetMouseCallback)
+    private MouseCallback? _mouseCallbackDelegate;
+
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
@@ -165,7 +169,9 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
                     windowCreated = true;
                     if (!callbackRegistered)
                     {
-                        Cv2.SetMouseCallback(windowName, OnOpenCvMouseCallback);
+                        // Store delegate in field to prevent GC collection (P/Invoke prevent)
+                        _mouseCallbackDelegate = OnOpenCvMouseCallback;
+                        Cv2.SetMouseCallback(windowName, _mouseCallbackDelegate);
                         callbackRegistered = true;
                     }
                     imageToShow.Dispose();
@@ -259,6 +265,7 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
         _threadRunning = false;
         _displayThread?.Join(1000);
         _displayThread = null;
+        _mouseCallbackDelegate = null;
 
         lock (_imageLock)
         {

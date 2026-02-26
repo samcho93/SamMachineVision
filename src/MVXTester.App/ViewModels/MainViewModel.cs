@@ -151,9 +151,8 @@ public partial class MainViewModel : ObservableObject
             }
         };
 
-        // Route mouse/keyboard events from execute output to nodes
-        ExecuteOutput.MouseEventOccurred += OnMouseEvent;
-        ExecuteOutput.KeyboardEventOccurred += OnKeyboardEvent;
+        // ExecuteOutput is preview-only; all mouse/keyboard events
+        // come from ImageShow node's OpenCV window via Cv2.SetMouseCallback
     }
 
     private void UpdateExecuteOutput()
@@ -167,28 +166,6 @@ public partial class MainViewModel : ObservableObject
                 ExecuteOutput.UpdateImage(snapshot);
                 snapshot.Dispose();
                 break;
-            }
-        }
-    }
-
-    private void OnMouseEvent(MouseEventData data)
-    {
-        foreach (var nodeVm in Editor.Nodes)
-        {
-            if (nodeVm.Model is IMouseEventReceiver receiver)
-            {
-                receiver.OnMouseEvent(data);
-            }
-        }
-    }
-
-    private void OnKeyboardEvent(KeyboardEventData data)
-    {
-        foreach (var nodeVm in Editor.Nodes)
-        {
-            if (nodeVm.Model is IKeyboardEventReceiver receiver)
-            {
-                receiver.OnKeyboardEvent(data);
             }
         }
     }
@@ -355,7 +332,7 @@ public partial class MainViewModel : ObservableObject
         await Editor.ExecuteForce();
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task ExecuteGraph()
     {
         if (Editor.IsExecuting)
