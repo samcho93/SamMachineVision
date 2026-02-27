@@ -10,7 +10,8 @@ public class GraphExecutor
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
-        var order = TopologicalSort(graph.Nodes, graph.Connections);
+        var (nodes, conns) = graph.Snapshot();
+        var order = TopologicalSort(nodes, conns);
         foreach (var node in order)
         {
             if (cancellationToken.IsCancellationRequested) return;
@@ -45,7 +46,8 @@ public class GraphExecutor
         Action? onFrameComplete, TimeSpan delay)
     {
         // Initial force execution
-        var order = TopologicalSort(graph.Nodes, graph.Connections);
+        var (nodes, conns) = graph.Snapshot();
+        var order = TopologicalSort(nodes, conns);
         foreach (var node in order)
         {
             if (cancellationToken.IsCancellationRequested) return;
@@ -67,7 +69,11 @@ public class GraphExecutor
             sw.Restart();
 
             // Re-sort every frame to pick up newly added/connected nodes
-            try { order = TopologicalSort(graph.Nodes, graph.Connections); }
+            try
+            {
+                var (n, c) = graph.Snapshot();
+                order = TopologicalSort(n, c);
+            }
             catch { continue; } // skip frame if graph is temporarily invalid (e.g. mid-edit cycle)
 
             foreach (var node in order)
@@ -111,14 +117,16 @@ public class GraphExecutor
     public void ExecuteRuntime(NodeGraph graph, CancellationToken cancellationToken,
         Action? onFrameComplete = null, int pollIntervalMs = 16)
     {
-        foreach (var n in graph.Nodes) n.IsRuntimeMode = true;
+        var nodesSnapshot = graph.Snapshot().Nodes;
+        foreach (var n in nodesSnapshot) n.IsRuntimeMode = true;
         try
         {
-        ExecuteRuntimeCore(graph, cancellationToken, onFrameComplete, pollIntervalMs);
+            ExecuteRuntimeCore(graph, cancellationToken, onFrameComplete, pollIntervalMs);
         }
         finally
         {
-            foreach (var n in graph.Nodes) n.IsRuntimeMode = false;
+            nodesSnapshot = graph.Snapshot().Nodes;
+            foreach (var n in nodesSnapshot) n.IsRuntimeMode = false;
         }
     }
 
@@ -126,7 +134,8 @@ public class GraphExecutor
         Action? onFrameComplete, int pollIntervalMs)
     {
         // Phase 1: Initial force execution of all nodes
-        var order = TopologicalSort(graph.Nodes, graph.Connections);
+        var (nodes, conns) = graph.Snapshot();
+        var order = TopologicalSort(nodes, conns);
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
         foreach (var node in order)
@@ -149,7 +158,11 @@ public class GraphExecutor
         while (!cancellationToken.IsCancellationRequested)
         {
             // Re-sort to pick up graph changes (new connections, etc.)
-            try { order = TopologicalSort(graph.Nodes, graph.Connections); }
+            try
+            {
+                var (n, c) = graph.Snapshot();
+                order = TopologicalSort(n, c);
+            }
             catch { continue; }
 
             // Also mark IStreamingSource nodes dirty so cameras/video work in runtime mode too
@@ -208,20 +221,16 @@ public class GraphExecutor
 
     public static List<INode> TopologicalSort(IReadOnlyList<INode> nodes, IReadOnlyList<IConnection> connections)
     {
-        // 스냅샷을 만들어 열거 중 컬렉션 변경에 의한 예외 방지
-        var nodesSnapshot = nodes.ToArray();
-        var connsSnapshot = connections.ToArray();
-
         var inDegree = new Dictionary<INode, int>();
         var adjacency = new Dictionary<INode, List<INode>>();
 
-        foreach (var node in nodesSnapshot)
+        foreach (var node in nodes)
         {
             inDegree[node] = 0;
             adjacency[node] = new List<INode>();
         }
 
-        foreach (var conn in connsSnapshot)
+        foreach (var conn in connections)
         {
             var src = conn.Source.Owner;
             var tgt = conn.Target.Owner;
@@ -247,7 +256,7 @@ public class GraphExecutor
             }
         }
 
-        if (result.Count != nodesSnapshot.Length)
+        if (result.Count != nodes.Count)
             throw new InvalidOperationException("Graph contains a cycle.");
 
         return result;

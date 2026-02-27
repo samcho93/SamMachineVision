@@ -4,6 +4,7 @@ public class NodeGraph
 {
     private readonly List<INode> _nodes = new();
     private readonly List<IConnection> _connections = new();
+    private readonly object _syncLock = new();
 
     public IReadOnlyList<INode> Nodes => _nodes;
     public IReadOnlyList<IConnection> Connections => _connections;
@@ -13,22 +14,44 @@ public class NodeGraph
     public event Action<IConnection>? ConnectionAdded;
     public event Action<IConnection>? ConnectionRemoved;
 
+    /// <summary>
+    /// 노드·연결 리스트의 스레드 안전 스냅샷을 반환합니다.
+    /// 백그라운드 실행 스레드에서 사용합니다.
+    /// </summary>
+    public (INode[] Nodes, IConnection[] Connections) Snapshot()
+    {
+        lock (_syncLock)
+        {
+            return (_nodes.ToArray(), _connections.ToArray());
+        }
+    }
+
     public void AddNode(INode node)
     {
-        _nodes.Add(node);
+        lock (_syncLock)
+        {
+            _nodes.Add(node);
+        }
         NodeAdded?.Invoke(node);
     }
 
     public void RemoveNode(INode node)
     {
-        var connectionsToRemove = _connections
-            .Where(c => c.Source.Owner == node || c.Target.Owner == node)
-            .ToList();
+        List<IConnection> connectionsToRemove;
+        lock (_syncLock)
+        {
+            connectionsToRemove = _connections
+                .Where(c => c.Source.Owner == node || c.Target.Owner == node)
+                .ToList();
+        }
 
         foreach (var conn in connectionsToRemove)
             RemoveConnection(conn);
 
-        _nodes.Remove(node);
+        lock (_syncLock)
+        {
+            _nodes.Remove(node);
+        }
         NodeRemoved?.Invoke(node);
     }
 
@@ -36,7 +59,11 @@ public class NodeGraph
     {
         if (target.IsConnected)
         {
-            var existing = _connections.FirstOrDefault(c => c.Target == target);
+            IConnection? existing;
+            lock (_syncLock)
+            {
+                existing = _connections.FirstOrDefault(c => c.Target == target);
+            }
             if (existing != null)
                 RemoveConnection(existing);
         }
@@ -48,7 +75,10 @@ public class NodeGraph
         if (connection == null)
             return null;
 
-        _connections.Add(connection);
+        lock (_syncLock)
+        {
+            _connections.Add(connection);
+        }
         MarkDirtyDownstream(target.Owner);
         ConnectionAdded?.Invoke(connection);
         return connection;
@@ -57,7 +87,10 @@ public class NodeGraph
     public void RemoveConnection(IConnection connection)
     {
         Connection.Disconnect(connection);
-        _connections.Remove(connection);
+        lock (_syncLock)
+        {
+            _connections.Remove(connection);
+        }
         MarkDirtyDownstream(connection.Target.Owner);
         ConnectionRemoved?.Invoke(connection);
     }
@@ -65,8 +98,12 @@ public class NodeGraph
     public void MarkDirtyDownstream(INode node)
     {
         node.IsDirty = true;
-        // 스냅샷으로 열거하여 동시 수정 예외 방지
-        var downstream = _connections.ToArray()
+        IConnection[] snapshot;
+        lock (_syncLock)
+        {
+            snapshot = _connections.ToArray();
+        }
+        var downstream = snapshot
             .Where(c => c.Source.Owner == node)
             .Select(c => c.Target.Owner)
             .Distinct()
@@ -83,8 +120,11 @@ public class NodeGraph
         var visited = new HashSet<INode>();
         var queue = new Queue<INode>();
         queue.Enqueue(from);
-        // 스냅샷으로 열거하여 동시 수정 예외 방지
-        var connsSnapshot = _connections.ToArray();
+        IConnection[] connsSnapshot;
+        lock (_syncLock)
+        {
+            connsSnapshot = _connections.ToArray();
+        }
 
         while (queue.Count > 0)
         {
@@ -106,7 +146,11 @@ public class NodeGraph
 
     public void Clear()
     {
-        var nodesToRemove = _nodes.ToList();
+        List<INode> nodesToRemove;
+        lock (_syncLock)
+        {
+            nodesToRemove = _nodes.ToList();
+        }
         foreach (var node in nodesToRemove)
             RemoveNode(node);
     }
