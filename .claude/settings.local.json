@@ -27,7 +27,8 @@
       "Bash(dir /s /b \"%USERPROFILE%\\\\.nuget\\\\packages\\\\nodify\\\\7.2.0\\\\*Node*\")",
       "Bash(cmd /c \"dir /s /b %USERPROFILE%\\\\.nuget\\\\packages\\\\nodify\\\\7.2.0\\\\lib\\\\*.dll\")",
       "Bash(dotnet nuget locals global-packages -l)",
-      "Bash(dotnet tool list -g)"
+      "Bash(dotnet tool list -g)",
+      "Bash(dotnet build --no-restore)"
     ]
   }
 }

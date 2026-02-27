@@ -23,10 +23,36 @@ public class FunctionNode : BaseNode
     // 매핑: FunctionNode 출력 포트 → 서브그래프 싱크 노드의 포트
     private readonly List<(IOutputPort fnOutput, INode subNode, string portName, bool readFromInput)> _outputMappings = new();
 
+    // 서브그래프 원본 좌표 (Detail 팝업용)
+    private Dictionary<string, (double X, double Y)>? _subGraphPositions;
+
     /// <summary>
     /// 함수 소스 프로젝트 파일 경로
     /// </summary>
     public string SourceFilePath => _sourceFilePath;
+
+    /// <summary>
+    /// 서브그래프 구조 (읽기 전용 — Detail 팝업 표시용)
+    /// </summary>
+    public NodeGraph? SubGraph => _subGraph;
+
+    /// <summary>
+    /// 서브그래프 노드의 원본 좌표 (Detail 팝업 레이아웃용)
+    /// </summary>
+    public IReadOnlyDictionary<string, (double X, double Y)>? SubGraphPositions => _subGraphPositions;
+
+    /// <summary>
+    /// 사용자 지정 표시 이름. null이면 파일명을 사용.
+    /// </summary>
+    public string? CustomName
+    {
+        get
+        {
+            var prop = Properties.FirstOrDefault(p => p.Name == "CustomName");
+            var val = prop?.GetValue<string>();
+            return string.IsNullOrEmpty(val) ? null : val;
+        }
+    }
 
     protected override void Setup()
     {
@@ -50,6 +76,10 @@ public class FunctionNode : BaseNode
         AddFilePathProperty("SourceFilePath", "Source File", filePath,
             "Function source project file path");
 
+        // 사용자 지정 표시 이름 프로퍼티
+        AddStringProperty("CustomName", "Display Name", "",
+            "Custom display name for this function node");
+
         try
         {
             // 1. 파일 로드 (ZIP 또는 JSON)
@@ -70,6 +100,9 @@ public class FunctionNode : BaseNode
                 Error = $"Failed to load function: {filePath}";
                 return;
             }
+
+            // 서브그래프 원본 좌표 저장 (Detail 팝업용)
+            _subGraphPositions = data.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
 
             // 2. 서브그래프 재구성
             _subGraph = GraphSerializer.ReconstructGraph(data);

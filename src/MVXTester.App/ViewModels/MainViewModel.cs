@@ -10,6 +10,7 @@ using MVXTester.Core.Models;
 using MVXTester.Core.Registry;
 using MVXTester.Core.Serialization;
 using MVXTester.App.Services;
+using MVXTester.App.Views;
 
 namespace MVXTester.App.ViewModels;
 
@@ -118,6 +119,18 @@ public partial class MainViewModel : ObservableObject
 
         Editor.NodeDoubleClicked += async (nodeVm) =>
         {
+            // FunctionNode 더블클릭 → Detail 팝업
+            if (nodeVm.Model is FunctionNode fn && fn.SubGraph != null)
+            {
+                var detailVm = new FunctionDetailViewModel(fn);
+                var detailDialog = new FunctionDetailDialog(detailVm)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                detailDialog.ShowDialog();
+                return;
+            }
+
             var filePathProp = nodeVm.Model.Properties
                 .FirstOrDefault(p => p.PropertyType == PropertyType.FilePath);
 
@@ -156,6 +169,9 @@ public partial class MainViewModel : ObservableObject
 
     private void OnPropertyChanged()
     {
+        // FunctionNode CustomName 변경 시 노드 헤더 즉시 갱신
+        PropertyEditor.SelectedNode?.RefreshTitle();
+
         _debounceTimer?.Stop();
         _debounceTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(DebounceDelayMs) };
         _debounceTimer.Tick -= OnDebounceTimerTick;

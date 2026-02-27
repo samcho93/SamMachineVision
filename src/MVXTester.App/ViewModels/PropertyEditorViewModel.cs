@@ -8,6 +8,7 @@ using OpenCvSharp.WpfExtensions;
 using MVXTester.Core.Models;
 using MVXTester.Core.UndoRedo;
 using MVXTester.App.UndoRedo;
+using MVXTester.App.Views;
 
 namespace MVXTester.App.ViewModels;
 
@@ -187,6 +188,7 @@ public partial class PropertyEditorViewModel : ObservableObject
     [ObservableProperty] private string _nodeCategory = "";
     [ObservableProperty] private WriteableBitmap? _resultImage;
     [ObservableProperty] private string _resultImageInfo = "";
+    [ObservableProperty] private bool _isFunctionNode;
 
     private Action? _onPropertyChanged;
     private UndoRedoManager? _undoManager;
@@ -205,6 +207,7 @@ public partial class PropertyEditorViewModel : ObservableObject
         Properties.Clear();
         ResultImage = null;
         ResultImageInfo = "";
+        IsFunctionNode = node?.Model is FunctionNode;
 
         if (node == null)
         {
@@ -289,5 +292,19 @@ public partial class PropertyEditorViewModel : ObservableObject
             if (modelProp != null)
                 prop.SetValueSilently(modelProp.Value);
         }
+    }
+
+    [RelayCommand]
+    private void ViewFunctionDetail()
+    {
+        if (SelectedNode?.Model is not FunctionNode fn) return;
+        if (fn.SubGraph == null) return;
+
+        var vm = new FunctionDetailViewModel(fn);
+        var dialog = new FunctionDetailDialog(vm)
+        {
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+        dialog.ShowDialog();
     }
 }

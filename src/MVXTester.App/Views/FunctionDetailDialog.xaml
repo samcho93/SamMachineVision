@@ -1,0 +1,119 @@
+<Window x:Class="MVXTester.App.Views.FunctionDetailDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:nodify="https://miroiu.github.io/nodify"
+        xmlns:vm="clr-namespace:MVXTester.App.ViewModels"
+        xmlns:conv="clr-namespace:MVXTester.App.Converters"
+        Title="Function Detail" Width="900" Height="650"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundBrush}">
+
+    <Window.Resources>
+        <conv:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVis" />
+        <conv:NullToVisibilityConverter x:Key="NullToVis" />
+    </Window.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,8">
+            <TextBlock x:Name="FunctionNameText" FontWeight="Bold" FontSize="16"
+                       Foreground="{DynamicResource ForegroundBrush}" />
+            <TextBlock x:Name="SourceFileText" FontSize="11"
+                       Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,2,0,0"
+                       TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <!-- Read-only NodifyEditor -->
+        <Border Grid.Row="1" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+            <nodify:NodifyEditor x:Name="DetailEditor"
+                                 ItemsSource="{Binding Nodes}"
+                                 Connections="{Binding Connections}"
+                                 Background="{DynamicResource BackgroundBrush}"
+                                 GridCellSize="20"
+                                 DisableAutoPanning="True">
+
+                <nodify:NodifyEditor.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:NodeViewModel}">
+                        <nodify:Node Header="{Binding Title}"
+                                     Input="{Binding InputConnectors}"
+                                     Output="{Binding OutputConnectors}"
+                                     HeaderBrush="{Binding CategoryColor}"
+                                     ContentBrush="{DynamicResource SurfaceBrush}"
+                                     FooterBrush="{DynamicResource SurfaceBrush}"
+                                     Foreground="{DynamicResource ForegroundBrush}"
+                                     Background="{DynamicResource SurfaceBrush}"
+                                     BorderBrush="{Binding CategoryBorderColor}"
+                                     BorderThickness="1.5">
+
+                            <nodify:Node.Footer>
+                                <StackPanel>
+                                    <Image Source="{Binding PreviewImage}"
+                                           MaxWidth="160" MaxHeight="120"
+                                           Stretch="Uniform" Margin="4"
+                                           Visibility="{Binding PreviewImage, Converter={StaticResource NullToVis}}" />
+                                    <Border Background="{DynamicResource ErrorHintBrush}" CornerRadius="2" Padding="4,2" Margin="4,0,4,4"
+                                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyToVis}}">
+                                        <TextBlock Text="{Binding ErrorMessage}" FontSize="10"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   TextWrapping="Wrap" MaxWidth="160" />
+                                    </Border>
+                                </StackPanel>
+                            </nodify:Node.Footer>
+
+                            <nodify:Node.InputConnectorTemplate>
+                                <DataTemplate DataType="{x:Type vm:ConnectorViewModel}">
+                                    <nodify:NodeInput Header="{Binding DisplayName}"
+                                                      Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                                      IsConnected="{Binding IsConnected}"
+                                                      Background="{DynamicResource SurfaceBrush}"
+                                                      Foreground="{DynamicResource ForegroundDimBrush}"
+                                                      FontSize="10"
+                                                      BorderBrush="{Binding TypeColor}" />
+                                </DataTemplate>
+                            </nodify:Node.InputConnectorTemplate>
+
+                            <nodify:Node.OutputConnectorTemplate>
+                                <DataTemplate DataType="{x:Type vm:ConnectorViewModel}">
+                                    <nodify:NodeOutput Header="{Binding DisplayName}"
+                                                       Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                                       IsConnected="{Binding IsConnected}"
+                                                       Background="{DynamicResource SurfaceBrush}"
+                                                       Foreground="{DynamicResource ForegroundDimBrush}"
+                                                       FontSize="10"
+                                                       BorderBrush="{Binding TypeColor}" />
+                                </DataTemplate>
+                            </nodify:Node.OutputConnectorTemplate>
+                        </nodify:Node>
+                    </DataTemplate>
+                </nodify:NodifyEditor.ItemTemplate>
+
+                <nodify:NodifyEditor.ItemContainerStyle>
+                    <Style TargetType="{x:Type nodify:ItemContainer}">
+                        <Setter Property="Location" Value="{Binding Location}" />
+                        <Setter Property="IsDraggable" Value="False" />
+                    </Style>
+                </nodify:NodifyEditor.ItemContainerStyle>
+
+                <nodify:NodifyEditor.ConnectionTemplate>
+                    <DataTemplate DataType="{x:Type vm:ConnectionViewModel}">
+                        <nodify:Connection Source="{Binding Source.Anchor}"
+                                           Target="{Binding Target.Anchor}"
+                                           Stroke="{Binding Source.TypeColor}"
+                                           StrokeThickness="2" />
+                    </DataTemplate>
+                </nodify:NodifyEditor.ConnectionTemplate>
+            </nodify:NodifyEditor>
+        </Border>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="Close" Click="CloseClick" Padding="16,6" />
+        </StackPanel>
+    </Grid>
+</Window>

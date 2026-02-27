@@ -8,6 +8,7 @@ using OpenCvSharp.WpfExtensions;
 using MVXTester.Core.Models;
 using MVXTester.Core.Registry;
 using MVXTester.App.Services;
+using FunctionNode = MVXTester.Core.Models.FunctionNode;
 
 namespace MVXTester.App.ViewModels;
 
@@ -20,7 +21,18 @@ public partial class NodeViewModel : ObservableObject
     [ObservableProperty] private System.Windows.Size _desiredSize;
 
     public INode Model { get; }
-    public string Title => Model.Name;
+
+    public string Title
+    {
+        get
+        {
+            if (Model is FunctionNode fn && fn.CustomName != null)
+                return fn.CustomName;
+            return Model.Name;
+        }
+    }
+
+    public void RefreshTitle() => OnPropertyChanged(nameof(Title));
     public string Category => Model.Category;
     public ObservableCollection<ConnectorViewModel> InputConnectors { get; } = new();
     public ObservableCollection<ConnectorViewModel> OutputConnectors { get; } = new();
