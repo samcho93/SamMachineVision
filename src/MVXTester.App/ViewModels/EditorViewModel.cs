@@ -55,6 +55,7 @@ public partial class EditorViewModel : ObservableObject
     public event Action<NodeViewModel?>? NodeSelected;
     public event Action? PropertyEditorRefreshRequested;
     public event Action? ConnectionChanged;
+    public event Action? GraphStructureChanged;
     public event Func<NodeViewModel, Task>? NodeDoubleClicked;
     public event Action<string>? ConnectionWarning;
     public event Action<NodeViewModel>? NodeDropped;
@@ -383,6 +384,8 @@ public partial class EditorViewModel : ObservableObject
 
         if (SelectedNode == nodeVm)
             SelectNode(null);
+
+        GraphStructureChanged?.Invoke();
     }
 
     public void TryConnectByIds(string srcNodeId, string srcPortName,
@@ -737,6 +740,7 @@ public partial class EditorViewModel : ObservableObject
 
         _executionCts?.Dispose();
         _executionCts = new CancellationTokenSource();
+        _executionDoneTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         IsExecuting = true;
 
         try
@@ -764,6 +768,7 @@ public partial class EditorViewModel : ObservableObject
 
         _executionCts?.Dispose();
         _executionCts = new CancellationTokenSource();
+        _executionDoneTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         IsExecuting = true;
 
         try
@@ -816,6 +821,7 @@ public partial class EditorViewModel : ObservableObject
 
         _executionCts?.Dispose();
         _executionCts = new CancellationTokenSource();
+        _executionDoneTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         IsExecuting = true;
 
         try
@@ -845,6 +851,7 @@ public partial class EditorViewModel : ObservableObject
 
         _executionCts?.Dispose();
         _executionCts = new CancellationTokenSource();
+        _executionDoneTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         IsExecuting = true;
         IsStreaming = true;
 
@@ -903,20 +910,19 @@ public partial class EditorViewModel : ObservableObject
 
     /// <summary>
     /// 실행을 취소하고, 실행이 완전히 종료될 때까지 비동기적으로 대기합니다.
+    /// TCS는 실행 시작 시 생성되므로 race condition이 없습니다.
     /// </summary>
     public async Task StopExecutionAsync(int timeoutMs = 5000)
     {
         if (!IsExecuting) return;
 
-        _executionDoneTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var tcs = _executionDoneTcs;
         CancelExecution();
 
-        // 타임아웃 적용하여 무한 대기 방지
-        var completed = await Task.WhenAny(_executionDoneTcs.Task, Task.Delay(timeoutMs));
-        if (completed != _executionDoneTcs.Task)
+        if (tcs != null)
         {
-            // 타임아웃: 강제 진행
-            _executionDoneTcs = null;
+            // 타임아웃 적용하여 무한 대기 방지
+            await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
         }
     }
 

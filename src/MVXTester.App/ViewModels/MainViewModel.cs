@@ -35,9 +35,35 @@ public partial class MainViewModel : ObservableObject
     private string? _currentExtractDir; // ZIP 아카이브 임시 추출 디렉토리
     private DispatcherTimer? _debounceTimer;
     private const int DebounceDelayMs = 150;
+    private bool _isDirty;
 
     public bool IsExecuting => Editor.IsExecuting;
     public bool IsStreaming => Editor.IsStreaming;
+
+    /// <summary>
+    /// 그래프가 마지막 저장 이후 변경되었는지 여부
+    /// </summary>
+    public bool IsDirty
+    {
+        get => _isDirty;
+        private set
+        {
+            if (_isDirty == value) return;
+            _isDirty = value;
+            UpdateTitle();
+        }
+    }
+
+    private void MarkDirty()
+    {
+        IsDirty = true;
+    }
+
+    private void UpdateTitle()
+    {
+        var name = _currentFilePath != null ? Path.GetFileName(_currentFilePath) : "Untitled";
+        Title = _isDirty ? $"MVXTester - {name} *" : $"MVXTester - {name}";
+    }
 
     public MainViewModel()
     {
@@ -105,14 +131,22 @@ public partial class MainViewModel : ObservableObject
             StatusText = $"Warning: {message}";
         };
 
+        Editor.GraphStructureChanged += () =>
+        {
+            MarkDirty();
+            NodeCount = Editor.Nodes.Count;
+        };
+
         Editor.ConnectionChanged += async () =>
         {
+            MarkDirty();
             if (Editor.UndoManager.IsExecutingUndoRedo) return;
             await Editor.Execute();
         };
 
         Editor.NodeDropped += async (nodeVm) =>
         {
+            MarkDirty();
             NodeCount = Editor.Nodes.Count;
             if (AutoExecute) await Editor.Execute();
         };
@@ -169,6 +203,7 @@ public partial class MainViewModel : ObservableObject
 
     private void OnPropertyChanged()
     {
+        MarkDirty();
         // FunctionNode CustomName 변경 시 노드 헤더 즉시 갱신
         PropertyEditor.SelectedNode?.RefreshTitle();
 
@@ -189,12 +224,14 @@ public partial class MainViewModel : ObservableObject
     private async Task NewGraph()
     {
         if (!await ConfirmAndStopExecution()) return;
+        if (!ConfirmDiscardChanges()) return;
 
         Editor.Clear();
         ProjectArchive.CleanupExtractDir(_currentExtractDir);
         _currentExtractDir = null;
         _currentFilePath = null;
-        Title = "MVXTester";
+        _isDirty = false;
+        UpdateTitle();
         StatusText = "New graph created";
         NodeCount = 0;
         ExecutionTime = "";
@@ -204,6 +241,7 @@ public partial class MainViewModel : ObservableObject
     private async Task Open()
     {
         if (!await ConfirmAndStopExecution()) return;
+        if (!ConfirmDiscardChanges()) return;
 
         var dialog = new OpenFileDialog
         {
@@ -271,6 +309,34 @@ public partial class MainViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>
+    /// 미저장 변경사항이 있으면 저장 여부를 묻습니다.
+    /// Yes → 저장 후 true, No → 저장하지 않고 true, Cancel → false (작업 취소)
+    /// 실행이 이미 정지된 상태에서 호출해야 합니다 (MessageBox 교착 방지).
+    /// </summary>
+    private bool ConfirmDiscardChanges()
+    {
+        if (!IsDirty) return true;
+
+        var result = MessageBox.Show(
+            "변경사항이 저장되지 않았습니다.\n저장하시겠습니까?",
+            "저장 확인",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Cancel) return false;
+
+        if (result == MessageBoxResult.Yes)
+        {
+            if (_currentFilePath != null)
+                SaveGraph(_currentFilePath);
+            else
+                SaveAs_Internal();
+        }
+
+        return true;
+    }
+
     private void SaveGraph(string path)
     {
         try
@@ -291,7 +357,8 @@ public partial class MainViewModel : ObservableObject
             }
 
             _currentFilePath = path;
-            Title = $"MVXTester - {Path.GetFileName(path)}";
+            _isDirty = false;
+            UpdateTitle();
             StatusText = "Saved";
         }
         catch (Exception ex)
@@ -410,7 +477,8 @@ public partial class MainViewModel : ObservableObject
         }
 
         _currentFilePath = path;
-        Title = $"MVXTester - {Path.GetFileName(path)}";
+        _isDirty = false;
+        UpdateTitle();
         NodeCount = Editor.Nodes.Count;
         StatusText = "Loaded";
 
