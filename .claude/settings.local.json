@@ -34,7 +34,8 @@
       "Bash(xargs grep -l \"NodeRegistry\\\\|CreateNode\\\\|FunctionNode\")",
       "Bash(xargs grep -l \"class.*Engine\\\\|ExecutionEngine\")",
       "Bash(xargs grep -l \"IsStreaming\")",
-      "Bash(wc -l /d/Work/CSharp/MVXTester/src/MVXTester.Core/Models/*.cs /d/Work/CSharp/MVXTester/src/MVXTester.Core/Engine/*.cs /d/Work/CSharp/MVXTester/src/MVXTester.Core/Serialization/*.cs)"
+      "Bash(wc -l /d/Work/CSharp/MVXTester/src/MVXTester.Core/Models/*.cs /d/Work/CSharp/MVXTester/src/MVXTester.Core/Engine/*.cs /d/Work/CSharp/MVXTester/src/MVXTester.Core/Serialization/*.cs)",
+      "Bash(grep -l \"Mat\\\\|Image\" \"D:\\\\Work\\\\CSharp\\\\MVXTester/src/MVXTester.Nodes/Drawing/\"*.cs)"
     ]
   }
 }
