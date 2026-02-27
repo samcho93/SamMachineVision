@@ -118,6 +118,7 @@ public static class CategoryColorHelper
         [NodeCategories.Data]         = Frozen(0x94, 0xE2, 0xD5),
         [NodeCategories.Event]        = Frozen(0xF5, 0xC2, 0xE7),
         [NodeCategories.Script]       = Frozen(0xF2, 0xCD, 0xCD),
+        [NodeCategories.Function]     = Frozen(0xFF, 0xCF, 0x48),
     };
 
     private static readonly SolidColorBrush _default = Frozen(0x45, 0x45, 0x5A);

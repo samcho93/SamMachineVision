@@ -17,7 +17,12 @@
       "Bash(dotnet build MVXTester.sln --configuration Release)",
       "Bash(dotnet build MVXTester.sln --configuration Debug)",
       "Bash(dotnet build D:WorkCSharpMVXTestersrcMVXTester.AppMVXTester.App.csproj --configuration Debug -o D:WorkCSharpMVXTestertemp_build)",
-      "Bash(dotnet build \"D:\\\\Work\\\\CSharp\\\\MVXTester\\\\src\\\\MVXTester.App\\\\MVXTester.App.csproj\" --configuration Debug -o \"D:\\\\Work\\\\CSharp\\\\MVXTester\\\\temp_build\")"
+      "Bash(dotnet build \"D:\\\\Work\\\\CSharp\\\\MVXTester\\\\src\\\\MVXTester.App\\\\MVXTester.App.csproj\" --configuration Debug -o \"D:\\\\Work\\\\CSharp\\\\MVXTester\\\\temp_build\")",
+      "Bash(xargs grep -l \"ZipFile\\\\|compress\\\\|archive\")",
+      "Bash(find \"/d/Work/CSharp/MVXTester\" -name \"*.csproj\" -exec grep -l \"Compression\\\\|Zip\\\\|Archive\" {} ;)",
+      "Bash(xargs grep -l \"\\\\.mvx\\\\|Save\\\\|Load\")",
+      "Bash(dotnet build MVXTester.sln -o build_temp --no-incremental)",
+      "Bash(dotnet build MVXTester.sln -o build_temp)"
     ]
   }
 }

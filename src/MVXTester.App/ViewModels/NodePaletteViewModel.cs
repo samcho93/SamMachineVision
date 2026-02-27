@@ -88,6 +88,11 @@ public partial class NodePaletteViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 외부에서 레지스트리 변경 후 팔레트를 새로고침
+    /// </summary>
+    public void Refresh() => RefreshCategories();
+
     [RelayCommand]
     private void AddNode(NodeRegistryEntry entry)
     {

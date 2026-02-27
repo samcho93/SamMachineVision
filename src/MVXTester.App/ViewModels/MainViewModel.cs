@@ -33,6 +33,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _themeIcon = ThemeManager.IsDarkTheme ? "\u2600" : "\u263D";
 
     private string? _currentFilePath;
+    private string? _currentExtractDir; // ZIP 아카이브 임시 추출 디렉토리
     private DispatcherTimer? _debounceTimer;
     private const int DebounceDelayMs = 150;
 
@@ -199,6 +200,8 @@ public partial class MainViewModel : ObservableObject
     private void NewGraph()
     {
         Editor.Clear();
+        ProjectArchive.CleanupExtractDir(_currentExtractDir);
+        _currentExtractDir = null;
         _currentFilePath = null;
         Title = "MVXTester";
         StatusText = "New graph created";
@@ -211,8 +214,8 @@ public partial class MainViewModel : ObservableObject
     {
         var dialog = new OpenFileDialog
         {
-            Filter = "MVXTester Graph (*.mvx)|*.mvx|JSON Files (*.json)|*.json|All Files (*.*)|*.*",
-            DefaultExt = ".mvx"
+            Filter = "MVXTester Project (*.mvxp)|*.mvxp|MVXTester Graph (*.mvx)|*.mvx|JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+            DefaultExt = ".mvxp"
         };
 
         if (dialog.ShowDialog() == true)
@@ -229,25 +232,29 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Save()
+    private async Task Save()
     {
+        await StopExecutionForSave();
+
         if (_currentFilePath != null)
-        {
             SaveGraph(_currentFilePath);
-        }
         else
-        {
-            SaveAs();
-        }
+            SaveAs_Internal();
     }
 
     [RelayCommand]
-    private void SaveAs()
+    private async Task SaveAs()
+    {
+        await StopExecutionForSave();
+        SaveAs_Internal();
+    }
+
+    private void SaveAs_Internal()
     {
         var dialog = new SaveFileDialog
         {
-            Filter = "MVXTester Graph (*.mvx)|*.mvx|JSON Files (*.json)|*.json|All Files (*.*)|*.*",
-            DefaultExt = ".mvx"
+            Filter = "MVXTester Project (*.mvxp)|*.mvxp|MVXTester Graph (*.mvx)|*.mvx|All Files (*.*)|*.*",
+            DefaultExt = ".mvxp"
         };
 
         if (dialog.ShowDialog() == true)
@@ -256,12 +263,41 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Stops any running execution before saving to prevent concurrent access
+    /// to graph.Nodes/Connections (which would freeze the program).
+    /// </summary>
+    private async Task StopExecutionForSave()
+    {
+        if (!Editor.IsExecuting) return;
+
+        Editor.CancelExecution();
+        // Wait for execution to actually finish
+        for (int i = 0; i < 100 && Editor.IsExecuting; i++)
+            await Task.Delay(50);
+
+        StatusText = "Execution stopped for save";
+    }
+
     private void SaveGraph(string path)
     {
         try
         {
-            GraphSerializer.SaveToFile(Editor.Graph, path,
-                node => Editor.GetNodePosition(node));
+            if (ProjectArchive.IsProjectArchive(path))
+            {
+                // ZIP 형식 저장 (.mvxp)
+                var graphJson = GraphSerializer.Serialize(Editor.Graph,
+                    node => Editor.GetNodePosition(node));
+                var fileMap = GraphSerializer.CollectReferencedFiles(Editor.Graph);
+                ProjectArchive.Save(path, graphJson, fileMap);
+            }
+            else
+            {
+                // 레거시 .mvx 형식 (이전 호환)
+                GraphSerializer.SaveToFile(Editor.Graph, path,
+                    node => Editor.GetNodePosition(node));
+            }
+
             _currentFilePath = path;
             Title = $"MVXTester - {Path.GetFileName(path)}";
             StatusText = "Saved";
@@ -274,7 +310,24 @@ public partial class MainViewModel : ObservableObject
 
     private async void LoadGraph(string path)
     {
-        var data = GraphSerializer.LoadFromFile(path);
+        // 이전 추출 디렉토리 정리
+        ProjectArchive.CleanupExtractDir(_currentExtractDir);
+        _currentExtractDir = null;
+
+        GraphData? data;
+        if (ProjectArchive.IsProjectArchive(path))
+        {
+            // ZIP 형식 로드 (.mvxp)
+            var (graphJson, extractDir) = ProjectArchive.Load(path);
+            _currentExtractDir = extractDir;
+            data = GraphSerializer.Deserialize(graphJson);
+        }
+        else
+        {
+            // 레거시 .mvx / .json 형식
+            data = GraphSerializer.LoadFromFile(path);
+        }
+
         if (data == null) return;
 
         Editor.Clear();
@@ -293,7 +346,31 @@ public partial class MainViewModel : ObservableObject
 
             if (nodeType == null) continue;
 
-            var vm = Editor.AddNode(nodeType, new Point(nodeData.X, nodeData.Y));
+            NodeViewModel vm;
+
+            // FunctionNode 특수 처리: Initialize()로 서브그래프 로드 및 포트 생성 필요
+            if (nodeType == typeof(MVXTester.Core.Models.FunctionNode)
+                && nodeData.Properties.TryGetValue("SourceFilePath", out var srcPathElem))
+            {
+                var srcPath = srcPathElem.Deserialize<string>();
+                if (!string.IsNullOrEmpty(srcPath))
+                {
+                    // 함수 노드를 레지스트리에도 등록 (팔레트 표시용)
+                    var funcName = Path.GetFileNameWithoutExtension(srcPath);
+                    Registry.RegisterFunction(funcName, srcPath);
+
+                    var entry = Registry.Entries.FirstOrDefault(e =>
+                        e.FunctionFilePath == srcPath && e.NodeType == typeof(MVXTester.Core.Models.FunctionNode));
+                    if (entry != null)
+                    {
+                        vm = Editor.AddNodeInternal(entry, new Point(nodeData.X, nodeData.Y), nodeData.Id);
+                        nodeMap[nodeData.Id] = vm;
+                        continue;
+                    }
+                }
+            }
+
+            vm = Editor.AddNodeInternal(nodeType, new Point(nodeData.X, nodeData.Y), nodeData.Id);
 
             foreach (var kvp in nodeData.Properties)
             {
@@ -393,6 +470,32 @@ public partial class MainViewModel : ObservableObject
     {
         ThemeManager.ToggleTheme();
         ThemeIcon = ThemeManager.IsDarkTheme ? "\u2600" : "\u263D";
+    }
+
+    [RelayCommand]
+    private void ImportFunction()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "MVXTester Project (*.mvxp)|*.mvxp|MVXTester Graph (*.mvx)|*.mvx|All Files (*.*)|*.*",
+            Title = "Import Function"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                var name = Path.GetFileNameWithoutExtension(dialog.FileName);
+                Registry.RegisterFunction(name, dialog.FileName);
+                Palette.Refresh();
+                StatusText = $"Function '{name}' imported";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to import function: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     }
 
     [RelayCommand]

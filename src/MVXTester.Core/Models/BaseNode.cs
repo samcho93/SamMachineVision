@@ -63,6 +63,30 @@ public abstract class BaseNode : INode
         return port;
     }
 
+    /// <summary>
+    /// 런타임에 타입을 지정하여 입력 포트 생성 (함수 노드용).
+    /// 리플렉션으로 InputPort&lt;T&gt;를 생성.
+    /// </summary>
+    protected IInputPort AddInputDynamic(string name, Type dataType)
+    {
+        var portType = typeof(InputPort<>).MakeGenericType(dataType);
+        var port = (IInputPort)Activator.CreateInstance(portType, name, this)!;
+        _inputs.Add(port);
+        return port;
+    }
+
+    /// <summary>
+    /// 런타임에 타입을 지정하여 출력 포트 생성 (함수 노드용).
+    /// 리플렉션으로 OutputPort&lt;T&gt;를 생성.
+    /// </summary>
+    protected IOutputPort AddOutputDynamic(string name, Type dataType)
+    {
+        var portType = typeof(OutputPort<>).MakeGenericType(dataType);
+        var port = (IOutputPort)Activator.CreateInstance(portType, name, this)!;
+        _outputs.Add(port);
+        return port;
+    }
+
     protected NodeProperty AddProperty(string name, string displayName, PropertyType type,
         Type valueType, object? defaultValue = null, object? min = null, object? max = null,
         string? description = null, Type? enumType = null)

@@ -24,4 +24,5 @@ public static class NodeCategories
     public const string Script = "Script";
     public const string Inspection = "Inspection";
     public const string Measurement = "Measurement";
+    public const string Function = "Function";
 }

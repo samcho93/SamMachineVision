@@ -49,6 +49,7 @@
                     <Button Content="New" Command="{Binding NewGraphCommand}" Margin="2" ToolTip="Ctrl+N" />
                     <Button Content="Open" Command="{Binding OpenCommand}" Margin="2" ToolTip="Ctrl+O" />
                     <Button Content="Save" Command="{Binding SaveCommand}" Margin="2" ToolTip="Ctrl+S" />
+                    <Button Content="Import Function" Command="{Binding ImportFunctionCommand}" Margin="2" ToolTip="Import a saved project as a function node" />
                     <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
                     <Button Content="Python Code" Command="{Binding GeneratePythonCodeCommand}" Margin="2" ToolTip="Generate Python Code" />
                     <Button Content="C# Code" Command="{Binding GenerateCSharpCodeCommand}" Margin="2" ToolTip="Generate C# Code" />

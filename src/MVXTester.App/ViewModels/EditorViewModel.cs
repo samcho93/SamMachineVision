@@ -124,6 +124,25 @@ public partial class EditorViewModel : ObservableObject
 
     public NodeViewModel AddNode(NodeRegistryEntry entry, Point position)
     {
+        // 함수 노드인 경우 entry 기반 생성 필요 (Initialize 호출 위해)
+        if (entry.FunctionFilePath != null)
+        {
+            var vm = AddNodeInternal(entry, position, null);
+
+            if (!_undoManager.IsExecutingUndoRedo)
+            {
+                var props = new Dictionary<string, object?>();
+                foreach (var p in vm.Model.Properties)
+                    props[p.Name] = p.Value;
+
+                var action = new AddNodeAction(this, entry.NodeType, position,
+                    properties: props, existingNodeId: vm.Model.Id);
+                _undoManager.PushAction(action);
+            }
+
+            return vm;
+        }
+
         return AddNode(entry.NodeType, position);
     }
 
@@ -319,6 +338,21 @@ public partial class EditorViewModel : ObservableObject
     public NodeViewModel AddNodeInternal(Type nodeType, Point position, string? idOverride)
     {
         var node = _registry.CreateNode(nodeType);
+        if (idOverride != null)
+            ((BaseNode)node).Id = idOverride;
+
+        _graph.AddNode(node);
+        var vm = new NodeViewModel(node) { Location = SnapToGrid(position) };
+        Nodes.Add(vm);
+        return vm;
+    }
+
+    /// <summary>
+    /// NodeRegistryEntry 기반 노드 생성 (함수 노드 등 특수 노드용).
+    /// </summary>
+    public NodeViewModel AddNodeInternal(NodeRegistryEntry entry, Point position, string? idOverride)
+    {
+        var node = _registry.CreateNode(entry);
         if (idOverride != null)
             ((BaseNode)node).Id = idOverride;
 

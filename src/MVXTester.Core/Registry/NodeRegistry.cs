@@ -9,6 +9,10 @@ public class NodeRegistryEntry
     public string Category { get; init; } = "";
     public string Description { get; init; } = "";
     public Type NodeType { get; init; } = null!;
+    /// <summary>
+    /// 함수 노드용 소스 프로젝트 파일 경로. null이면 일반 노드.
+    /// </summary>
+    public string? FunctionFilePath { get; init; }
 }
 
 public class NodeRegistry
@@ -41,11 +45,40 @@ public class NodeRegistry
         return (INode)Activator.CreateInstance(nodeType)!;
     }
 
+    /// <summary>
+    /// NodeRegistryEntry 기반 노드 생성. 함수 노드인 경우 Initialize()도 호출.
+    /// </summary>
+    public INode CreateNode(NodeRegistryEntry entry)
+    {
+        var node = (INode)Activator.CreateInstance(entry.NodeType)!;
+        if (node is FunctionNode fn && entry.FunctionFilePath != null)
+            fn.Initialize(entry.FunctionFilePath);
+        return node;
+    }
+
     public INode CreateNode(string name)
     {
         var entry = _entries.FirstOrDefault(e => e.Name == name)
             ?? throw new InvalidOperationException($"Node type '{name}' not found in registry.");
-        return CreateNode(entry.NodeType);
+        return CreateNode(entry);
+    }
+
+    /// <summary>
+    /// 프로젝트 파일을 함수 노드로 등록
+    /// </summary>
+    public void RegisterFunction(string name, string filePath, string? description = null)
+    {
+        // 이미 같은 이름으로 등록된 함수가 있으면 제거 (재임포트 지원)
+        _entries.RemoveAll(e => e.Name == name && e.Category == NodeCategories.Function);
+
+        _entries.Add(new NodeRegistryEntry
+        {
+            Name = name,
+            Category = NodeCategories.Function,
+            Description = description ?? $"Function: {name}",
+            NodeType = typeof(FunctionNode),
+            FunctionFilePath = filePath
+        });
     }
 
     public Dictionary<string, List<NodeRegistryEntry>> GetByCategory()
@@ -91,6 +124,7 @@ public class NodeRegistry
         NodeCategories.Data => 17,
         NodeCategories.Event => 18,
         NodeCategories.Script => 19,
+        NodeCategories.Function => 20,
         _ => 99
     };
 }
