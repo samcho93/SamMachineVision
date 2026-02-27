@@ -57,6 +57,8 @@
                                  Input="{Binding InputConnectors}"
                                  Output="{Binding OutputConnectors}"
                                  HeaderBrush="{Binding CategoryColor}"
+                                 ContentBrush="{DynamicResource SurfaceBrush}"
+                                 FooterBrush="{DynamicResource SurfaceBrush}"
                                  Foreground="{DynamicResource ForegroundBrush}"
                                  Background="{DynamicResource SurfaceBrush}"
                                  BorderBrush="{Binding CategoryBorderColor}"

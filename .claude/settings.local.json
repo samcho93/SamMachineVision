@@ -22,7 +22,12 @@
       "Bash(find \"/d/Work/CSharp/MVXTester\" -name \"*.csproj\" -exec grep -l \"Compression\\\\|Zip\\\\|Archive\" {} ;)",
       "Bash(xargs grep -l \"\\\\.mvx\\\\|Save\\\\|Load\")",
       "Bash(dotnet build MVXTester.sln -o build_temp --no-incremental)",
-      "Bash(dotnet build MVXTester.sln -o build_temp)"
+      "Bash(dotnet build MVXTester.sln -o build_temp)",
+      "Bash(dotnet list src/MVXTester.App/MVXTester.App.csproj package)",
+      "Bash(dir /s /b \"%USERPROFILE%\\\\.nuget\\\\packages\\\\nodify\\\\7.2.0\\\\*Node*\")",
+      "Bash(cmd /c \"dir /s /b %USERPROFILE%\\\\.nuget\\\\packages\\\\nodify\\\\7.2.0\\\\lib\\\\*.dll\")",
+      "Bash(dotnet nuget locals global-packages -l)",
+      "Bash(dotnet tool list -g)"
     ]
   }
 }
