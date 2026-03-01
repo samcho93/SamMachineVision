@@ -153,81 +153,361 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource HelpH1}">Tutorials</TextBlock>
 
+                        <!-- ── Tutorial 1: Basic Image Processing ── -->
                         <TextBlock Style="{StaticResource HelpH2}">Tutorial 1: Basic Image Processing</TextBlock>
-                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Load an image, convert to grayscale, apply blur, detect edges.
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Load an image, convert to grayscale, apply blur, detect edges.</TextBlock>
 
-Step 1: Add an "Image Read" node from Input/Output category
+                        <!-- Node Diagram -->
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <!-- Image Read -->
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Input/Output" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <!-- Convert Color -->
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#CBA6F7" Background="#30CBA6F7" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Convert Color" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="BGR2GRAY" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <!-- Gaussian Blur -->
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#89B4FA" Background="#3089B4FA" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Gaussian Blur" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Kernel=5" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <!-- Canny -->
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F38BA8" Background="#30F38BA8" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Canny" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Edge Detection" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Add an "Image Read" node from Input/Output category
 Step 2: Double-click the node to select an image file
-Step 3: Add a "Convert Color" node (Color category), set Code = BGR2GRAY
-Step 4: Connect Image Read → Convert Color (Image port)
+Step 3: Add a "Convert Color" node (Color), set Code = BGR2GRAY
+Step 4: Connect Image Read &#x2192; Convert Color
 Step 5: Add a "Gaussian Blur" node (Filter), set KernelW/H = 5
-Step 6: Connect Convert Color → Gaussian Blur
-Step 7: Add a "Canny" node (Edge Detection), set Threshold1=100, Threshold2=200
-Step 8: Connect Gaussian Blur → Canny
-Step 9: Press F5 to execute — see edge detection result in preview</TextBlock>
+Step 6: Add a "Canny" node (Edge Detection), Threshold1=100, Threshold2=200
+Step 7: Connect all nodes left-to-right, press F5 to execute</TextBlock>
 
+                        <!-- ── Tutorial 2: Contour Detection ── -->
                         <TextBlock Style="{StaticResource HelpH2}">Tutorial 2: Object Detection with Contours</TextBlock>
-                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Find and count objects in a binary image.
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Find and count objects in a binary image.</TextBlock>
 
-Step 1: Image Read → Convert Color (BGR2GRAY) → Threshold (Thresh=128)
+                        <!-- Node Diagram -->
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel>
+                                <!-- Row 1 -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5">
+                                        <TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#CBA6F7" Background="#30CBA6F7" Padding="8,5">
+                                        <TextBlock Text="CvtColor" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="8,5">
+                                        <TextBlock Text="Threshold" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="8,5">
+                                        <TextBlock Text="Find Contours" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                </StackPanel>
+                                <!-- Row 2 -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0">
+                                    <TextBlock Text="&#x2193;" FontSize="14" Foreground="#FAB387" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="8,5">
+                                        <TextBlock Text="Filter Contours" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="16" Foreground="#FAB387" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F5C2E7" Background="#30F5C2E7" Padding="8,5">
+                                        <TextBlock Text="Draw Contours" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="16" Foreground="#F9E2AF" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4">
+                                        <TextBlock Text="Count: N" FontSize="9" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Image Read &#x2192; Convert Color (BGR2GRAY) &#x2192; Threshold (Thresh=128)
 Step 2: Add "Find Contours" node (Contour category)
-Step 3: Connect Threshold → Find Contours
-Step 4: Add "Filter Contours" node, set MinArea=500 to remove noise
-Step 5: Connect Find Contours → Filter Contours
-Step 6: Add "Draw Contours" node, connect original image + filtered contours
-Step 7: The Count output tells you how many objects were found
-Step 8: Use "Contour Centers" to get centroids of each object</TextBlock>
+Step 3: Add "Filter Contours", set MinArea=500 to remove noise
+Step 4: Add "Draw Contours", connect original image + filtered contours
+Step 5: The Count output tells you how many objects were found</TextBlock>
 
+                        <!-- ── Tutorial 3: Live Camera ── -->
                         <TextBlock Style="{StaticResource HelpH2}">Tutorial 3: Live Camera Processing</TextBlock>
-                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Process live camera feed in real-time.
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Process live camera feed in real-time.</TextBlock>
 
-Step 1: Add a "USB Camera" node (or "HIK Camera" for industrial cameras)
+                        <!-- Node Diagram -->
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="USB Camera" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="or HIK Camera" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#89B4FA" Background="#3089B4FA" Padding="10,5">
+                                    <TextBlock Text="Gaussian Blur" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="10,5">
+                                    <TextBlock Text="Threshold" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="10,5">
+                                    <TextBlock Text="Find Contours" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                                <TextBlock Text="  F6" FontSize="11" FontWeight="Bold" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Add a "USB Camera" node (or "HIK Camera" for industrial cameras)
 Step 2: Connect to processing nodes (blur, threshold, etc.)
 Step 3: Press F6 (Stream) to start continuous capture
-Step 4: Adjust parameters in real-time — results update live
+Step 4: Adjust parameters in real-time &#x2014; results update live
 Step 5: Press F6 again to stop streaming</TextBlock>
 
+                        <!-- ── Tutorial 4: Template Matching ── -->
                         <TextBlock Style="{StaticResource HelpH2}">Tutorial 4: Template Matching</TextBlock>
-                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Find a template pattern in a larger image.
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Find a template pattern in a larger image.</TextBlock>
 
-Step 1: Add two "Image Read" nodes — one for the scene, one for the template
+                        <!-- Node Diagram (two inputs merging) -->
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <Grid HorizontalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="8"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <!-- Top input: Scene -->
+                                <Border Grid.Row="0" Grid.Column="0" CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Scene" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="&#x2198;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,0"/>
+                                <!-- Bottom input: Template -->
+                                <Border Grid.Row="2" Grid.Column="0" CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Template" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="&#x2197;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,0"/>
+                                <!-- Center: Template Match -->
+                                <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="2" CornerRadius="4" BorderThickness="1.5" BorderBrush="#F2CDCD" Background="#30F2CDCD" Padding="10,5" VerticalAlignment="Center">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Template Match" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="CCoeffNormed" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Grid.Row="0" Grid.RowSpan="3" Grid.Column="3" Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <!-- Outputs -->
+                                <StackPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="4" VerticalAlignment="Center">
+                                    <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,3" Margin="0,0,0,4">
+                                        <TextBlock Text="Location (Point)" FontSize="9" FontFamily="Consolas" Foreground="#F5C2E7"/>
+                                    </Border>
+                                    <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,3">
+                                        <TextBlock Text="Score (double)" FontSize="9" FontFamily="Consolas" Foreground="#F9E2AF"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Add two "Image Read" nodes &#x2014; one for scene, one for template
 Step 2: Add "Template Match" node (Detection category)
-Step 3: Connect scene → Image input, template → Template input
+Step 3: Connect scene &#x2192; Image, template &#x2192; Template input
 Step 4: Set Method = CCoeffNormed for best results
-Step 5: Output: Location (best match position) and Score (confidence 0~1)
+Step 5: Outputs: Location (best match) and Score (0~1)
 Step 6: For multiple matches, use "Template Match Multi" with Threshold=0.8</TextBlock>
 
+                        <!-- ── Tutorial 5: Control Flow ── -->
                         <TextBlock Style="{StaticResource HelpH2}">Tutorial 5: Using Control Flow (Loops)</TextBlock>
-                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Process multiple images with the same pipeline using For loop.
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Process multiple images with the same pipeline using For loop.</TextBlock>
 
-Step 1: Add a "For" node (Control category), set Start=0, End=5, Step=1
+                        <!-- Node Diagram -->
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="For" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Start=0, End=5" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#F9E2AF" VerticalAlignment="Center" Margin="5,0"/>
+                                <!-- Loop body (labeled border) -->
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#609399B2" Background="#109399B2" Padding="6,5">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#89B4FA" Background="#3089B4FA" Padding="8,4">
+                                            <TextBlock Text="Blur" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                        <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="8,4">
+                                            <TextBlock Text="Threshold" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                        <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="8,4">
+                                            <TextBlock Text="Contours" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Collect" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="List&lt;Mat&gt;" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Add a "For" node (Control category), set Start=0, End=5, Step=1
 Step 2: Inside the loop body, add processing nodes
 Step 3: Use the Index output to vary parameters per iteration
 Step 4: Add a "Collect" node at the end to gather results into a list
-Step 5: The loop executes body nodes repeatedly for each index value
-Step 6: Use "Break If" node to exit early based on a condition</TextBlock>
+Step 5: Use "Break If" node to exit early based on a condition</TextBlock>
 
+                        <!-- ── Tutorial 6: Reusable Functions ── -->
                         <TextBlock Style="{StaticResource HelpH2}">Tutorial 6: Creating Reusable Functions</TextBlock>
-                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Package a processing pipeline as a reusable function node.
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Package a processing pipeline as a reusable function node.</TextBlock>
 
-Step 1: Build your pipeline in a new graph (e.g., blur → threshold → contours)
+                        <!-- Node Diagram -->
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel>
+                                <!-- Step A: Original pipeline -->
+                                <TextBlock Text="1. Build pipeline:" FontSize="9" Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,0,0,4"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#89B4FA" Background="#3089B4FA" Padding="8,4">
+                                        <TextBlock Text="Blur" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="8,4">
+                                        <TextBlock Text="Threshold" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="8,4">
+                                        <TextBlock Text="Find Contours" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="   Save as .mvxp" FontSize="9" Foreground="{DynamicResource ForegroundDimBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </StackPanel>
+                                <!-- Step B: Import as function -->
+                                <TextBlock Text="2. Import &#x2192; Use as single node:" FontSize="9" Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,10,0,4"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,4">
+                                        <TextBlock Text="Image Read" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="4" BorderThickness="2" BorderBrush="#FFCF48" Background="#30FFCF48" Padding="10,5">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="My Function" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Function Node" FontSize="7.5" Foreground="#FFCF48" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Text="&#x2192;" FontSize="14" Foreground="#FAB387" VerticalAlignment="Center" Margin="4,0"/>
+                                    <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4">
+                                        <TextBlock Text="Contours" FontSize="9" FontFamily="Consolas" Foreground="#FAB387"/>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Build your pipeline in a new graph
 Step 2: Save as a .mvxp project file
 Step 3: In another graph, click "Import Function" in the toolbar
-Step 4: Select the saved .mvxp file
-Step 5: A new function node appears in the palette with auto-detected ports
-Step 6: Source nodes (no inputs) become function parameters
-Step 7: Sink nodes (no outputs) become function return values
-Step 8: Double-click the function node to view its internal structure</TextBlock>
+Step 4: Source nodes (no inputs) become function parameters
+Step 5: Sink nodes (no outputs) become function return values
+Step 6: Double-click the function node to view its internal structure</TextBlock>
 
+                        <!-- ── Tutorial 7: Industrial Inspection ── -->
                         <TextBlock Style="{StaticResource HelpH2}">Tutorial 7: Industrial Inspection</TextBlock>
-                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Detect defects by comparing against a reference image.
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Detect defects by comparing against a reference image.</TextBlock>
 
-Step 1: Add two "Image Read" nodes — Reference (golden sample) and Test image
+                        <!-- Node Diagram (two inputs merging) -->
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <Grid HorizontalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="8"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <!-- Top: Reference -->
+                                <Border Grid.Row="0" Grid.Column="0" CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Reference" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="&#x2198;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,0"/>
+                                <!-- Bottom: Test -->
+                                <Border Grid.Row="2" Grid.Column="0" CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Test Image" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="&#x2197;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,0"/>
+                                <!-- Center: Defect Detector -->
+                                <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="2" CornerRadius="4" BorderThickness="1.5" BorderBrush="#9399B2" Background="#309399B2" Padding="10,5" VerticalAlignment="Center">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Defect Detector" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Inspection" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Grid.Row="0" Grid.RowSpan="3" Grid.Column="3" Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <!-- Outputs -->
+                                <StackPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="4" VerticalAlignment="Center">
+                                    <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,3" Margin="0,0,0,3">
+                                        <TextBlock Text="DiffMask (Mat)" FontSize="9" FontFamily="Consolas" Foreground="#89B4FA"/>
+                                    </Border>
+                                    <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,3" Margin="0,0,0,3">
+                                        <TextBlock Text="Defects (Rect[])" FontSize="9" FontFamily="Consolas" Foreground="#F5C2E7"/>
+                                    </Border>
+                                    <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,3">
+                                        <TextBlock Text="Count (int)" FontSize="9" FontFamily="Consolas" Foreground="#F9E2AF"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Add two "Image Read" nodes &#x2014; Reference and Test image
 Step 2: Add "Defect Detector" node (Inspection category)
 Step 3: Connect Reference and Test images
 Step 4: Adjust Threshold and MinDefectArea to filter noise
-Step 5: Outputs: DiffMask (binary diff), Defects (bounding rects), Count
-Step 6: Enable ShowOverlay to visualize defects on the original image</TextBlock>
+Step 5: Enable ShowOverlay to visualize defects on the original image</TextBlock>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -292,7 +572,7 @@ Step 6: Enable ShowOverlay to visualize defects on the original image</TextBlock
 │   │   ├── Inspection/          13 nodes (Defect, Pattern...)
 │   │   ├── Measurement/         3 nodes (Distance, Angle...)
 │   │   ├── Morphology/          3 nodes (Erode, Dilate...)
-│   │   ├── Script/              1 node (PythonScript)
+│   │   ├── Script/              2 nodes (Python, C# Script)
 │   │   ├── Segmentation/        3 nodes (Watershed, GrabCut...)
 │   │   ├── Threshold/           3 nodes (Fixed, Adaptive, Otsu)
 │   │   ├── Transform/           8 nodes (Resize, Rotate, Warp...)
@@ -341,7 +621,7 @@ Control ............. Loops, switch, boolean logic (11)
 Data Processing ..... CSV, string operations (7)
 Communication ....... TCP, Serial port (3)
 Event ............... Keyboard, mouse events (3)
-Script .............. Python script execution (1)
+Script .............. Python / C# script execution (2)
 Inspection .......... High-level industrial checks (13)
 Measurement ......... Distance, angle, dimensions (3)
 Function ............ Sub-graph reusable nodes (1)</TextBlock>
