@@ -20,8 +20,8 @@ public enum DataModeOption
     Hex
 }
 
-[NodeInfo("Serial Port", NodeCategories.Communication, Description = "Serial port communication")]
-public class SerialPortNode : BaseNode
+[NodeInfo("Serial Port", NodeCategories.Communication, Description = "Serial port communication with background receiving")]
+public class SerialPortNode : BaseNode, IBackgroundNode
 {
     private InputPort<string> _sendDataInput = null!;
     private OutputPort<string> _receivedDataOutput = null!;
@@ -36,8 +36,13 @@ public class SerialPortNode : BaseNode
     private SerialPort? _serialPort;
     private string _lastPortName = "";
     private int _lastBaudRate = -1;
-    private string _receivedData = "";
-    private readonly object _lock = new();
+
+    // Background receive buffer
+    private string _receivedBuffer = "";
+    private readonly object _bufferLock = new();
+    private Thread? _receiveThread;
+    private volatile bool _backgroundRunning;
+    private CancellationToken _backgroundCt;
 
     protected override void Setup()
     {
@@ -50,6 +55,65 @@ public class SerialPortNode : BaseNode
         _stopBits = AddEnumProperty("StopBits", "Stop Bits", System.IO.Ports.StopBits.One, "Stop bits");
         _parity = AddEnumProperty("Parity", "Parity", System.IO.Ports.Parity.None, "Parity");
         _dataMode = AddEnumProperty("DataMode", "Data Mode", DataModeOption.ASCII, "Data mode (ASCII or Hex)");
+    }
+
+    public void StartBackground(CancellationToken ct)
+    {
+        _backgroundCt = ct;
+        _backgroundRunning = true;
+        _receiveThread = new Thread(BackgroundReceiveLoop)
+        {
+            IsBackground = true,
+            Name = "SerialPort_BgReceive"
+        };
+        _receiveThread.Start();
+    }
+
+    public void StopBackground()
+    {
+        _backgroundRunning = false;
+        _receiveThread?.Join(1000);
+        _receiveThread = null;
+    }
+
+    private void BackgroundReceiveLoop()
+    {
+        while (_backgroundRunning && !_backgroundCt.IsCancellationRequested)
+        {
+            try
+            {
+                if (_serialPort != null && _serialPort.IsOpen)
+                {
+                    int bytesAvailable = _serialPort.BytesToRead;
+                    if (bytesAvailable > 0)
+                    {
+                        var dataMode = _dataMode.GetValue<DataModeOption>();
+                        string data;
+                        if (dataMode == DataModeOption.Hex)
+                        {
+                            var buffer = new byte[bytesAvailable];
+                            _serialPort.Read(buffer, 0, bytesAvailable);
+                            data = BitConverter.ToString(buffer).Replace("-", " ");
+                        }
+                        else
+                        {
+                            data = _serialPort.ReadExisting();
+                        }
+
+                        lock (_bufferLock)
+                        {
+                            _receivedBuffer = data;
+                        }
+                        IsDirty = true;
+                    }
+                }
+            }
+            catch (TimeoutException) { }
+            catch (IOException) { }
+            catch (InvalidOperationException) { }
+
+            Thread.Sleep(10);
+        }
     }
 
     public override void Process()
@@ -68,8 +132,8 @@ public class SerialPortNode : BaseNode
                 _lastBaudRate = baudRate;
             }
 
-            // Read available data
-            if (_serialPort != null && _serialPort.IsOpen)
+            // In non-background mode, read directly (fallback for non-runtime execution)
+            if (!_backgroundRunning && _serialPort != null && _serialPort.IsOpen)
             {
                 try
                 {
@@ -81,16 +145,16 @@ public class SerialPortNode : BaseNode
                         {
                             var buffer = new byte[bytesAvailable];
                             _serialPort.Read(buffer, 0, bytesAvailable);
-                            lock (_lock)
+                            lock (_bufferLock)
                             {
-                                _receivedData = BitConverter.ToString(buffer).Replace("-", " ");
+                                _receivedBuffer = BitConverter.ToString(buffer).Replace("-", " ");
                             }
                         }
                         else
                         {
-                            lock (_lock)
+                            lock (_bufferLock)
                             {
-                                _receivedData = _serialPort.ReadExisting();
+                                _receivedBuffer = _serialPort.ReadExisting();
                             }
                         }
                     }
@@ -108,7 +172,6 @@ public class SerialPortNode : BaseNode
                     var dataMode = _dataMode.GetValue<DataModeOption>();
                     if (dataMode == DataModeOption.Hex)
                     {
-                        // Parse hex string like "FF 01 02"
                         var hexParts = sendData.Split(new[] { ' ', '-' }, StringSplitOptions.RemoveEmptyEntries);
                         var bytes = hexParts.Select(h => Convert.ToByte(h, 16)).ToArray();
                         _serialPort.Write(bytes, 0, bytes.Length);
@@ -122,15 +185,17 @@ public class SerialPortNode : BaseNode
                 catch (FormatException ex)
                 {
                     Error = $"Invalid hex format: {ex.Message}";
+                    return;
                 }
             }
 
-            lock (_lock)
+            // Output buffered data
+            lock (_bufferLock)
             {
-                SetOutputValue(_receivedDataOutput, _receivedData);
+                SetOutputValue(_receivedDataOutput, _receivedBuffer);
             }
             SetOutputValue(_isOpenOutput, _serialPort?.IsOpen ?? false);
-            if (Error == null) Error = null; // Only clear if not set above
+            Error = null;
         }
         catch (Exception ex)
         {
@@ -178,6 +243,7 @@ public class SerialPortNode : BaseNode
 
     public override void Cleanup()
     {
+        StopBackground();
         ClosePort();
         base.Cleanup();
     }

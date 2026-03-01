@@ -6,8 +6,8 @@ using MVXTester.Core.Registry;
 
 namespace MVXTester.Nodes.Communication;
 
-[NodeInfo("TCP Server", NodeCategories.Communication, Description = "TCP server for sending and receiving data")]
-public class TcpServerNode : BaseNode
+[NodeInfo("TCP Server", NodeCategories.Communication, Description = "TCP server with background receiving")]
+public class TcpServerNode : BaseNode, IBackgroundNode
 {
     private InputPort<string> _sendDataInput = null!;
     private OutputPort<string> _receivedDataOutput = null!;
@@ -18,8 +18,13 @@ public class TcpServerNode : BaseNode
     private TcpClient? _client;
     private NetworkStream? _stream;
     private int _lastPort = -1;
-    private string _receivedData = "";
-    private readonly object _lock = new();
+
+    // Background receive buffer
+    private string _receivedBuffer = "";
+    private readonly object _bufferLock = new();
+    private Thread? _receiveThread;
+    private volatile bool _backgroundRunning;
+    private CancellationToken _backgroundCt;
 
     protected override void Setup()
     {
@@ -27,6 +32,65 @@ public class TcpServerNode : BaseNode
         _receivedDataOutput = AddOutput<string>("Received Data");
         _isRunningOutput = AddOutput<bool>("IsRunning");
         _port = AddIntProperty("Port", "Port", 5000, 1, 65535, "TCP port to listen on");
+    }
+
+    public void StartBackground(CancellationToken ct)
+    {
+        _backgroundCt = ct;
+        _backgroundRunning = true;
+        _receiveThread = new Thread(BackgroundReceiveLoop)
+        {
+            IsBackground = true,
+            Name = "TcpServer_BgReceive"
+        };
+        _receiveThread.Start();
+    }
+
+    public void StopBackground()
+    {
+        _backgroundRunning = false;
+        _receiveThread?.Join(1000);
+        _receiveThread = null;
+    }
+
+    private void BackgroundReceiveLoop()
+    {
+        while (_backgroundRunning && !_backgroundCt.IsCancellationRequested)
+        {
+            try
+            {
+                // Accept pending connections
+                if (_listener != null && _client == null && _listener.Pending())
+                {
+                    _client = _listener.AcceptTcpClient();
+                    _client.ReceiveTimeout = 100;
+                    _stream = _client.GetStream();
+                }
+
+                // Read available data
+                if (_stream != null && _client != null && _client.Connected)
+                {
+                    if (_stream.DataAvailable)
+                    {
+                        var buffer = new byte[4096];
+                        int bytesRead = _stream.Read(buffer, 0, buffer.Length);
+                        if (bytesRead > 0)
+                        {
+                            lock (_bufferLock)
+                            {
+                                _receivedBuffer = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                            }
+                            IsDirty = true;
+                        }
+                    }
+                }
+            }
+            catch (IOException) { }
+            catch (SocketException) { }
+            catch (InvalidOperationException) { }
+
+            Thread.Sleep(10);
+        }
     }
 
     public override void Process()
@@ -43,34 +107,36 @@ public class TcpServerNode : BaseNode
                 _lastPort = port;
             }
 
-            // Accept pending connections
-            if (_listener != null && _client == null && _listener.Pending())
+            // In non-background mode, poll directly (fallback)
+            if (!_backgroundRunning)
             {
-                _client = _listener.AcceptTcpClient();
-                _client.ReceiveTimeout = 100;
-                _stream = _client.GetStream();
-            }
-
-            // Read available data
-            if (_stream != null && _client != null && _client.Connected)
-            {
-                try
+                if (_listener != null && _client == null && _listener.Pending())
                 {
-                    if (_stream.DataAvailable)
+                    _client = _listener.AcceptTcpClient();
+                    _client.ReceiveTimeout = 100;
+                    _stream = _client.GetStream();
+                }
+
+                if (_stream != null && _client != null && _client.Connected)
+                {
+                    try
                     {
-                        var buffer = new byte[4096];
-                        int bytesRead = _stream.Read(buffer, 0, buffer.Length);
-                        if (bytesRead > 0)
+                        if (_stream.DataAvailable)
                         {
-                            lock (_lock)
+                            var buffer = new byte[4096];
+                            int bytesRead = _stream.Read(buffer, 0, buffer.Length);
+                            if (bytesRead > 0)
                             {
-                                _receivedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                                lock (_bufferLock)
+                                {
+                                    _receivedBuffer = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                                }
                             }
                         }
                     }
+                    catch (IOException) { }
+                    catch (SocketException) { }
                 }
-                catch (IOException) { }
-                catch (SocketException) { }
             }
 
             // Send data if connected
@@ -87,9 +153,10 @@ public class TcpServerNode : BaseNode
                 catch (SocketException) { }
             }
 
-            lock (_lock)
+            // Output buffered data
+            lock (_bufferLock)
             {
-                SetOutputValue(_receivedDataOutput, _receivedData);
+                SetOutputValue(_receivedDataOutput, _receivedBuffer);
             }
             SetOutputValue(_isRunningOutput, _listener != null);
             Error = null;
@@ -135,6 +202,7 @@ public class TcpServerNode : BaseNode
 
     public override void Cleanup()
     {
+        StopBackground();
         StopServer();
         base.Cleanup();
     }
