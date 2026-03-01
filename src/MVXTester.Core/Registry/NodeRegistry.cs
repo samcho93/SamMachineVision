@@ -127,7 +127,9 @@ public class NodeRegistry
         NodeCategories.Inspection => 20,
         NodeCategories.Measurement => 21,
         NodeCategories.MediaPipe => 22,
-        NodeCategories.Function => 23,
+        NodeCategories.YOLO => 23,
+        NodeCategories.OCR => 24,
+        NodeCategories.Function => 25,
         _ => 99
     };
 }

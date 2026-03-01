@@ -25,5 +25,8 @@ public static class NodeCategories
     public const string Inspection = "Inspection";
     public const string Measurement = "Measurement";
     public const string MediaPipe = "MediaPipe";
+    public const string YOLO = "YOLO";
+    public const string OCR = "OCR";
+    public const string AI = "AI";
     public const string Function = "Function";
 }

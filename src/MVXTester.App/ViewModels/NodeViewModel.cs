@@ -143,6 +143,8 @@ public static class CategoryColorHelper
         [NodeCategories.Event]        = Frozen(0xF5, 0xC2, 0xE7),
         [NodeCategories.Script]       = Frozen(0xF2, 0xCD, 0xCD),
         [NodeCategories.MediaPipe]    = Frozen(0xB4, 0x7E, 0xF5),
+        [NodeCategories.YOLO]         = Frozen(0xFF, 0x8C, 0x42),
+        [NodeCategories.OCR]          = Frozen(0x4E, 0xC9, 0xB0),
         [NodeCategories.Function]     = Frozen(0xFF, 0xCF, 0x48),
     };
 
