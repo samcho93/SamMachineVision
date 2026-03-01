@@ -12,7 +12,7 @@ namespace MVXTester.Nodes.AI;
 /// Sends image + prompt to Gemini and returns the text response.
 /// Requires an API key from aistudio.google.com
 /// </summary>
-[NodeInfo("Gemini Vision", NodeCategories.AI,
+[NodeInfo("Gemini Vision", NodeCategories.LLMVLM,
     Description = "Analyze images using Google Gemini Vision API")]
 public class GeminiVisionNode : BaseNode
 {

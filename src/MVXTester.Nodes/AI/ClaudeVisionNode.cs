@@ -12,7 +12,7 @@ namespace MVXTester.Nodes.AI;
 /// Sends image + prompt to Claude and returns the text response.
 /// Requires an API key from console.anthropic.com
 /// </summary>
-[NodeInfo("Claude Vision", NodeCategories.AI,
+[NodeInfo("Claude Vision", NodeCategories.LLMVLM,
     Description = "Analyze images using Anthropic Claude Vision API")]
 public class ClaudeVisionNode : BaseNode
 {

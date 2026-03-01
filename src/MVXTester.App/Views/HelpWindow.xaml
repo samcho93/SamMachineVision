@@ -1,7 +1,7 @@
 <Window x:Class="MVXTester.App.Views.HelpWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SamMachineVision — Help" Width="900" Height="700"
+        Title="SamMachineVision — Help" Width="1000" Height="800"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}">
 
@@ -510,6 +510,395 @@ Step 2: Add "Defect Detector" node (Inspection category)
 Step 3: Connect Reference and Test images
 Step 4: Adjust Threshold and MinDefectArea to filter noise
 Step 5: Enable ShowOverlay to visualize defects on the original image</TextBlock>
+
+                        <!-- ── Tutorial 8: Face Detection (MediaPipe) ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 8: Face Detection (MediaPipe)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Detect faces in real-time using MediaPipe BlazeFace.</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <TextBlock Text="Camera" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#B47EF5" Background="#30B47EF5" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="MP Face Detection" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Confidence=0.5" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <TextBlock Text="Image Show" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                                <TextBlock Text="  F5" FontSize="11" FontWeight="Bold" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Camera &#x2192; MP Face Detection (Result output shows bounding boxes)
+Step 2: Connect Result &#x2192; Image Show, press F5 for runtime mode
+Step 3: Faces output (Rect[]) can be used for ROI cropping</TextBlock>
+
+                        <!-- ── Tutorial 9: Hand Tracking ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 9: Hand Tracking</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Track hand landmarks in real-time.</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <TextBlock Text="Camera" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#B47EF5" Background="#30B47EF5" Padding="10,5">
+                                    <TextBlock Text="MP Hand Landmark" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="10,5">
+                                    <TextBlock Text="Image Show" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Camera &#x2192; MP Hand Landmark &#x2192; Image Show
+Step 2: F6 (Stream) for continuous tracking at 30fps
+Step 3: 21 landmarks per hand with skeleton connections drawn</TextBlock>
+
+                        <!-- ── Tutorial 10: Pose Estimation ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 10: Pose Estimation</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#B47EF5" Background="#30B47EF5" Padding="8,5"><TextBlock Text="MP Pose Landmark" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4"><TextBlock Text="33 Landmarks" FontSize="9" FontFamily="Consolas" Foreground="#B47EF5"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">33 body keypoints with skeleton visualization. Visibility output indicates which joints are detected.</TextBlock>
+
+                        <!-- ── Tutorial 11: Face Mesh ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 11: Face Mesh (468 Points)</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Camera" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#B47EF5" Background="#30B47EF5" Padding="8,5"><TextBlock Text="MP Face Mesh" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Show" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">468 face landmark points with contour drawing. DrawContour/DrawPoints properties control visualization.</TextBlock>
+
+                        <!-- ── Tutorial 12: Background Removal ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 12: Background Removal</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#B47EF5" Background="#30B47EF5" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="MP Selfie Seg." FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Effect=Remove" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Save" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Effect options: Blur (background blur), Remove (transparent), GreenScreen (green background).</TextBlock>
+
+                        <!-- ── Tutorial 13: Object Detection (SSD) ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 13: Object Detection (COCO 80 Classes)</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#B47EF5" Background="#30B47EF5" Padding="8,5"><TextBlock Text="MP Object Detection" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4"><TextBlock Text="Labels[], Boxes[]" FontSize="9" FontFamily="Consolas" Foreground="#B47EF5"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">SSD MobileNet V2 with COCO 80 classes: person, car, bicycle, dog, cat, etc.</TextBlock>
+
+                        <!-- ── Tutorial 14: YOLOv8 Detection ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 14: YOLOv8 Object Detection</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#FF8C42" Background="#30FF8C42" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="YOLOv8 Detection" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="yolov8n.onnx" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Show" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Place yolov8n.onnx in Models/YOLO/ folder
+Step 2: Image Read &#x2192; YOLOv8 Detection &#x2192; Image Show
+Step 3: Auto-detects input size and class count from model metadata</TextBlock>
+
+                        <!-- ── Tutorial 15: YOLOv8 Live ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 15: Real-Time YOLOv8 with Camera</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Camera" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#FF8C42" Background="#30FF8C42" Padding="8,5"><TextBlock Text="YOLOv8 Detection" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Show" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="  F6" FontSize="11" FontWeight="Bold" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">F6 (Stream mode) for continuous detection. Use yolov8n for best speed, yolov8m/l for accuracy.</TextBlock>
+
+                        <!-- ── Tutorial 16: PaddleOCR ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 16: Text Recognition (PaddleOCR)</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#4EC9B0" Background="#304EC9B0" Padding="8,5"><TextBlock Text="PaddleOCR" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4"><TextBlock Text="FullText (string)" FontSize="9" FontFamily="Consolas" Foreground="#4EC9B0"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Step 1: Place ppocr_det.onnx, ppocr_rec.onnx, ppocr_keys.txt in Models/OCR/
+Step 2: Outputs: Texts[] (each text region), FullText (all combined), Boxes[] (locations)</TextBlock>
+
+                        <!-- ── Tutorial 17: Multi-language OCR ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 17: Korean/English OCR</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#4EC9B0" Background="#304EC9B0" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="PaddleOCR" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="kor model" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#9399B2" Background="#309399B2" Padding="8,5"><TextBlock Text="Print" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Set RecModel=ppocr_rec.onnx and DictFile=ppocr_keys.txt for Korean/Chinese. Use ppocr_rec_en.onnx for English-only.</TextBlock>
+
+                        <!-- ── Tutorial 18: Tesseract OCR ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 18: Tesseract OCR</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#4EC9B0" Background="#304EC9B0" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Tesseract OCR" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="eng+kor" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4"><TextBlock Text="FullText" FontSize="9" FontFamily="Consolas" Foreground="#4EC9B0"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Place eng.traineddata/kor.traineddata in Models/Tesseract/. Language="eng+kor" for mixed text.</TextBlock>
+
+                        <!-- ── Tutorial 19-21: LLM/VLM Vision ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 19: LLM/VLM Image Analysis (OpenAI GPT-4o)</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#E06C9F" Background="#30E06C9F" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="OpenAI Vision" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="gpt-4o-mini" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4"><TextBlock Text="Response (string)" FontSize="9" FontFamily="Consolas" Foreground="#E06C9F"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">API key auto-loaded from Models/API/api_config.json. Prompt input port for custom questions.</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 20: LLM/VLM Image Analysis (Gemini)</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#E06C9F" Background="#30E06C9F" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Gemini Vision" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="gemini-2.5-flash" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4"><TextBlock Text="Response (string)" FontSize="9" FontFamily="Consolas" Foreground="#E06C9F"/></Border>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 21: LLM/VLM Image Analysis (Claude)</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#E06C9F" Background="#30E06C9F" Padding="10,5">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Claude Vision" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="claude-sonnet-4" FontSize="7.5" Foreground="{DynamicResource ForegroundDimBrush}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="8,4"><TextBlock Text="Response (string)" FontSize="9" FontFamily="Consolas" Foreground="#E06C9F"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Set API key in Models/API/api_config.json or manually in Properties panel.</TextBlock>
+
+                        <!-- ── Tutorial 22: Multi-LLM/VLM Comparison ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 22: Multi-LLM/VLM Comparison</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Compare responses from GPT-4o, Gemini, and Claude for the same image.</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                    <TextBlock Text=" &#x2192; " FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center"/>
+                                    <StackPanel>
+                                        <Border CornerRadius="3" BorderThickness="1.5" BorderBrush="#E06C9F" Background="#30E06C9F" Padding="6,3" Margin="0,1"><TextBlock Text="OpenAI Vision" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                        <Border CornerRadius="3" BorderThickness="1.5" BorderBrush="#E06C9F" Background="#30E06C9F" Padding="6,3" Margin="0,1"><TextBlock Text="Gemini Vision" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                        <Border CornerRadius="3" BorderThickness="1.5" BorderBrush="#E06C9F" Background="#30E06C9F" Padding="6,3" Margin="0,1"><TextBlock Text="Claude Vision" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                    </StackPanel>
+                                    <TextBlock Text=" &#x2192; " FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center"/>
+                                    <StackPanel>
+                                        <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="6,3" Margin="0,1"><TextBlock Text="Print 1" FontSize="9" FontFamily="Consolas" Foreground="#E06C9F"/></Border>
+                                        <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="6,3" Margin="0,1"><TextBlock Text="Print 2" FontSize="9" FontFamily="Consolas" Foreground="#E06C9F"/></Border>
+                                        <Border CornerRadius="3" BorderThickness="1" BorderBrush="{DynamicResource ForegroundDimBrush}" Padding="6,3" Margin="0,1"><TextBlock Text="Print 3" FontSize="9" FontFamily="Consolas" Foreground="#E06C9F"/></Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Connect one Image Read to all 3 LLM/VLM nodes. Compare Response outputs side-by-side.</TextBlock>
+
+                        <!-- ── Tutorial 23: OCR + LLM/VLM Verification ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 23: OCR + LLM/VLM Verification</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#4EC9B0" Background="#304EC9B0" Padding="8,5"><TextBlock Text="PaddleOCR" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#E06C9F" Background="#30E06C9F" Padding="8,5"><TextBlock Text="OpenAI Vision" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">OCR FullText &#x2192; LLM/VLM Prompt input. Use LLM/VLM to verify, translate, or summarize OCR results.</TextBlock>
+
+                        <!-- ── Tutorial 24: Histogram Equalization ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 24: Histogram Equalization</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#CBA6F7" Background="#30CBA6F7" Padding="8,5"><TextBlock Text="CvtColor" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#B4BEFE" Background="#30B4BEFE" Padding="8,5"><TextBlock Text="Equalize Hist" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Convert to grayscale first (BGR2GRAY), then equalize for contrast enhancement.</TextBlock>
+
+                        <!-- ── Tutorial 25: Color Object Detection ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 25: Color Object Detection</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Camera" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#9399B2" Background="#309399B2" Padding="8,5"><TextBlock Text="Color Detector" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F5C2E7" Background="#30F5C2E7" Padding="8,5"><TextBlock Text="Draw Contours" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Show" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Color Object Detector (Inspection): set HSV range for target color. Outputs contours of detected regions.</TextBlock>
+
+                        <!-- ── Tutorial 26: Morphology Pipeline ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 26: Morphology Pipeline</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="8,5"><TextBlock Text="Threshold" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#FAB387" Background="#30FAB387" Padding="8,5"><TextBlock Text="Erode" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#FAB387" Background="#30FAB387" Padding="8,5"><TextBlock Text="Dilate" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="8,5"><TextBlock Text="Contours" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Erode removes noise, Dilate fills gaps. Classic morphology for clean binary masks.</TextBlock>
+
+                        <!-- ── Tutorial 27: Feature Matching ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 27: Feature Matching (ORB)</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image 1" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#94E2D5" Background="#3094E2D5" Padding="8,5"><TextBlock Text="ORB" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#94E2D5" Background="#3094E2D5" Padding="8,5"><TextBlock Text="Feature Match" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="4,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F5C2E7" Background="#30F5C2E7" Padding="8,5"><TextBlock Text="Draw Matches" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Two images &#x2192; ORB feature extraction &#x2192; BFMatcher &#x2192; visualize correspondences.</TextBlock>
+
+                        <!-- ── Tutorial 28: Watershed ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 28: Watershed Segmentation</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="8,5"><TextBlock Text="Image Read" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#CBA6F7" Background="#30CBA6F7" Padding="8,5"><TextBlock Text="CvtColor" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="8,5"><TextBlock Text="Threshold" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="8,5"><TextBlock Text="Watershed" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">Marker-based segmentation. Each connected region gets a unique color in the output.</TextBlock>
+
+                        <!-- ── Tutorial 29: TCP Communication ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 29: TCP Communication</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="8,5"><TextBlock Text="TCP Server" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#89B4FA" Background="#3089B4FA" Padding="8,5"><TextBlock Text="Process..." FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="16" Foreground="#89B4FA" VerticalAlignment="Center" Margin="5,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="8,5"><TextBlock Text="TCP Client" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}">TCP Server receives commands (background thread), triggers processing, TCP Client sends results back. Use F5 Runtime mode.</TextBlock>
+
+                        <!-- ── Tutorial 30: Full Inspection Pipeline ── -->
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 30: Complete Inspection Pipeline</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Goal: Full industrial inspection with pass/fail judgment and network reporting.</TextBlock>
+                        <Border Background="{DynamicResource HighlightBrush}" CornerRadius="6" Padding="14,10" Margin="0,6,0,8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="6,4"><TextBlock Text="Camera" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="3,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#89B4FA" Background="#3089B4FA" Padding="6,4"><TextBlock Text="Blur" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="3,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="6,4"><TextBlock Text="Thresh" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="3,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#A6E3A1" Background="#30A6E3A1" Padding="6,4"><TextBlock Text="Contours" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="3,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#9399B2" Background="#309399B2" Padding="6,4"><TextBlock Text="Measure" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="3,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#74C7EC" Background="#3074C7EC" Padding="6,4"><TextBlock Text="If" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                                <TextBlock Text="&#x2192;" FontSize="14" Foreground="#89B4FA" VerticalAlignment="Center" Margin="3,0"/>
+                                <Border CornerRadius="4" BorderThickness="1.5" BorderBrush="#F9E2AF" Background="#30F9E2AF" Padding="6,4"><TextBlock Text="TCP" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ForegroundBrush}"/></Border>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Camera &#x2192; Blur &#x2192; Threshold &#x2192; Contours &#x2192; Filter &#x2192; Measurement
+&#x2192; If (Pass/Fail condition) &#x2192; TCP Client (send result to PLC/MES)
+Use F5 Runtime with TCP Server for trigger-based inspection.</TextBlock>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -536,7 +925,8 @@ Step 5: Enable ShowOverlay to visualize defects on the original image</TextBlock
 │  GraphSerializer, SubGraphAnalyzer            │
 ├───────────────────────────────────────────────┤
 │  Node Library (MVXTester.Nodes)               │
-│  150+ nodes across 24 categories              │
+│  160+ nodes across 27 categories              │
+│  MediaPipe, YOLO, OCR, LLM/VLM Vision APIs    │
 │  OpenCvSharp-based image processing           │
 └───────────────────────────────────────────────┘</TextBlock>
 
@@ -578,7 +968,11 @@ Step 5: Enable ShowOverlay to visualize defects on the original image</TextBlock
 │   │   ├── Segmentation/        3 nodes (Watershed, GrabCut...)
 │   │   ├── Threshold/           3 nodes (Fixed, Adaptive, Otsu)
 │   │   ├── Transform/           8 nodes (Resize, Rotate, Warp...)
-│   │   └── Value/               14 nodes (Int, String, Math...)
+│   │   ├── Value/               14 nodes (Int, String, Math...)
+│   │   ├── MediaPipe/           6 nodes (Face, Hand, Pose, Mesh)
+│   │   ├── YOLO/                1 node  (YOLOv8 Detection)
+│   │   ├── OCR/                 2 nodes (PaddleOCR, Tesseract)
+│   │   └── AI/                  3 nodes LLM/VLM (GPT-4o, Gemini, Claude)
 │   │
 │   └── MVXTester.App/           WPF application
 │       ├── ViewModels/          MVVM ViewModels
@@ -603,7 +997,7 @@ Step 5: Enable ShowOverlay to visualize defects on the original image</TextBlock
                         <TextBlock Style="{StaticResource HelpH3}">FunctionNode</TextBlock>
                         <TextBlock Style="{StaticResource HelpBody}">Loads a saved project (.mvxp) as a reusable sub-graph. SubGraphAnalyzer identifies boundary ports: source nodes (in-degree 0) become inputs, sink nodes (out-degree 0) become outputs. Executes the sub-graph internally with its own GraphExecutor.</TextBlock>
 
-                        <TextBlock Style="{StaticResource HelpH2}">Node Categories (24)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpH2}">Node Categories (27)</TextBlock>
                         <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11.5">Input/Output ........ Image/Video I/O, Unified Camera (7)
 Color ............... Color space conversion (4)
 Filter .............. Blur, sharpen, denoise (10)
@@ -626,7 +1020,10 @@ Event ............... Keyboard, mouse, WaitKey (4)
 Script .............. Python / C# script execution (2)
 Inspection .......... High-level industrial checks (13)
 Measurement ......... Distance, angle, dimensions (3)
-Output .............. Image display, save (3)
+MediaPipe ........... Face, Hand, Pose, Mesh, Seg (6)
+YOLO ................ YOLOv8 object detection (1)
+OCR ................. PaddleOCR, Tesseract (2)
+LLM/VLM ............. GPT-4o, Gemini, Claude (3)
 Function ............ Sub-graph reusable nodes (1)</TextBlock>
                     </StackPanel>
                 </ScrollViewer>
@@ -705,12 +1102,154 @@ Function ............ Sub-graph reusable nodes (1)</TextBlock>
   - Both generators follow topological order
   - Variable naming based on node names</TextBlock>
 
+                        <TextBlock Style="{StaticResource HelpH2}">ONNX Runtime</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>Microsoft.ML.OnnxRuntime 1.20.x</Bold>
+  - MediaPipe face/hand/pose/mesh/segmentation models
+  - YOLOv8 object detection models (nano~xlarge)
+  - PaddleOCR detection + recognition models
+  - InferenceSession with byte-loading for non-ASCII path safety
+  - CPU inference (GPU optional with CUDA/DirectML provider)</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">OCR Engines</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>PaddleOCR (ONNX)</Bold> &#x2014; PP-OCRv5 detection + CTC recognition
+  - Multilingual: Korean, Chinese, Japanese, English
+  - Two-stage: text detection (DB) + text recognition (CTC decode)
+  - Models: ppocr_det.onnx, ppocr_rec.onnx, ppocr_keys.txt
+
+<Bold>Tesseract 5.2.x</Bold> &#x2014; Classic OCR engine via NuGet
+  - 100+ language support with traineddata files
+  - Page segmentation modes, confidence filtering
+  - Word/Line/Block level detection</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">LLM/VLM Vision APIs</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>OpenAI GPT-4o</Bold> &#x2014; Chat Completions API with vision
+<Bold>Google Gemini</Bold> &#x2014; GenerateContent API with inline_data
+<Bold>Anthropic Claude</Bold> &#x2014; Messages API with base64 image
+  - All use HttpClient REST API (no SDK dependency)
+  - Image: Mat &#x2192; PNG &#x2192; base64 &#x2192; API
+  - API keys auto-loaded from Models/API/api_config.json
+  - 60-second timeout, response overlaid on output image</TextBlock>
+
                         <TextBlock Style="{StaticResource HelpH2}">Build System</TextBlock>
                         <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>MSBuild / dotnet CLI</Bold>
   - Multi-project solution: Core, Nodes, App
   - Core and Nodes are class libraries (UI-independent)
   - App is the WPF executable
   - NuGet package management</TextBlock>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══ Tab 6: Setup Guide ═══ -->
+            <TabItem Header="  Setup Guide  " Padding="8,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpH1}">Installation &amp; Setup Guide</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">1. Required SDK</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>.NET 8.0 SDK</Bold> &#x2014; https://dotnet.microsoft.com/download
+<Bold>Windows 10/11</Bold> &#x2014; WPF requires Windows
+<Bold>Visual Studio 2022</Bold> or <Bold>dotnet CLI</Bold>
+
+Build:  dotnet build MVXTester.sln
+Run:    dotnet run --project src/MVXTester.App/MVXTester.App.csproj</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">2. ONNX Models</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Place model files in the corresponding Models/ subfolder. They are auto-copied to the build output directory.</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">MediaPipe (Models/MediaPipe/)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11">blazeface_short.onnx   Face detection
+palm_detection.onnx    Hand detection (stage 1)
+hand_landmark.onnx     Hand landmarks (stage 2)
+pose_detection.onnx    Pose detection (stage 1)
+pose_landmark_lite.onnx Pose landmarks (stage 2)
+face_landmark.onnx     Face mesh (468 points)
+selfie_segmentation.onnx Person segmentation
+ssd_mobilenet_v2.onnx  Object detection (COCO 80)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Download: google/mediapipe ONNX exports or HuggingFace</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">YOLOv8 (Models/YOLO/)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11">yolov8n.onnx    Nano   (6MB, fastest)
+yolov8s.onnx    Small  (22MB)
+yolov8m.onnx    Medium (52MB)
+yolov8l.onnx    Large  (87MB)
+yolov8x.onnx    XLarge (131MB, most accurate)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Download: https://github.com/ultralytics/assets
+Export:   yolo export model=yolov8n.pt format=onnx</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">PaddleOCR (Models/OCR/)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11">ppocr_det.onnx      Text detection (DB algorithm)
+ppocr_rec.onnx      Text recognition (Korean/Chinese)
+ppocr_keys.txt      Character dictionary (9000+ chars)
+ppocr_rec_en.onnx   English recognition (optional)
+ppocr_keys_en.txt   English dictionary (optional)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Download: HuggingFace monkt/paddleocr-onnx (PP-OCRv5)</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">Tesseract OCR (Models/Tesseract/)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11">eng.traineddata     English (23MB)
+kor.traineddata     Korean (15MB)
+jpn.traineddata     Japanese (optional)
+chi_sim.traineddata Chinese Simplified (optional)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Download: https://github.com/tesseract-ocr/tessdata</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">3. API Key Setup</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">LLM/VLM nodes load API keys from Models/API/api_config.json:</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11">{
+  "openai": {
+    "api_key": "sk-proj-...",
+    "model": "gpt-4o-mini"
+  },
+  "gemini": {
+    "api_key": "AIza...",
+    "model": "gemini-2.5-flash"
+  },
+  "claude": {
+    "api_key": "sk-ant-...",
+    "model": "claude-sonnet-4-20250514"
+  }
+}</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">API Key &#xBC1C;&#xAE09; (How to get API keys)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>OpenAI</Bold>
+  1. https://platform.openai.com &#xBC29;&#xBB38;
+  2. API Keys &#xBA54;&#xB274; &#x2192; Create new secret key
+  3. sk-proj-... &#xD615;&#xC2DD;&#xC758; &#xD0A4; &#xBCF5;&#xC0AC;
+
+<Bold>Google Gemini</Bold>
+  1. https://aistudio.google.com &#xBC29;&#xBB38;
+  2. Get API key &#xD074;&#xB9AD;
+  3. AIza... &#xD615;&#xC2DD;&#xC758; &#xD0A4; &#xBCF5;&#xC0AC;
+
+<Bold>Anthropic Claude</Bold>
+  1. https://console.anthropic.com &#xBC29;&#xBB38;
+  2. API Keys &#xBA54;&#xB274; &#x2192; Create Key
+  3. sk-ant-... &#xD615;&#xC2DD;&#xC758; &#xD0A4; &#xBCF5;&#xC0AC;</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" Foreground="{DynamicResource ForegroundDimBrush}" FontStyle="Italic">* api_config.json &#xD30C;&#xC77C;&#xC774; &#xC5C6;&#xC5B4;&#xB3C4; &#xB178;&#xB4DC; Properties &#xD328;&#xB110;&#xC5D0;&#xC11C; &#xC218;&#xB3D9; &#xC785;&#xB825; &#xAC00;&#xB2A5;</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">4. Camera SDK (Optional)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>USB Camera</Bold> &#x2014; No additional SDK required (OpenCvSharp VideoCapture)
+
+<Bold>HIKROBOT MVS SDK</Bold>
+  - https://www.hikrobotics.com &#xC5D0;&#xC11C; MVS SDK &#xB2E4;&#xC6B4;&#xB85C;&#xB4DC; &#xBC0F; &#xC124;&#xCE58;
+  - MvCameraControl.Net.dll &#xC790;&#xB3D9; &#xAC80;&#xC0C9;
+  - GigE Vision / USB3 Vision &#xCE74;&#xBA54;&#xB77C; &#xC9C0;&#xC6D0;
+
+<Bold>Cognex VisionPro 9.x</Bold>
+  - VisionPro SDK &#xC124;&#xCE58; &#xD6C4; &#xC790;&#xB3D9; &#xAC80;&#xC0C9;
+  - GigE Vision &#xCE74;&#xBA54;&#xB77C; (CIC &#xC2DC;&#xB9AC;&#xC988;)
+
+* SDK &#xBBF8;&#xC124;&#xCE58; &#xD658;&#xACBD;&#xC5D0;&#xC11C;&#xB3C4; &#xCE74;&#xBA54;&#xB77C; &#xC678; &#xBAA8;&#xB4E0; &#xAE30;&#xB2A5; &#xC815;&#xC0C1; &#xC791;&#xB3D9;</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">5. Folder Structure</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11">bin/Debug/net8.0-windows/
+&#x251C;&#x2500;&#x2500; Models/
+&#x2502;   &#x251C;&#x2500;&#x2500; MediaPipe/    *.onnx (auto-copied)
+&#x2502;   &#x251C;&#x2500;&#x2500; YOLO/         yolov8n.onnx
+&#x2502;   &#x251C;&#x2500;&#x2500; OCR/          ppocr_*.onnx, ppocr_keys.txt
+&#x2502;   &#x251C;&#x2500;&#x2500; Tesseract/    *.traineddata
+&#x2502;   &#x2514;&#x2500;&#x2500; API/          api_config.json (auto-copied)
+&#x251C;&#x2500;&#x2500; MVXTester.App.exe
+&#x2514;&#x2500;&#x2500; *.dll</TextBlock>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -723,7 +1262,7 @@ Function ............ Sub-graph reusable nodes (1)</TextBlock>
             <DockPanel>
                 <Button Content="Close" Click="CloseClick" DockPanel.Dock="Right"
                         Padding="20,6" HorizontalAlignment="Right" />
-                <TextBlock Text="SamMachineVision — 150+ nodes, 24 categories"
+                <TextBlock Text="SamMachineVision — 160+ nodes, 27 categories"
                            Foreground="{DynamicResource ForegroundDimBrush}"
                            VerticalAlignment="Center" FontSize="11" />
             </DockPanel>

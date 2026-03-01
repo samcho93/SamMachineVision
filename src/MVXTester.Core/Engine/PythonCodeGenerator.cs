@@ -33,6 +33,12 @@ public static class PythonCodeGenerator
         bool needsSerial = false;
         bool needsCsv = false;
         bool needsJson = false;
+        bool needsMediaPipe = false;
+        bool needsYolo = false;
+        bool needsTesseract = false;
+        bool needsPaddleOCR = false;
+        bool needsRequests = false;
+        bool needsBase64 = false;
 
         foreach (var node in sorted)
         {
@@ -45,6 +51,20 @@ public static class PythonCodeGenerator
                 needsCsv = true;
             if (name.Contains("JSON"))
                 needsJson = true;
+            if (name.Contains("MP ") || node.Category == "MediaPipe")
+                needsMediaPipe = true;
+            if (name.Contains("YOLO") || node.Category == "YOLO")
+                needsYolo = true;
+            if (name.Contains("Tesseract"))
+                needsTesseract = true;
+            if (name.Contains("PaddleOCR"))
+                needsPaddleOCR = true;
+            if (name.Contains("OpenAI") || name.Contains("Gemini") || name.Contains("Claude"))
+            {
+                needsRequests = true;
+                needsBase64 = true;
+                needsJson = true;
+            }
         }
 
         if (needsSocket)
@@ -55,7 +75,35 @@ public static class PythonCodeGenerator
             sb.AppendLine("import csv");
         if (needsJson)
             sb.AppendLine("import json");
-        if (needsSocket || needsSerial || needsCsv || needsJson)
+        if (needsRequests)
+            sb.AppendLine("import requests");
+        if (needsBase64)
+            sb.AppendLine("import base64");
+        if (needsMediaPipe)
+            sb.AppendLine("import mediapipe as mp");
+        if (needsYolo)
+            sb.AppendLine("from ultralytics import YOLO");
+        if (needsTesseract)
+            sb.AppendLine("import pytesseract");
+        if (needsPaddleOCR)
+            sb.AppendLine("from paddleocr import PaddleOCR");
+
+        // Print pip install hints as comment
+        var pipPackages = new List<string>();
+        pipPackages.Add("opencv-python");
+        pipPackages.Add("numpy");
+        if (needsSocket) { } // built-in
+        if (needsSerial) pipPackages.Add("pyserial");
+        if (needsMediaPipe) pipPackages.Add("mediapipe");
+        if (needsYolo) pipPackages.Add("ultralytics");
+        if (needsTesseract) pipPackages.Add("pytesseract");
+        if (needsPaddleOCR) pipPackages.Add("paddleocr");
+        if (needsRequests) pipPackages.Add("requests");
+
+        sb.AppendLine();
+        sb.AppendLine($"# pip install {string.Join(" ", pipPackages)}");
+
+        if (needsSocket || needsSerial || needsCsv || needsJson || needsMediaPipe || needsYolo || needsTesseract || needsPaddleOCR || needsRequests || needsBase64)
             sb.AppendLine();
 
         sb.AppendLine();
@@ -879,6 +927,316 @@ public static class PythonCodeGenerator
         else if (MatchName(name, "JSON Stringify", "To JSON"))
         {
             sb.AppendLine($"    {primaryResult} = json.dumps({input1})");
+        }
+
+        // =====================================================================
+        // MEDIAPIPE
+        // =====================================================================
+        else if (MatchName(name, "MP Face Detection"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            sb.AppendLine($"    mp_face_detection = mp.solutions.face_detection");
+            sb.AppendLine($"    mp_drawing = mp.solutions.drawing_utils");
+            sb.AppendLine($"    with mp_face_detection.FaceDetection(min_detection_confidence={confidence}) as face_det:");
+            sb.AppendLine($"        rgb_{node.Id} = cv2.cvtColor({input1}, cv2.COLOR_BGR2RGB)");
+            sb.AppendLine($"        results_{node.Id} = face_det.process(rgb_{node.Id})");
+            sb.AppendLine($"        {primaryResult} = {input1}.copy()");
+            sb.AppendLine($"        h_, w_ = {input1}.shape[:2]");
+            if (resultVars.Count > 1) sb.AppendLine($"        {resultVars[1]} = []  # face Rects");
+            if (resultVars.Count > 2) sb.AppendLine($"        {resultVars[2]} = []  # scores");
+            if (resultVars.Count > 3) sb.AppendLine($"        {resultVars[3]} = 0   # count");
+            sb.AppendLine($"        if results_{node.Id}.detections:");
+            if (resultVars.Count > 3) sb.AppendLine($"            {resultVars[3]} = len(results_{node.Id}.detections)");
+            sb.AppendLine($"            for det in results_{node.Id}.detections:");
+            sb.AppendLine($"                mp_drawing.draw_detection({primaryResult}, det)");
+            if (resultVars.Count > 1) sb.AppendLine($"                bb = det.location_data.relative_bounding_box");
+            if (resultVars.Count > 1) sb.AppendLine($"                {resultVars[1]}.append((int(bb.xmin*w_), int(bb.ymin*h_), int(bb.width*w_), int(bb.height*h_)))");
+            if (resultVars.Count > 2) sb.AppendLine($"                {resultVars[2]}.append(det.score[0])");
+        }
+        else if (MatchName(name, "MP Face Mesh"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            var drawContours = GetPropBool(props, "DrawContours", true);
+            sb.AppendLine($"    mp_face_mesh = mp.solutions.face_mesh");
+            sb.AppendLine($"    mp_drawing = mp.solutions.drawing_utils");
+            sb.AppendLine($"    mp_drawing_styles = mp.solutions.drawing_styles");
+            sb.AppendLine($"    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence={confidence}) as face_mesh:");
+            sb.AppendLine($"        rgb_{node.Id} = cv2.cvtColor({input1}, cv2.COLOR_BGR2RGB)");
+            sb.AppendLine($"        results_{node.Id} = face_mesh.process(rgb_{node.Id})");
+            sb.AppendLine($"        {primaryResult} = {input1}.copy()");
+            if (resultVars.Count > 1) sb.AppendLine($"        {resultVars[1]} = []  # landmarks");
+            if (resultVars.Count > 2) sb.AppendLine($"        {resultVars[2]} = 0   # count");
+            sb.AppendLine($"        if results_{node.Id}.multi_face_landmarks:");
+            sb.AppendLine($"            for face_lm in results_{node.Id}.multi_face_landmarks:");
+            if (drawContours) sb.AppendLine($"                mp_drawing.draw_landmarks({primaryResult}, face_lm, mp_face_mesh.FACEMESH_TESSELATION, mp_drawing_styles.get_default_face_mesh_tesselation_style())");
+            sb.AppendLine($"                h_, w_ = {input1}.shape[:2]");
+            if (resultVars.Count > 1) sb.AppendLine($"                {resultVars[1]} = [(int(lm.x*w_), int(lm.y*h_)) for lm in face_lm.landmark]");
+            if (resultVars.Count > 2) sb.AppendLine($"                {resultVars[2]} = len(face_lm.landmark)");
+        }
+        else if (MatchName(name, "MP Hand Landmark"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            var maxHands = GetPropNum(props, "MaxHands", 2);
+            sb.AppendLine($"    mp_hands = mp.solutions.hands");
+            sb.AppendLine($"    mp_drawing = mp.solutions.drawing_utils");
+            sb.AppendLine($"    with mp_hands.Hands(static_image_mode=True, max_num_hands={maxHands}, min_detection_confidence={confidence}) as hands:");
+            sb.AppendLine($"        rgb_{node.Id} = cv2.cvtColor({input1}, cv2.COLOR_BGR2RGB)");
+            sb.AppendLine($"        results_{node.Id} = hands.process(rgb_{node.Id})");
+            sb.AppendLine($"        {primaryResult} = {input1}.copy()");
+            if (resultVars.Count > 1) sb.AppendLine($"        {resultVars[1]} = []  # landmarks");
+            if (resultVars.Count > 2) sb.AppendLine($"        {resultVars[2]} = 0   # count");
+            sb.AppendLine($"        if results_{node.Id}.multi_hand_landmarks:");
+            if (resultVars.Count > 2) sb.AppendLine($"            {resultVars[2]} = len(results_{node.Id}.multi_hand_landmarks)");
+            sb.AppendLine($"            for hand_lm in results_{node.Id}.multi_hand_landmarks:");
+            sb.AppendLine($"                mp_drawing.draw_landmarks({primaryResult}, hand_lm, mp_hands.HAND_CONNECTIONS)");
+            sb.AppendLine($"                h_, w_ = {input1}.shape[:2]");
+            if (resultVars.Count > 1) sb.AppendLine($"                {resultVars[1]} = [(int(lm.x*w_), int(lm.y*h_)) for lm in hand_lm.landmark]");
+        }
+        else if (MatchName(name, "MP Pose Landmark"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            sb.AppendLine($"    mp_pose = mp.solutions.pose");
+            sb.AppendLine($"    mp_drawing = mp.solutions.drawing_utils");
+            sb.AppendLine($"    mp_drawing_styles = mp.solutions.drawing_styles");
+            sb.AppendLine($"    with mp_pose.Pose(static_image_mode=True, min_detection_confidence={confidence}) as pose:");
+            sb.AppendLine($"        rgb_{node.Id} = cv2.cvtColor({input1}, cv2.COLOR_BGR2RGB)");
+            sb.AppendLine($"        results_{node.Id} = pose.process(rgb_{node.Id})");
+            sb.AppendLine($"        {primaryResult} = {input1}.copy()");
+            if (resultVars.Count > 1) sb.AppendLine($"        {resultVars[1]} = []  # landmarks");
+            if (resultVars.Count > 2) sb.AppendLine($"        {resultVars[2]} = []  # visibility");
+            if (resultVars.Count > 3) sb.AppendLine($"        {resultVars[3]} = 0   # count");
+            sb.AppendLine($"        if results_{node.Id}.pose_landmarks:");
+            sb.AppendLine($"            mp_drawing.draw_landmarks({primaryResult}, results_{node.Id}.pose_landmarks, mp_pose.POSE_CONNECTIONS, mp_drawing_styles.get_default_pose_landmarks_style())");
+            sb.AppendLine($"            h_, w_ = {input1}.shape[:2]");
+            if (resultVars.Count > 1) sb.AppendLine($"            {resultVars[1]} = [(int(lm.x*w_), int(lm.y*h_)) for lm in results_{node.Id}.pose_landmarks.landmark]");
+            if (resultVars.Count > 2) sb.AppendLine($"            {resultVars[2]} = [lm.visibility for lm in results_{node.Id}.pose_landmarks.landmark]");
+            if (resultVars.Count > 3) sb.AppendLine($"            {resultVars[3]} = len(results_{node.Id}.pose_landmarks.landmark)");
+        }
+        else if (MatchName(name, "MP Selfie Segmentation"))
+        {
+            var threshold = GetPropDouble(props, "Threshold", 0.5);
+            var bgMode = GetPropStr(props, "BackgroundMode");
+            var blurStrength = GetPropNum(props, "BlurStrength", 21);
+            sb.AppendLine($"    mp_selfie = mp.solutions.selfie_segmentation");
+            sb.AppendLine($"    with mp_selfie.SelfieSegmentation(model_selection=0) as seg:");
+            sb.AppendLine($"        rgb_{node.Id} = cv2.cvtColor({input1}, cv2.COLOR_BGR2RGB)");
+            sb.AppendLine($"        results_{node.Id} = seg.process(rgb_{node.Id})");
+            sb.AppendLine($"        mask_{node.Id} = (results_{node.Id}.segmentation_mask > {threshold}).astype(np.uint8)");
+            if (resultVars.Count > 1) sb.AppendLine($"        {resultVars[1]} = (mask_{node.Id} * 255).astype(np.uint8)  # Mask output");
+            if (string.IsNullOrEmpty(bgMode) || bgMode.Contains("Blur"))
+            {
+                sb.AppendLine($"        bg_{node.Id} = cv2.GaussianBlur({input1}, ({blurStrength}|1, {blurStrength}|1), 0)");
+            }
+            else if (bgMode.Contains("Green"))
+            {
+                sb.AppendLine($"        bg_{node.Id} = np.zeros_like({input1}); bg_{node.Id}[:] = (0, 255, 0)");
+            }
+            else
+            {
+                sb.AppendLine($"        bg_{node.Id} = np.zeros_like({input1})");
+            }
+            sb.AppendLine($"        mask3_{node.Id} = np.stack([mask_{node.Id}]*3, axis=-1)");
+            sb.AppendLine($"        {primaryResult} = np.where(mask3_{node.Id}, {input1}, bg_{node.Id})");
+        }
+        else if (MatchName(name, "MP Object Detection"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            var maxDet = GetPropNum(props, "MaxDetections", 20);
+            sb.AppendLine($"    mp_obj = mp.solutions.object_detection");
+            sb.AppendLine($"    # NOTE: MediaPipe object detection requires mediapipe>=0.10");
+            sb.AppendLine($"    # Alternative: use a simple ONNX model or Ultralytics YOLO");
+            sb.AppendLine($"    base_options = mp.tasks.BaseOptions(model_asset_path='efficientdet_lite0.tflite')");
+            sb.AppendLine($"    options = mp.tasks.vision.ObjectDetectorOptions(base_options=base_options, score_threshold={confidence}, max_results={maxDet})");
+            sb.AppendLine($"    detector = mp.tasks.vision.ObjectDetector.create_from_options(options)");
+            sb.AppendLine($"    mp_image_{node.Id} = mp.Image(image_format=mp.ImageFormat.SRGB, data=cv2.cvtColor({input1}, cv2.COLOR_BGR2RGB))");
+            sb.AppendLine($"    det_result_{node.Id} = detector.detect(mp_image_{node.Id})");
+            sb.AppendLine($"    {primaryResult} = {input1}.copy()");
+            if (resultVars.Count > 1) sb.AppendLine($"    {resultVars[1]} = []  # bounding boxes");
+            if (resultVars.Count > 2) sb.AppendLine($"    {resultVars[2]} = []  # labels");
+            if (resultVars.Count > 3) sb.AppendLine($"    {resultVars[3]} = []  # scores");
+            if (resultVars.Count > 4) sb.AppendLine($"    {resultVars[4]} = len(det_result_{node.Id}.detections)  # count");
+            sb.AppendLine($"    for det in det_result_{node.Id}.detections:");
+            sb.AppendLine($"        bb = det.bounding_box");
+            sb.AppendLine($"        cv2.rectangle({primaryResult}, (bb.origin_x, bb.origin_y), (bb.origin_x+bb.width, bb.origin_y+bb.height), (0,255,0), 2)");
+            sb.AppendLine($"        label = det.categories[0].category_name if det.categories else 'unknown'");
+            sb.AppendLine($"        score = det.categories[0].score if det.categories else 0");
+            sb.AppendLine($"        cv2.putText({primaryResult}, f'{{label}} {{score:.2f}}', (bb.origin_x, bb.origin_y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)");
+            if (resultVars.Count > 1) sb.AppendLine($"        {resultVars[1]}.append((bb.origin_x, bb.origin_y, bb.width, bb.height))");
+            if (resultVars.Count > 2) sb.AppendLine($"        {resultVars[2]}.append(label)");
+            if (resultVars.Count > 3) sb.AppendLine($"        {resultVars[3]}.append(score)");
+        }
+
+        // =====================================================================
+        // YOLO
+        // =====================================================================
+        else if (MatchName(name, "YOLOv8", "YOLO Detection", "YOLOv8 Detection"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.25);
+            var iou = GetPropDouble(props, "IoUThreshold", "IoU", 0.45);
+            var modelFile = GetPropStr(props, "ModelFile");
+            if (string.IsNullOrEmpty(modelFile)) modelFile = "yolov8n.pt";
+            sb.AppendLine($"    model_{node.Id} = YOLO({PyStr(modelFile)})");
+            sb.AppendLine($"    results_{node.Id} = model_{node.Id}({input1}, conf={confidence}, iou={iou})[0]");
+            sb.AppendLine($"    {primaryResult} = results_{node.Id}.plot()  # annotated image");
+            if (resultVars.Count > 1) sb.AppendLine($"    {resultVars[1]} = []  # bounding boxes");
+            if (resultVars.Count > 2) sb.AppendLine($"    {resultVars[2]} = []  # labels");
+            if (resultVars.Count > 3) sb.AppendLine($"    {resultVars[3]} = []  # scores");
+            if (resultVars.Count > 4) sb.AppendLine($"    {resultVars[4]} = len(results_{node.Id}.boxes)  # count");
+            sb.AppendLine($"    for box in results_{node.Id}.boxes:");
+            sb.AppendLine($"        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)");
+            if (resultVars.Count > 1) sb.AppendLine($"        {resultVars[1]}.append((x1, y1, x2-x1, y2-y1))");
+            if (resultVars.Count > 2) sb.AppendLine($"        {resultVars[2]}.append(results_{node.Id}.names[int(box.cls[0])])");
+            if (resultVars.Count > 3) sb.AppendLine($"        {resultVars[3]}.append(float(box.conf[0]))");
+        }
+
+        // =====================================================================
+        // OCR
+        // =====================================================================
+        else if (MatchName(name, "PaddleOCR"))
+        {
+            var recThreshold = GetPropDouble(props, "RecThreshold", 0.5);
+            sb.AppendLine($"    ocr_{node.Id} = PaddleOCR(use_angle_cls=True, lang='korean')  # change lang as needed");
+            sb.AppendLine($"    ocr_result_{node.Id} = ocr_{node.Id}.ocr({input1}, cls=True)");
+            sb.AppendLine($"    {primaryResult} = {input1}.copy()");
+            if (resultVars.Count > 1) sb.AppendLine($"    {resultVars[1]} = []  # texts");
+            if (resultVars.Count > 2) sb.AppendLine($"    {resultVars[2]} = []  # boxes");
+            if (resultVars.Count > 3) sb.AppendLine($"    {resultVars[3]} = []  # scores");
+            if (resultVars.Count > 4) sb.AppendLine($"    {resultVars[4]} = 0   # count");
+            if (resultVars.Count > 5) sb.AppendLine($"    {resultVars[5]} = ''  # full text");
+            sb.AppendLine($"    if ocr_result_{node.Id} and ocr_result_{node.Id}[0]:");
+            if (resultVars.Count > 4) sb.AppendLine($"        {resultVars[4]} = len(ocr_result_{node.Id}[0])");
+            sb.AppendLine($"        for line in ocr_result_{node.Id}[0]:");
+            sb.AppendLine($"            box, (text, score) = line[0], line[1]");
+            sb.AppendLine($"            if score >= {recThreshold}:");
+            if (resultVars.Count > 1) sb.AppendLine($"                {resultVars[1]}.append(text)");
+            if (resultVars.Count > 2) sb.AppendLine($"                pts = np.array(box, np.int32); {resultVars[2]}.append(tuple(cv2.boundingRect(pts)))");
+            if (resultVars.Count > 3) sb.AppendLine($"                {resultVars[3]}.append(score)");
+            sb.AppendLine($"                pts = np.array(box, np.int32)");
+            sb.AppendLine($"                cv2.polylines({primaryResult}, [pts], True, (0,255,0), 2)");
+            sb.AppendLine($"                cv2.putText({primaryResult}, text, (int(box[0][0]), int(box[0][1])-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)");
+            if (resultVars.Count > 5) sb.AppendLine($"        {resultVars[5]} = ' '.join({resultVars[1]})");
+        }
+        else if (MatchName(name, "Tesseract OCR", "Tesseract"))
+        {
+            var lang = GetPropStr(props, "Language");
+            if (string.IsNullOrEmpty(lang)) lang = "eng+kor";
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            var psm = GetPropNum(props, "PageSegMode", 3);
+            sb.AppendLine($"    # Requires: pip install pytesseract && Tesseract-OCR installed on system");
+            sb.AppendLine($"    # pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'");
+            sb.AppendLine($"    ocr_data_{node.Id} = pytesseract.image_to_data({input1}, lang={PyStr(lang)}, config='--psm {psm}', output_type=pytesseract.Output.DICT)");
+            sb.AppendLine($"    {primaryResult} = {input1}.copy()");
+            if (resultVars.Count > 1) sb.AppendLine($"    {resultVars[1]} = []  # texts");
+            if (resultVars.Count > 2) sb.AppendLine($"    {resultVars[2]} = []  # boxes");
+            if (resultVars.Count > 3) sb.AppendLine($"    {resultVars[3]} = []  # scores");
+            if (resultVars.Count > 4) sb.AppendLine($"    {resultVars[4]} = 0   # count");
+            if (resultVars.Count > 5) sb.AppendLine($"    {resultVars[5]} = ''  # full text");
+            sb.AppendLine($"    for i_{node.Id} in range(len(ocr_data_{node.Id}['text'])):");
+            sb.AppendLine($"        conf = float(ocr_data_{node.Id}['conf'][i_{node.Id}]) / 100.0");
+            sb.AppendLine($"        txt = ocr_data_{node.Id}['text'][i_{node.Id}].strip()");
+            sb.AppendLine($"        if conf >= {confidence} and txt:");
+            if (resultVars.Count > 1) sb.AppendLine($"            {resultVars[1]}.append(txt)");
+            sb.AppendLine($"            x, y, w, h = ocr_data_{node.Id}['left'][i_{node.Id}], ocr_data_{node.Id}['top'][i_{node.Id}], ocr_data_{node.Id}['width'][i_{node.Id}], ocr_data_{node.Id}['height'][i_{node.Id}]");
+            if (resultVars.Count > 2) sb.AppendLine($"            {resultVars[2]}.append((x, y, w, h))");
+            if (resultVars.Count > 3) sb.AppendLine($"            {resultVars[3]}.append(conf)");
+            if (resultVars.Count > 4) sb.AppendLine($"            {resultVars[4]} += 1");
+            sb.AppendLine($"            cv2.rectangle({primaryResult}, (x, y), (x+w, y+h), (0,255,0), 2)");
+            sb.AppendLine($"            cv2.putText({primaryResult}, txt, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)");
+            if (resultVars.Count > 5) sb.AppendLine($"    {resultVars[5]} = ' '.join({resultVars[1]})");
+        }
+
+        // =====================================================================
+        // AI VISION (LLM/VLM)
+        // =====================================================================
+        else if (MatchName(name, "OpenAI Vision", "GPT Vision"))
+        {
+            var apiKey = GetPropStr(props, "ApiKey");
+            var model = GetPropStr(props, "Model");
+            if (string.IsNullOrEmpty(model)) model = "gpt-4o-mini";
+            var maxTokens = GetPropNum(props, "MaxTokens", 1024);
+            var temperature = GetPropDouble(props, "Temperature", 0.7);
+            var systemPrompt = GetPropStr(props, "SystemPrompt");
+            if (string.IsNullOrEmpty(systemPrompt)) systemPrompt = "You are a helpful vision assistant.";
+            sb.AppendLine($"    # OpenAI Vision API");
+            sb.AppendLine($"    _, buf_{node.Id} = cv2.imencode('.png', {input1})");
+            sb.AppendLine($"    img_b64_{node.Id} = base64.b64encode(buf_{node.Id}).decode('utf-8')");
+            var promptVar = (node.Inputs.Count > 1 && inputVarMap.ContainsKey(node.Inputs[1].Name))
+                ? inputVarMap[node.Inputs[1].Name]
+                : PyStr("Describe this image.");
+            sb.AppendLine($"    prompt_{node.Id} = {promptVar}");
+            sb.AppendLine($"    api_key_{node.Id} = {PyStr(apiKey)} or os.environ.get('OPENAI_API_KEY', '')");
+            sb.AppendLine($"    resp_{node.Id} = requests.post('https://api.openai.com/v1/chat/completions',");
+            sb.AppendLine($"        headers={{'Authorization': f'Bearer {{api_key_{node.Id}}}', 'Content-Type': 'application/json'}},");
+            sb.AppendLine($"        json={{'model': {PyStr(model)}, 'max_tokens': {maxTokens}, 'temperature': {temperature},");
+            sb.AppendLine($"              'messages': [{{'role': 'system', 'content': {PyStr(systemPrompt)}}},");
+            sb.AppendLine($"                           {{'role': 'user', 'content': [");
+            sb.AppendLine($"                               {{'type': 'text', 'text': prompt_{node.Id}}},");
+            sb.AppendLine($"                               {{'type': 'image_url', 'image_url': {{'url': f'data:image/png;base64,{{img_b64_{node.Id}}}'}}}}]}}]}})");
+            sb.AppendLine($"    {primaryResult} = resp_{node.Id}.json().get('choices', [{{}}])[0].get('message', {{}}).get('content', 'Error')");
+            if (resultVars.Count > 1)
+            {
+                sb.AppendLine($"    {resultVars[1]} = {input1}.copy()");
+                sb.AppendLine($"    cv2.putText({resultVars[1]}, str({primaryResult})[:80], (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)");
+            }
+        }
+        else if (MatchName(name, "Gemini Vision"))
+        {
+            var apiKey = GetPropStr(props, "ApiKey");
+            var model = GetPropStr(props, "Model");
+            if (string.IsNullOrEmpty(model)) model = "gemini-2.0-flash";
+            var maxTokens = GetPropNum(props, "MaxTokens", 1024);
+            var temperature = GetPropDouble(props, "Temperature", 0.7);
+            var systemPrompt = GetPropStr(props, "SystemPrompt");
+            if (string.IsNullOrEmpty(systemPrompt)) systemPrompt = "You are a helpful vision assistant.";
+            sb.AppendLine($"    # Google Gemini Vision API");
+            sb.AppendLine($"    _, buf_{node.Id} = cv2.imencode('.png', {input1})");
+            sb.AppendLine($"    img_b64_{node.Id} = base64.b64encode(buf_{node.Id}).decode('utf-8')");
+            var promptVar2 = (node.Inputs.Count > 1 && inputVarMap.ContainsKey(node.Inputs[1].Name))
+                ? inputVarMap[node.Inputs[1].Name]
+                : PyStr("Describe this image.");
+            sb.AppendLine($"    prompt_{node.Id} = {promptVar2}");
+            sb.AppendLine($"    api_key_{node.Id} = {PyStr(apiKey)} or os.environ.get('GEMINI_API_KEY', '')");
+            sb.AppendLine($"    resp_{node.Id} = requests.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={{api_key_{node.Id}}}',");
+            sb.AppendLine($"        json={{'system_instruction': {{'parts': [{{'text': {PyStr(systemPrompt)}}}]}},");
+            sb.AppendLine($"              'generationConfig': {{'maxOutputTokens': {maxTokens}, 'temperature': {temperature}}},");
+            sb.AppendLine($"              'contents': [{{'parts': [{{'text': prompt_{node.Id}}}, {{'inline_data': {{'mime_type': 'image/png', 'data': img_b64_{node.Id}}}}}]}}]}})");
+            sb.AppendLine($"    {primaryResult} = resp_{node.Id}.json().get('candidates', [{{}}])[0].get('content', {{}}).get('parts', [{{}}])[0].get('text', 'Error')");
+            if (resultVars.Count > 1)
+            {
+                sb.AppendLine($"    {resultVars[1]} = {input1}.copy()");
+                sb.AppendLine($"    cv2.putText({resultVars[1]}, str({primaryResult})[:80], (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)");
+            }
+        }
+        else if (MatchName(name, "Claude Vision"))
+        {
+            var apiKey = GetPropStr(props, "ApiKey");
+            var model = GetPropStr(props, "Model");
+            if (string.IsNullOrEmpty(model)) model = "claude-sonnet-4-20250514";
+            var maxTokens = GetPropNum(props, "MaxTokens", 1024);
+            var temperature = GetPropDouble(props, "Temperature", 0.7);
+            var systemPrompt = GetPropStr(props, "SystemPrompt");
+            if (string.IsNullOrEmpty(systemPrompt)) systemPrompt = "You are a helpful vision assistant.";
+            sb.AppendLine($"    # Anthropic Claude Vision API");
+            sb.AppendLine($"    _, buf_{node.Id} = cv2.imencode('.png', {input1})");
+            sb.AppendLine($"    img_b64_{node.Id} = base64.b64encode(buf_{node.Id}).decode('utf-8')");
+            var promptVar3 = (node.Inputs.Count > 1 && inputVarMap.ContainsKey(node.Inputs[1].Name))
+                ? inputVarMap[node.Inputs[1].Name]
+                : PyStr("Describe this image.");
+            sb.AppendLine($"    prompt_{node.Id} = {promptVar3}");
+            sb.AppendLine($"    api_key_{node.Id} = {PyStr(apiKey)} or os.environ.get('ANTHROPIC_API_KEY', '')");
+            sb.AppendLine($"    resp_{node.Id} = requests.post('https://api.anthropic.com/v1/messages',");
+            sb.AppendLine($"        headers={{'x-api-key': api_key_{node.Id}, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json'}},");
+            sb.AppendLine($"        json={{'model': {PyStr(model)}, 'max_tokens': {maxTokens}, 'temperature': {temperature},");
+            sb.AppendLine($"              'system': {PyStr(systemPrompt)},");
+            sb.AppendLine($"              'messages': [{{'role': 'user', 'content': [");
+            sb.AppendLine($"                  {{'type': 'image', 'source': {{'type': 'base64', 'media_type': 'image/png', 'data': img_b64_{node.Id}}}}},");
+            sb.AppendLine($"                  {{'type': 'text', 'text': prompt_{node.Id}}}]}}]}})");
+            sb.AppendLine($"    {primaryResult} = resp_{node.Id}.json().get('content', [{{}}])[0].get('text', 'Error')");
+            if (resultVars.Count > 1)
+            {
+                sb.AppendLine($"    {resultVars[1]} = {input1}.copy()");
+                sb.AppendLine($"    cv2.putText({resultVars[1]}, str({primaryResult})[:80], (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)");
+            }
         }
 
         // =====================================================================

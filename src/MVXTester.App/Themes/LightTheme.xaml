@@ -63,13 +63,33 @@
         </Setter>
     </Style>
 
-    <!-- Stream Button (named style for DynamicResource in MainWindow) -->
-    <Style x:Key="StreamButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Content" Value="&#x25B6; Stream" />
+    <!-- Execute Button Style (green = go/run) -->
+    <Style x:Key="ExecuteButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Content" Value="▶ Execute" />
         <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsExecuting}" Value="True">
+                <Setter Property="Content" Value="■ Stop" />
+                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Force Execute Button Style (yellow = warning/force) -->
+    <Style x:Key="ForceExecuteButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+    </Style>
+
+    <!-- Stream Button (blue = continuous, named style for DynamicResource in MainWindow) -->
+    <Style x:Key="StreamButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Content" Value="▶ Stream" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsStreaming}" Value="True">
-                <Setter Property="Content" Value="&#x25A0; Stop" />
+                <Setter Property="Content" Value="■ Stop" />
                 <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
             </DataTrigger>
         </Style.Triggers>

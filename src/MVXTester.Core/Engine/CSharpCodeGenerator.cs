@@ -28,6 +28,9 @@ public static class CSharpCodeGenerator
         bool needsSockets = false;
         bool needsSerial = false;
         bool needsCsv = false;
+        bool needsOnnx = false;
+        bool needsHttp = false;
+        bool needsTesseract = false;
 
         foreach (var node in sorted)
         {
@@ -38,9 +41,24 @@ public static class CSharpCodeGenerator
                 needsSerial = true;
             if (name.Contains("CSV"))
                 needsCsv = true;
+            if (name.Contains("MP ") || node.Category == "MediaPipe" || name.Contains("YOLO") || node.Category == "YOLO" || name.Contains("PaddleOCR"))
+                needsOnnx = true;
+            if (name.Contains("OpenAI") || name.Contains("Gemini") || name.Contains("Claude"))
+                needsHttp = true;
+            if (name.Contains("Tesseract"))
+                needsTesseract = true;
         }
 
+        // --- NuGet package hints ---
+        var nugetPackages = new List<string> { "OpenCvSharp4", "OpenCvSharp4.runtime.win" };
+        if (needsOnnx) nugetPackages.Add("Microsoft.ML.OnnxRuntime");
+        if (needsTesseract) nugetPackages.Add("Tesseract");
+        if (needsSerial) nugetPackages.Add("System.IO.Ports");
+
         // --- Using statements ---
+        sb.AppendLine($"// NuGet: {string.Join(", ", nugetPackages)}");
+        sb.AppendLine($"// dotnet add package {string.Join(" && dotnet add package ", nugetPackages)}");
+        sb.AppendLine();
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Collections.Generic;");
         sb.AppendLine("using System.IO;");
@@ -54,6 +72,16 @@ public static class CSharpCodeGenerator
         }
         if (needsSerial)
             sb.AppendLine("using System.IO.Ports;");
+        if (needsOnnx)
+            sb.AppendLine("using Microsoft.ML.OnnxRuntime;");
+        if (needsHttp)
+        {
+            sb.AppendLine("using System.Net.Http;");
+            sb.AppendLine("using System.Net.Http.Headers;");
+            sb.AppendLine("using System.Text.Json;");
+        }
+        if (needsTesseract)
+            sb.AppendLine("using Tesseract;");
         sb.AppendLine();
 
         sb.AppendLine("namespace GeneratedPipeline;");
@@ -1036,6 +1064,354 @@ public static class CSharpCodeGenerator
         else if (MatchName(name, "JSON Stringify", "To JSON"))
         {
             sb.AppendLine($"        var {primaryResult} = System.Text.Json.JsonSerializer.Serialize({input1});");
+        }
+
+        // =====================================================================
+        // MEDIAPIPE (via ONNX Runtime - standalone C# equivalent)
+        // =====================================================================
+        else if (MatchName(name, "MP Face Detection"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            sb.AppendLine($"        // MediaPipe Face Detection via ONNX Runtime");
+            sb.AppendLine($"        // Requires: face_detection_short_range.onnx in working directory");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        using var session_{node.Id} = new InferenceSession(\"Models/MediaPipe/face_detection_short_range.onnx\");");
+            sb.AppendLine($"        var resized_{node.Id} = new Mat();");
+            sb.AppendLine($"        Cv2.Resize({input1}, resized_{node.Id}, new Size(128, 128));");
+            sb.AppendLine($"        // Preprocess: BGR→RGB, normalize [0,1], NHWC float32 tensor");
+            sb.AppendLine($"        var rgb_{node.Id} = new Mat();");
+            sb.AppendLine($"        Cv2.CvtColor(resized_{node.Id}, rgb_{node.Id}, ColorConversionCodes.BGR2RGB);");
+            sb.AppendLine($"        var data_{node.Id} = new float[1 * 128 * 128 * 3];");
+            sb.AppendLine($"        rgb_{node.Id}.ConvertTo(rgb_{node.Id}, MatType.CV_32FC3, 1.0 / 255.0);");
+            sb.AppendLine($"        System.Runtime.InteropServices.Marshal.Copy(rgb_{node.Id}.Data, data_{node.Id}, 0, data_{node.Id}.Length);");
+            sb.AppendLine($"        var tensor_{node.Id} = new Microsoft.ML.OnnxRuntime.Tensors.DenseTensor<float>(data_{node.Id}, new[] {{ 1, 128, 128, 3 }});");
+            sb.AppendLine($"        var inputs_{node.Id} = new[] {{ NamedOnnxValue.CreateFromTensor(session_{node.Id}.InputNames[0], tensor_{node.Id}) }};");
+            sb.AppendLine($"        using var results_{node.Id} = session_{node.Id}.Run(inputs_{node.Id});");
+            sb.AppendLine($"        // Post-process detections: decode boxes, apply NMS, draw on {primaryResult}");
+            sb.AppendLine($"        Console.WriteLine($\"Face detection: {{results_{node.Id}.Count}} output tensors\");");
+            if (resultVars.Count > 3) sb.AppendLine($"        var {resultVars[3]} = 0; // count - implement post-processing");
+            sb.AppendLine($"        resized_{node.Id}.Dispose(); rgb_{node.Id}.Dispose();");
+        }
+        else if (MatchName(name, "MP Face Mesh"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            sb.AppendLine($"        // MediaPipe Face Mesh via ONNX Runtime");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        using var session_{node.Id} = new InferenceSession(\"Models/MediaPipe/face_landmark.onnx\");");
+            sb.AppendLine($"        var resized_{node.Id} = new Mat(); Cv2.Resize({input1}, resized_{node.Id}, new Size(192, 192));");
+            sb.AppendLine($"        var rgb_{node.Id} = new Mat(); Cv2.CvtColor(resized_{node.Id}, rgb_{node.Id}, ColorConversionCodes.BGR2RGB);");
+            sb.AppendLine($"        var data_{node.Id} = new float[1 * 192 * 192 * 3];");
+            sb.AppendLine($"        rgb_{node.Id}.ConvertTo(rgb_{node.Id}, MatType.CV_32FC3, 1.0 / 255.0);");
+            sb.AppendLine($"        System.Runtime.InteropServices.Marshal.Copy(rgb_{node.Id}.Data, data_{node.Id}, 0, data_{node.Id}.Length);");
+            sb.AppendLine($"        var tensor_{node.Id} = new Microsoft.ML.OnnxRuntime.Tensors.DenseTensor<float>(data_{node.Id}, new[] {{ 1, 192, 192, 3 }});");
+            sb.AppendLine($"        var inputs_{node.Id} = new[] {{ NamedOnnxValue.CreateFromTensor(session_{node.Id}.InputNames[0], tensor_{node.Id}) }};");
+            sb.AppendLine($"        using var results_{node.Id} = session_{node.Id}.Run(inputs_{node.Id});");
+            sb.AppendLine($"        Console.WriteLine($\"Face Mesh: {{results_{node.Id}.Count}} output tensors (468 landmarks)\");");
+            if (resultVars.Count > 2) sb.AppendLine($"        var {resultVars[2]} = 0; // count - implement landmark extraction");
+            sb.AppendLine($"        resized_{node.Id}.Dispose(); rgb_{node.Id}.Dispose();");
+        }
+        else if (MatchName(name, "MP Hand Landmark"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            var maxHands = GetPropNum(props, "MaxHands", 2);
+            sb.AppendLine($"        // MediaPipe Hand Landmark via ONNX Runtime (2-stage: palm detection + hand landmark)");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        using var palmSess_{node.Id} = new InferenceSession(\"Models/MediaPipe/palm_detection.onnx\");");
+            sb.AppendLine($"        using var handSess_{node.Id} = new InferenceSession(\"Models/MediaPipe/hand_landmark.onnx\");");
+            sb.AppendLine($"        // Stage 1: Palm detection (192x192) → detect hand ROI");
+            sb.AppendLine($"        // Stage 2: Hand landmark (224x224) → 21 keypoints");
+            sb.AppendLine($"        Console.WriteLine(\"Hand Landmark: implement 2-stage pipeline for {maxHands} hand(s)\");");
+            if (resultVars.Count > 2) sb.AppendLine($"        var {resultVars[2]} = 0; // count");
+        }
+        else if (MatchName(name, "MP Pose Landmark"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            sb.AppendLine($"        // MediaPipe Pose Landmark via ONNX Runtime (2-stage)");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        using var poseDet_{node.Id} = new InferenceSession(\"Models/MediaPipe/pose_detection.onnx\");");
+            sb.AppendLine($"        using var poseLM_{node.Id} = new InferenceSession(\"Models/MediaPipe/pose_landmark_full.onnx\");");
+            sb.AppendLine($"        // Stage 1: Pose detection (224x224) → body ROI");
+            sb.AppendLine($"        // Stage 2: Pose landmark (256x256) → 33 keypoints");
+            sb.AppendLine($"        Console.WriteLine(\"Pose Landmark: implement 2-stage pipeline\");");
+            if (resultVars.Count > 3) sb.AppendLine($"        var {resultVars[3]} = 0; // count");
+        }
+        else if (MatchName(name, "MP Selfie Segmentation"))
+        {
+            var threshold = GetPropDouble(props, "Threshold", 0.5);
+            var bgMode = GetPropStr(props, "BackgroundMode");
+            var blurStrength = GetPropNum(props, "BlurStrength", 21);
+            sb.AppendLine($"        // MediaPipe Selfie Segmentation via ONNX Runtime");
+            sb.AppendLine($"        using var session_{node.Id} = new InferenceSession(\"Models/MediaPipe/selfie_segmentation.onnx\");");
+            sb.AppendLine($"        var resized_{node.Id} = new Mat(); Cv2.Resize({input1}, resized_{node.Id}, new Size(256, 256));");
+            sb.AppendLine($"        var rgb_{node.Id} = new Mat(); Cv2.CvtColor(resized_{node.Id}, rgb_{node.Id}, ColorConversionCodes.BGR2RGB);");
+            sb.AppendLine($"        var data_{node.Id} = new float[1 * 256 * 256 * 3];");
+            sb.AppendLine($"        rgb_{node.Id}.ConvertTo(rgb_{node.Id}, MatType.CV_32FC3, 1.0 / 255.0);");
+            sb.AppendLine($"        System.Runtime.InteropServices.Marshal.Copy(rgb_{node.Id}.Data, data_{node.Id}, 0, data_{node.Id}.Length);");
+            sb.AppendLine($"        var tensor_{node.Id} = new Microsoft.ML.OnnxRuntime.Tensors.DenseTensor<float>(data_{node.Id}, new[] {{ 1, 256, 256, 3 }});");
+            sb.AppendLine($"        var inputs_{node.Id} = new[] {{ NamedOnnxValue.CreateFromTensor(session_{node.Id}.InputNames[0], tensor_{node.Id}) }};");
+            sb.AppendLine($"        using var results_{node.Id} = session_{node.Id}.Run(inputs_{node.Id});");
+            sb.AppendLine($"        var maskData_{node.Id} = results_{node.Id}.First().AsEnumerable<float>().ToArray();");
+            sb.AppendLine($"        // Build mask and apply background effect");
+            sb.AppendLine($"        var maskMat_{node.Id} = new Mat(256, 256, MatType.CV_32FC1, maskData_{node.Id});");
+            sb.AppendLine($"        var maskResized_{node.Id} = new Mat(); Cv2.Resize(maskMat_{node.Id}, maskResized_{node.Id}, {input1}.Size());");
+            sb.AppendLine($"        var mask8_{node.Id} = new Mat(); maskResized_{node.Id}.ConvertTo(mask8_{node.Id}, MatType.CV_8UC1, 255.0);");
+            sb.AppendLine($"        Cv2.Threshold(mask8_{node.Id}, mask8_{node.Id}, (int)({threshold} * 255), 255, ThresholdTypes.Binary);");
+            if (resultVars.Count > 1)
+            {
+                sb.AppendLine($"        var {resultVars[1]} = mask8_{node.Id}.Clone(); // Mask output");
+                matVars.Add(resultVars[1]);
+            }
+            if (string.IsNullOrEmpty(bgMode) || bgMode.Contains("Blur"))
+            {
+                sb.AppendLine($"        var bg_{node.Id} = new Mat(); Cv2.GaussianBlur({input1}, bg_{node.Id}, new Size({blurStrength} | 1, {blurStrength} | 1), 0);");
+            }
+            else if (bgMode.Contains("Green"))
+            {
+                sb.AppendLine($"        var bg_{node.Id} = new Mat({input1}.Size(), {input1}.Type(), new Scalar(0, 255, 0));");
+            }
+            else
+            {
+                sb.AppendLine($"        var bg_{node.Id} = Mat.Zeros({input1}.Size(), {input1}.Type());");
+            }
+            sb.AppendLine($"        var {primaryResult} = new Mat(); {input1}.CopyTo({primaryResult});");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        bg_{node.Id}.CopyTo({primaryResult}, 255 - mask8_{node.Id});");
+            sb.AppendLine($"        resized_{node.Id}.Dispose(); rgb_{node.Id}.Dispose(); maskMat_{node.Id}.Dispose(); maskResized_{node.Id}.Dispose(); mask8_{node.Id}.Dispose(); bg_{node.Id}.Dispose();");
+        }
+        else if (MatchName(name, "MP Object Detection"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            var maxDet = GetPropNum(props, "MaxDetections", 20);
+            sb.AppendLine($"        // MediaPipe Object Detection via ONNX Runtime (SSD MobileNet)");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        using var session_{node.Id} = new InferenceSession(\"Models/MediaPipe/ssd_mobilenet_v2.onnx\");");
+            sb.AppendLine($"        // Preprocess to 300x300, run inference, decode SSD outputs, draw boxes");
+            sb.AppendLine($"        Console.WriteLine(\"Object Detection: implement SSD post-processing\");");
+            if (resultVars.Count > 4) sb.AppendLine($"        var {resultVars[4]} = 0; // count");
+        }
+
+        // =====================================================================
+        // YOLO (via ONNX Runtime)
+        // =====================================================================
+        else if (MatchName(name, "YOLOv8", "YOLO Detection", "YOLOv8 Detection"))
+        {
+            var confidence = GetPropDouble(props, "Confidence", 0.25);
+            var iou = GetPropDouble(props, "IoUThreshold", "IoU", 0.45);
+            var modelFile = GetPropStr(props, "ModelFile");
+            if (string.IsNullOrEmpty(modelFile)) modelFile = "yolov8n.onnx";
+            sb.AppendLine($"        // YOLOv8 Detection via ONNX Runtime");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        using var session_{node.Id} = new InferenceSession({CStr(modelFile)});");
+            sb.AppendLine($"        // Preprocess: resize to 640x640, normalize [0,1], NCHW format");
+            sb.AppendLine($"        var resized_{node.Id} = new Mat();");
+            sb.AppendLine($"        Cv2.Resize({input1}, resized_{node.Id}, new Size(640, 640));");
+            sb.AppendLine($"        var rgb_{node.Id} = new Mat();");
+            sb.AppendLine($"        Cv2.CvtColor(resized_{node.Id}, rgb_{node.Id}, ColorConversionCodes.BGR2RGB);");
+            sb.AppendLine($"        rgb_{node.Id}.ConvertTo(rgb_{node.Id}, MatType.CV_32FC3, 1.0 / 255.0);");
+            sb.AppendLine($"        var pixelData_{node.Id} = new float[1 * 3 * 640 * 640];");
+            sb.AppendLine($"        // Convert HWC→CHW");
+            sb.AppendLine($"        unsafe {{ var ptr = (float*)rgb_{node.Id}.Data;");
+            sb.AppendLine($"            for (int y = 0; y < 640; y++) for (int x = 0; x < 640; x++) for (int c = 0; c < 3; c++)");
+            sb.AppendLine($"                pixelData_{node.Id}[c * 640 * 640 + y * 640 + x] = ptr[(y * 640 + x) * 3 + c]; }}");
+            sb.AppendLine($"        var tensor_{node.Id} = new Microsoft.ML.OnnxRuntime.Tensors.DenseTensor<float>(pixelData_{node.Id}, new[] {{ 1, 3, 640, 640 }});");
+            sb.AppendLine($"        var inputs_{node.Id} = new[] {{ NamedOnnxValue.CreateFromTensor(session_{node.Id}.InputNames[0], tensor_{node.Id}) }};");
+            sb.AppendLine($"        using var results_{node.Id} = session_{node.Id}.Run(inputs_{node.Id});");
+            sb.AppendLine($"        var output_{node.Id} = results_{node.Id}.First().AsEnumerable<float>().ToArray();");
+            sb.AppendLine($"        // YOLOv8 output: [1, 84, 8400] → transpose, decode cx/cy/w/h + 80 class scores");
+            sb.AppendLine($"        var scaleX_{node.Id} = (float){input1}.Width / 640f;");
+            sb.AppendLine($"        var scaleY_{node.Id} = (float){input1}.Height / 640f;");
+            sb.AppendLine($"        var cocoLabels = new[] {{ \"person\",\"bicycle\",\"car\",\"motorcycle\",\"airplane\",\"bus\",\"train\",\"truck\",\"boat\",\"traffic light\",\"fire hydrant\",\"stop sign\",\"parking meter\",\"bench\",\"bird\",\"cat\",\"dog\",\"horse\",\"sheep\",\"cow\",\"elephant\",\"bear\",\"zebra\",\"giraffe\",\"backpack\",\"umbrella\",\"handbag\",\"tie\",\"suitcase\",\"frisbee\",\"skis\",\"snowboard\",\"sports ball\",\"kite\",\"baseball bat\",\"baseball glove\",\"skateboard\",\"surfboard\",\"tennis racket\",\"bottle\",\"wine glass\",\"cup\",\"fork\",\"knife\",\"spoon\",\"bowl\",\"banana\",\"apple\",\"sandwich\",\"orange\",\"broccoli\",\"carrot\",\"hot dog\",\"pizza\",\"donut\",\"cake\",\"chair\",\"couch\",\"potted plant\",\"bed\",\"dining table\",\"toilet\",\"tv\",\"laptop\",\"mouse\",\"remote\",\"keyboard\",\"cell phone\",\"microwave\",\"oven\",\"toaster\",\"sink\",\"refrigerator\",\"book\",\"clock\",\"vase\",\"scissors\",\"teddy bear\",\"hair drier\",\"toothbrush\" }};");
+            sb.AppendLine($"        // Decode 8400 predictions (implement NMS with conf={confidence}, iou={iou})");
+            sb.AppendLine($"        Console.WriteLine($\"YOLOv8: {{output_{node.Id}.Length}} output values\");");
+            if (resultVars.Count > 4) sb.AppendLine($"        var {resultVars[4]} = 0; // detection count");
+            sb.AppendLine($"        resized_{node.Id}.Dispose(); rgb_{node.Id}.Dispose();");
+        }
+
+        // =====================================================================
+        // OCR
+        // =====================================================================
+        else if (MatchName(name, "PaddleOCR"))
+        {
+            var recThreshold = GetPropDouble(props, "RecThreshold", 0.5);
+            var detModel = GetPropStr(props, "DetModel");
+            if (string.IsNullOrEmpty(detModel)) detModel = "ppocr_det.onnx";
+            var recModel = GetPropStr(props, "RecModel");
+            if (string.IsNullOrEmpty(recModel)) recModel = "ppocr_rec.onnx";
+            sb.AppendLine($"        // PaddleOCR via ONNX Runtime (detection + recognition)");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            sb.AppendLine($"        using var detSession_{node.Id} = new InferenceSession(\"Models/OCR/{detModel}\");");
+            sb.AppendLine($"        using var recSession_{node.Id} = new InferenceSession(\"Models/OCR/{recModel}\");");
+            sb.AppendLine($"        // Stage 1: Text detection - preprocess and run det model");
+            sb.AppendLine($"        // Stage 2: For each detected text region, crop and run rec model");
+            sb.AppendLine($"        // Stage 3: CTC decode recognition output using dictionary file");
+            sb.AppendLine($"        Console.WriteLine(\"PaddleOCR: implement det+rec pipeline\");");
+            if (resultVars.Count > 4) sb.AppendLine($"        var {resultVars[4]} = 0; // count");
+            if (resultVars.Count > 5) sb.AppendLine($"        var {resultVars[5]} = \"\"; // full text");
+        }
+        else if (MatchName(name, "Tesseract OCR", "Tesseract"))
+        {
+            var lang = GetPropStr(props, "Language");
+            if (string.IsNullOrEmpty(lang)) lang = "eng+kor";
+            var confidence = GetPropDouble(props, "Confidence", 0.5);
+            var psm = GetPropNum(props, "PageSegMode", 3);
+            sb.AppendLine($"        // Tesseract OCR via Tesseract NuGet package");
+            sb.AppendLine($"        // Requires: tessdata folder with language files");
+            sb.AppendLine($"        var {primaryResult} = {input1}.Clone();");
+            matVars.Add(primaryResult);
+            if (resultVars.Count > 1) sb.AppendLine($"        var {resultVars[1]} = new List<string>(); // texts");
+            if (resultVars.Count > 2) sb.AppendLine($"        var {resultVars[2]} = new List<Rect>(); // boxes");
+            if (resultVars.Count > 3) sb.AppendLine($"        var {resultVars[3]} = new List<double>(); // scores");
+            if (resultVars.Count > 4) sb.AppendLine($"        var {resultVars[4]} = 0; // count");
+            if (resultVars.Count > 5) sb.AppendLine($"        var {resultVars[5]} = \"\"; // full text");
+            sb.AppendLine($"        using var engine_{node.Id} = new TesseractEngine(\"tessdata\", {CStr(lang)}, EngineMode.Default);");
+            sb.AppendLine($"        engine_{node.Id}.SetVariable(\"tessedit_pageseg_mode\", \"{psm}\");");
+            sb.AppendLine($"        var imgBytes_{node.Id} = {input1}.ToBytes(\".png\");");
+            sb.AppendLine($"        using var pix_{node.Id} = Pix.LoadFromMemory(imgBytes_{node.Id});");
+            sb.AppendLine($"        using var page_{node.Id} = engine_{node.Id}.Process(pix_{node.Id});");
+            if (resultVars.Count > 5) sb.AppendLine($"        {resultVars[5]} = page_{node.Id}.GetText().Trim();");
+            sb.AppendLine($"        using var iter_{node.Id} = page_{node.Id}.GetIterator();");
+            sb.AppendLine($"        iter_{node.Id}.Begin();");
+            sb.AppendLine($"        do {{");
+            sb.AppendLine($"            var text = iter_{node.Id}.GetText(PageIteratorLevel.Word);");
+            sb.AppendLine($"            var conf = iter_{node.Id}.GetConfidence(PageIteratorLevel.Word) / 100.0;");
+            sb.AppendLine($"            if (text != null && conf >= {confidence} && text.Trim().Length > 0)");
+            sb.AppendLine($"            {{");
+            sb.AppendLine($"                iter_{node.Id}.TryGetBoundingBox(PageIteratorLevel.Word, out var bounds);");
+            sb.AppendLine($"                var r = new Rect(bounds.X1, bounds.Y1, bounds.Width, bounds.Height);");
+            if (resultVars.Count > 1) sb.AppendLine($"                {resultVars[1]}.Add(text.Trim());");
+            if (resultVars.Count > 2) sb.AppendLine($"                {resultVars[2]}.Add(r);");
+            if (resultVars.Count > 3) sb.AppendLine($"                {resultVars[3]}.Add(conf);");
+            if (resultVars.Count > 4) sb.AppendLine($"                {resultVars[4]}++;");
+            sb.AppendLine($"                Cv2.Rectangle({primaryResult}, r, new Scalar(0, 255, 0), 2);");
+            sb.AppendLine($"                Cv2.PutText({primaryResult}, text.Trim(), new Point(r.X, r.Y - 5), HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 255, 0), 1);");
+            sb.AppendLine($"            }}");
+            sb.AppendLine($"        }} while (iter_{node.Id}.Next(PageIteratorLevel.Word));");
+        }
+
+        // =====================================================================
+        // AI VISION (LLM/VLM via HttpClient)
+        // =====================================================================
+        else if (MatchName(name, "OpenAI Vision", "GPT Vision"))
+        {
+            var apiKey = GetPropStr(props, "ApiKey");
+            var model = GetPropStr(props, "Model");
+            if (string.IsNullOrEmpty(model)) model = "gpt-4o-mini";
+            var maxTokens = GetPropNum(props, "MaxTokens", 1024);
+            var temperature = GetPropDouble(props, "Temperature", 0.7);
+            var systemPrompt = GetPropStr(props, "SystemPrompt");
+            if (string.IsNullOrEmpty(systemPrompt)) systemPrompt = "You are a helpful vision assistant.";
+            sb.AppendLine($"        // OpenAI Vision API call");
+            sb.AppendLine($"        string {primaryResult};");
+            var promptInput = (node.Inputs.Count > 1 && inputVarMap.ContainsKey(node.Inputs[1].Name))
+                ? inputVarMap[node.Inputs[1].Name]
+                : CStr("Describe this image.");
+            sb.AppendLine($"        {{");
+            sb.AppendLine($"            var imgBytes = {input1}.ToBytes(\".png\");");
+            sb.AppendLine($"            var b64 = Convert.ToBase64String(imgBytes);");
+            sb.AppendLine($"            var apiKey = {CStr(apiKey)};");
+            sb.AppendLine($"            if (string.IsNullOrEmpty(apiKey)) apiKey = Environment.GetEnvironmentVariable(\"OPENAI_API_KEY\") ?? \"\";");
+            sb.AppendLine($"            using var http = new HttpClient();");
+            sb.AppendLine($"            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(\"Bearer\", apiKey);");
+            sb.AppendLine($"            var body = JsonSerializer.Serialize(new {{ model = {CStr(model)}, max_tokens = {maxTokens}, temperature = {temperature},");
+            sb.AppendLine($"                messages = new object[] {{ new {{ role = \"system\", content = {CStr(systemPrompt)} }},");
+            sb.AppendLine($"                    new {{ role = \"user\", content = new object[] {{");
+            sb.AppendLine($"                        new {{ type = \"text\", text = (string){promptInput} }},");
+            sb.AppendLine($"                        new {{ type = \"image_url\", image_url = new {{ url = $\"data:image/png;base64,{{b64}}\" }} }} }} }} }} }});");
+            sb.AppendLine($"            var resp = http.PostAsync(\"https://api.openai.com/v1/chat/completions\",");
+            sb.AppendLine($"                new StringContent(body, System.Text.Encoding.UTF8, \"application/json\")).Result;");
+            sb.AppendLine($"            var json = JsonDocument.Parse(resp.Content.ReadAsStringAsync().Result);");
+            sb.AppendLine($"            {primaryResult} = json.RootElement.GetProperty(\"choices\")[0].GetProperty(\"message\").GetProperty(\"content\").GetString() ?? \"Error\";");
+            sb.AppendLine($"        }}");
+            if (resultVars.Count > 1)
+            {
+                sb.AppendLine($"        var {resultVars[1]} = {input1}.Clone();");
+                matVars.Add(resultVars[1]);
+                sb.AppendLine($"        Cv2.PutText({resultVars[1]}, {primaryResult}.Length > 80 ? {primaryResult}[..80] : {primaryResult}, new Point(10, 30), HersheyFonts.HersheySimplex, 0.6, new Scalar(0, 255, 0), 1);");
+            }
+        }
+        else if (MatchName(name, "Gemini Vision"))
+        {
+            var apiKey = GetPropStr(props, "ApiKey");
+            var model = GetPropStr(props, "Model");
+            if (string.IsNullOrEmpty(model)) model = "gemini-2.0-flash";
+            var maxTokens = GetPropNum(props, "MaxTokens", 1024);
+            var temperature = GetPropDouble(props, "Temperature", 0.7);
+            var systemPrompt = GetPropStr(props, "SystemPrompt");
+            if (string.IsNullOrEmpty(systemPrompt)) systemPrompt = "You are a helpful vision assistant.";
+            sb.AppendLine($"        // Google Gemini Vision API call");
+            sb.AppendLine($"        string {primaryResult};");
+            var promptInput2 = (node.Inputs.Count > 1 && inputVarMap.ContainsKey(node.Inputs[1].Name))
+                ? inputVarMap[node.Inputs[1].Name]
+                : CStr("Describe this image.");
+            sb.AppendLine($"        {{");
+            sb.AppendLine($"            var imgBytes = {input1}.ToBytes(\".png\");");
+            sb.AppendLine($"            var b64 = Convert.ToBase64String(imgBytes);");
+            sb.AppendLine($"            var apiKey = {CStr(apiKey)};");
+            sb.AppendLine($"            if (string.IsNullOrEmpty(apiKey)) apiKey = Environment.GetEnvironmentVariable(\"GEMINI_API_KEY\") ?? \"\";");
+            sb.AppendLine($"            using var http = new HttpClient();");
+            sb.AppendLine($"            var body = JsonSerializer.Serialize(new {{");
+            sb.AppendLine($"                system_instruction = new {{ parts = new[] {{ new {{ text = {CStr(systemPrompt)} }} }} }},");
+            sb.AppendLine($"                generationConfig = new {{ maxOutputTokens = {maxTokens}, temperature = {temperature} }},");
+            sb.AppendLine($"                contents = new[] {{ new {{ parts = new object[] {{");
+            sb.AppendLine($"                    new {{ text = (string){promptInput2} }},");
+            sb.AppendLine($"                    new {{ inline_data = new {{ mime_type = \"image/png\", data = b64 }} }} }} }} }} }});");
+            sb.AppendLine($"            var resp = http.PostAsync($\"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={{apiKey}}\",");
+            sb.AppendLine($"                new StringContent(body, System.Text.Encoding.UTF8, \"application/json\")).Result;");
+            sb.AppendLine($"            var json = JsonDocument.Parse(resp.Content.ReadAsStringAsync().Result);");
+            sb.AppendLine($"            {primaryResult} = json.RootElement.GetProperty(\"candidates\")[0].GetProperty(\"content\").GetProperty(\"parts\")[0].GetProperty(\"text\").GetString() ?? \"Error\";");
+            sb.AppendLine($"        }}");
+            if (resultVars.Count > 1)
+            {
+                sb.AppendLine($"        var {resultVars[1]} = {input1}.Clone();");
+                matVars.Add(resultVars[1]);
+                sb.AppendLine($"        Cv2.PutText({resultVars[1]}, {primaryResult}.Length > 80 ? {primaryResult}[..80] : {primaryResult}, new Point(10, 30), HersheyFonts.HersheySimplex, 0.6, new Scalar(0, 255, 0), 1);");
+            }
+        }
+        else if (MatchName(name, "Claude Vision"))
+        {
+            var apiKey = GetPropStr(props, "ApiKey");
+            var model = GetPropStr(props, "Model");
+            if (string.IsNullOrEmpty(model)) model = "claude-sonnet-4-20250514";
+            var maxTokens = GetPropNum(props, "MaxTokens", 1024);
+            var temperature = GetPropDouble(props, "Temperature", 0.7);
+            var systemPrompt = GetPropStr(props, "SystemPrompt");
+            if (string.IsNullOrEmpty(systemPrompt)) systemPrompt = "You are a helpful vision assistant.";
+            sb.AppendLine($"        // Anthropic Claude Vision API call");
+            sb.AppendLine($"        string {primaryResult};");
+            var promptInput3 = (node.Inputs.Count > 1 && inputVarMap.ContainsKey(node.Inputs[1].Name))
+                ? inputVarMap[node.Inputs[1].Name]
+                : CStr("Describe this image.");
+            sb.AppendLine($"        {{");
+            sb.AppendLine($"            var imgBytes = {input1}.ToBytes(\".png\");");
+            sb.AppendLine($"            var b64 = Convert.ToBase64String(imgBytes);");
+            sb.AppendLine($"            var apiKey = {CStr(apiKey)};");
+            sb.AppendLine($"            if (string.IsNullOrEmpty(apiKey)) apiKey = Environment.GetEnvironmentVariable(\"ANTHROPIC_API_KEY\") ?? \"\";");
+            sb.AppendLine($"            using var http = new HttpClient();");
+            sb.AppendLine($"            http.DefaultRequestHeaders.Add(\"x-api-key\", apiKey);");
+            sb.AppendLine($"            http.DefaultRequestHeaders.Add(\"anthropic-version\", \"2023-06-01\");");
+            sb.AppendLine($"            var body = JsonSerializer.Serialize(new {{ model = {CStr(model)}, max_tokens = {maxTokens}, temperature = {temperature},");
+            sb.AppendLine($"                system = {CStr(systemPrompt)},");
+            sb.AppendLine($"                messages = new[] {{ new {{ role = \"user\", content = new object[] {{");
+            sb.AppendLine($"                    new {{ type = \"image\", source = new {{ type = \"base64\", media_type = \"image/png\", data = b64 }} }},");
+            sb.AppendLine($"                    new {{ type = \"text\", text = (string){promptInput3} }} }} }} }} }});");
+            sb.AppendLine($"            var resp = http.PostAsync(\"https://api.anthropic.com/v1/messages\",");
+            sb.AppendLine($"                new StringContent(body, System.Text.Encoding.UTF8, \"application/json\")).Result;");
+            sb.AppendLine($"            var json = JsonDocument.Parse(resp.Content.ReadAsStringAsync().Result);");
+            sb.AppendLine($"            {primaryResult} = json.RootElement.GetProperty(\"content\")[0].GetProperty(\"text\").GetString() ?? \"Error\";");
+            sb.AppendLine($"        }}");
+            if (resultVars.Count > 1)
+            {
+                sb.AppendLine($"        var {resultVars[1]} = {input1}.Clone();");
+                matVars.Add(resultVars[1]);
+                sb.AppendLine($"        Cv2.PutText({resultVars[1]}, {primaryResult}.Length > 80 ? {primaryResult}[..80] : {primaryResult}, new Point(10, 30), HersheyFonts.HersheySimplex, 0.6, new Scalar(0, 255, 0), 1);");
+            }
         }
 
         // =====================================================================

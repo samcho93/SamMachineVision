@@ -13,7 +13,7 @@ namespace MVXTester.Nodes.AI;
 /// Sends image + prompt to OpenAI and returns the text response.
 /// Requires an API key from platform.openai.com
 /// </summary>
-[NodeInfo("OpenAI Vision", NodeCategories.AI,
+[NodeInfo("OpenAI Vision", NodeCategories.LLMVLM,
     Description = "Analyze images using OpenAI GPT-4o Vision API")]
 public class OpenAIVisionNode : BaseNode
 {

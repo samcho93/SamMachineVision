@@ -145,7 +145,7 @@ public static class CategoryColorHelper
         [NodeCategories.MediaPipe]    = Frozen(0xB4, 0x7E, 0xF5),
         [NodeCategories.YOLO]         = Frozen(0xFF, 0x8C, 0x42),
         [NodeCategories.OCR]          = Frozen(0x4E, 0xC9, 0xB0),
-        [NodeCategories.AI]           = Frozen(0xE0, 0x6C, 0x9F),
+        [NodeCategories.LLMVLM]       = Frozen(0xE0, 0x6C, 0x9F),
         [NodeCategories.Function]     = Frozen(0xFF, 0xCF, 0x48),
     };
 
