@@ -9,6 +9,7 @@ namespace MVXTester.Nodes.MediaPipe;
 /// <summary>
 /// Detects 33 body pose landmarks using MediaPipe BlazePose.
 /// Two-stage pipeline: pose detection → pose landmark extraction.
+/// Uses flat array access for safe tensor handling.
 /// </summary>
 [NodeInfo("MP Pose Landmark", NodeCategories.MediaPipe,
     Description = "Detect 33 body pose landmarks using MediaPipe BlazePose")]
@@ -30,7 +31,6 @@ public class MPPoseLandmarkNode : BaseNode
     private const int LmInputSize = 256;
     private const int NumPoseLandmarks = 33;
 
-    // Landmark names for labeling
     private static readonly string[] LandmarkNames =
     {
         "nose", "left_eye_inner", "left_eye", "left_eye_outer",
@@ -77,22 +77,22 @@ public class MPPoseLandmarkNode : BaseNode
             if (result.Channels() == 1)
                 Cv2.CvtColor(result, result, ColorConversionCodes.GRAY2BGR);
 
-            // Stage 1: Pose Detection - detect body ROI
+            // Stage 1: Pose Detection - find body ROI
             Rect bodyRoi;
             float detScore;
             if (!DetectBodyRoi(image, threshold, out bodyRoi, out detScore))
             {
-                // Fallback: use entire image as ROI
                 bodyRoi = new Rect(0, 0, image.Width, image.Height);
                 detScore = 0;
             }
 
+            // Make square ROI with padding
+            var squareRoi = MakeSquareRoi(bodyRoi, 0.25f, image.Width, image.Height);
+
             // Stage 2: Pose Landmark
             var lmSession = MediaPipeHelper.GetSession(PoseLmModelFile);
 
-            // Crop body ROI with padding
-            var paddedRoi = PadRect(bodyRoi, 0.25f, image.Width, image.Height);
-            using var roiMat = new Mat(image, paddedRoi);
+            using var roiMat = new Mat(image, squareRoi);
 
             var lmInputData = MediaPipeHelper.PreprocessImageNHWC(roiMat, LmInputSize, LmInputSize);
             var lmInputName = lmSession.InputNames[0];
@@ -104,10 +104,10 @@ public class MPPoseLandmarkNode : BaseNode
             using var lmResults = lmSession.Run(lmInputs);
             var lmOutputs = lmResults.ToList();
 
-            // Parse landmarks output - use flat array for safe access
+            // Flat array for safe access
             var lmFlat = MediaPipeHelper.GetFlatArray(lmOutputs[0].AsTensor<float>());
 
-            // Check pose confidence if available
+            // Check confidence
             float poseConfidence = 1.0f;
             if (lmOutputs.Count > 1)
             {
@@ -117,9 +117,7 @@ public class MPPoseLandmarkNode : BaseNode
 
             int totalValues = lmFlat.Length;
             int valuesPerLandmark = totalValues / NumPoseLandmarks;
-            if (valuesPerLandmark < 2) valuesPerLandmark = 5; // default
-
-            bool isNormalized = MediaPipeHelper.IsNormalizedCoordinates(lmFlat, NumPoseLandmarks, valuesPerLandmark);
+            if (valuesPerLandmark < 2) valuesPerLandmark = 5;
 
             var landmarks = new Point[NumPoseLandmarks];
             var visibility = new double[NumPoseLandmarks];
@@ -132,18 +130,10 @@ public class MPPoseLandmarkNode : BaseNode
                 float lx = lmFlat[baseIdx];
                 float ly = lmFlat[baseIdx + 1];
 
-                if (isNormalized)
-                {
-                    landmarks[i] = new Point(
-                        (int)(lx * paddedRoi.Width + paddedRoi.X),
-                        (int)(ly * paddedRoi.Height + paddedRoi.Y));
-                }
-                else
-                {
-                    landmarks[i] = new Point(
-                        (int)(lx * paddedRoi.Width / LmInputSize + paddedRoi.X),
-                        (int)(ly * paddedRoi.Height / LmInputSize + paddedRoi.Y));
-                }
+                // MediaPipe outputs pixel coords in [0, inputSize] space
+                landmarks[i] = new Point(
+                    (int)(lx / LmInputSize * squareRoi.Width + squareRoi.X),
+                    (int)(ly / LmInputSize * squareRoi.Height + squareRoi.Y));
 
                 // Visibility (index 3 if present)
                 if (valuesPerLandmark >= 4 && baseIdx + 3 < totalValues)
@@ -155,7 +145,6 @@ public class MPPoseLandmarkNode : BaseNode
             // Draw skeleton
             if (drawSkel)
             {
-                // Draw connections with visibility check
                 foreach (var conn in MediaPipeHelper.PoseConnections)
                 {
                     if (conn.Length < 2) continue;
@@ -167,13 +156,12 @@ public class MPPoseLandmarkNode : BaseNode
                         new Scalar(0, 255, 128), 2, LineTypes.AntiAlias);
                 }
 
-                // Draw landmark points
                 for (int i = 0; i < NumPoseLandmarks; i++)
                 {
                     if (visibility[i] < 0.5) continue;
                     var color = i < 11
-                        ? new Scalar(255, 128, 0)  // Face landmarks: blue-ish
-                        : new Scalar(0, 255, 0);    // Body landmarks: green
+                        ? new Scalar(255, 128, 0)
+                        : new Scalar(0, 255, 0);
 
                     Cv2.Circle(result, landmarks[i], 4, color, -1, LineTypes.AntiAlias);
                     Cv2.Circle(result, landmarks[i], 4, new Scalar(255, 255, 255), 1, LineTypes.AntiAlias);
@@ -192,7 +180,7 @@ public class MPPoseLandmarkNode : BaseNode
                 }
             }
 
-            // Status label
+            // Status
             var statusText = poseConfidence > threshold
                 ? $"Pose: {poseConfidence:P0}"
                 : "No pose detected";
@@ -219,8 +207,7 @@ public class MPPoseLandmarkNode : BaseNode
     }
 
     /// <summary>
-    /// Stage 1: Detect body bounding box using pose detection model.
-    /// Falls back to full image if detection model is not available.
+    /// Stage 1: Detect body bounding box using flat array access.
     /// </summary>
     private bool DetectBodyRoi(Mat image, float threshold, out Rect roi, out float score)
     {
@@ -242,16 +229,19 @@ public class MPPoseLandmarkNode : BaseNode
 
             if (detOutputs.Count < 2) return false;
 
-            var regressors = detOutputs[0].AsTensor<float>();
-            var scores = detOutputs[1].AsTensor<float>();
+            // Use flat arrays for safe access
+            var regFlat = MediaPipeHelper.GetFlatArray(detOutputs[0].AsTensor<float>());
+            var scoreFlat = MediaPipeHelper.GetFlatArray(detOutputs[1].AsTensor<float>());
 
-            int numAnchors = (int)(scores.Length / 1);
+            int numAnchors = scoreFlat.Length;
+            int regStride = numAnchors > 0 ? regFlat.Length / numAnchors : 12;
+
             float bestScore = 0;
             int bestIdx = -1;
 
             for (int i = 0; i < numAnchors; i++)
             {
-                float s = MediaPipeHelper.Sigmoid(scores[0, i, 0]);
+                float s = MediaPipeHelper.Sigmoid(scoreFlat[i]);
                 if (s > bestScore)
                 {
                     bestScore = s;
@@ -261,11 +251,13 @@ public class MPPoseLandmarkNode : BaseNode
 
             if (bestIdx < 0 || bestScore < threshold) return false;
 
-            // Simple center-based decode (approximate)
-            float cx = regressors[0, bestIdx, 0] / DetInputSize;
-            float cy = regressors[0, bestIdx, 1] / DetInputSize;
-            float w = regressors[0, bestIdx, 2] / DetInputSize;
-            float h = regressors[0, bestIdx, 3] / DetInputSize;
+            int regBase = bestIdx * regStride;
+            if (regBase + 3 >= regFlat.Length) return false;
+
+            float cx = regFlat[regBase + 0] / DetInputSize;
+            float cy = regFlat[regBase + 1] / DetInputSize;
+            float w = regFlat[regBase + 2] / DetInputSize;
+            float h = regFlat[regBase + 3] / DetInputSize;
 
             roi = new Rect(
                 (int)((cx - w / 2) * image.Width),
@@ -279,20 +271,29 @@ public class MPPoseLandmarkNode : BaseNode
         }
         catch
         {
-            // If pose detection model not available, use full image
             return false;
         }
     }
 
-    private static Rect PadRect(Rect r, float padRatio, int imgW, int imgH)
+    /// <summary>
+    /// Create square ROI centered on detection box with padding.
+    /// </summary>
+    private static Rect MakeSquareRoi(Rect box, float padRatio, int imgW, int imgH)
     {
-        int padX = (int)(r.Width * padRatio);
-        int padY = (int)(r.Height * padRatio);
-        int x = Math.Max(0, r.X - padX);
-        int y = Math.Max(0, r.Y - padY);
-        int w = Math.Min(r.Width + padX * 2, imgW - x);
-        int h = Math.Min(r.Height + padY * 2, imgH - y);
-        return new Rect(x, y, Math.Max(1, w), Math.Max(1, h));
+        int cx = box.X + box.Width / 2;
+        int cy = box.Y + box.Height / 2;
+        int maxSide = Math.Max(box.Width, box.Height);
+
+        int padded = (int)(maxSide * (1 + padRatio));
+        int half = padded / 2;
+
+        int x = Math.Max(0, cx - half);
+        int y = Math.Max(0, cy - half);
+        int w = Math.Min(padded, imgW - x);
+        int h = Math.Min(padded, imgH - y);
+
+        int side = Math.Min(w, h);
+        return new Rect(x, y, Math.Max(1, side), Math.Max(1, side));
     }
 
     private static Rect ClampRect(Rect r, int imgW, int imgH)

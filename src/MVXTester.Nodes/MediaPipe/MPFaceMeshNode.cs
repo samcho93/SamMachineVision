@@ -75,8 +75,8 @@ public class MPFaceMeshNode : BaseNode
             // Stage 2: Face Landmark on cropped face
             var lmSession = MediaPipeHelper.GetSession(FaceLmModelFile);
 
-            // Crop face ROI with padding for better landmark detection
-            var paddedRoi = PadRect(faceRoi, 0.3f, image.Width, image.Height);
+            // Square ROI with padding for better landmark detection
+            var paddedRoi = MakeSquareRoi(faceRoi, 0.3f, image.Width, image.Height);
             using var roiMat = new Mat(image, paddedRoi);
 
             var lmInputData = MediaPipeHelper.PreprocessImageNHWC(roiMat, LmInputSize, LmInputSize);
@@ -114,21 +114,7 @@ public class MPFaceMeshNode : BaseNode
 
             // Extract 468 landmarks
             int totalValues = lmFlat.Length;
-            int stride = Math.Max(1, totalValues / NumLandmarks);
-            bool isNormalized = MediaPipeHelper.IsNormalizedCoordinates(lmFlat, NumLandmarks, stride);
-
-            // Scale factors: map from landmark space → ROI → original image
-            float roiScaleX, roiScaleY;
-            if (isNormalized)
-            {
-                roiScaleX = paddedRoi.Width;
-                roiScaleY = paddedRoi.Height;
-            }
-            else
-            {
-                roiScaleX = paddedRoi.Width / (float)LmInputSize;
-                roiScaleY = paddedRoi.Height / (float)LmInputSize;
-            }
+            int stride = Math.Max(1, totalValues / NumLandmarks); // typically 3 (x, y, z)
 
             var landmarks = new Point[NumLandmarks];
             for (int i = 0; i < NumLandmarks && i * stride + 1 < totalValues; i++)
@@ -136,9 +122,10 @@ public class MPFaceMeshNode : BaseNode
                 float x = lmFlat[i * stride];
                 float y = lmFlat[i * stride + 1];
 
+                // MediaPipe outputs pixel coords in [0, inputSize] space
                 landmarks[i] = new Point(
-                    (int)(x * roiScaleX + paddedRoi.X),
-                    (int)(y * roiScaleY + paddedRoi.Y));
+                    (int)(x / LmInputSize * paddedRoi.Width + paddedRoi.X),
+                    (int)(y / LmInputSize * paddedRoi.Height + paddedRoi.Y));
             }
 
             // Draw contours
@@ -262,15 +249,26 @@ public class MPFaceMeshNode : BaseNode
         }
     }
 
-    private static Rect PadRect(Rect r, float padRatio, int imgW, int imgH)
+    /// <summary>
+    /// Create square ROI centered on detection box with padding.
+    /// Square crop prevents distortion when resizing to the model's square input.
+    /// </summary>
+    private static Rect MakeSquareRoi(Rect box, float padRatio, int imgW, int imgH)
     {
-        int padX = (int)(r.Width * padRatio);
-        int padY = (int)(r.Height * padRatio);
-        int x = Math.Max(0, r.X - padX);
-        int y = Math.Max(0, r.Y - padY);
-        int w = Math.Min(r.Width + padX * 2, imgW - x);
-        int h = Math.Min(r.Height + padY * 2, imgH - y);
-        return new Rect(x, y, Math.Max(1, w), Math.Max(1, h));
+        int cx = box.X + box.Width / 2;
+        int cy = box.Y + box.Height / 2;
+        int maxSide = Math.Max(box.Width, box.Height);
+
+        int padded = (int)(maxSide * (1 + padRatio));
+        int half = padded / 2;
+
+        int x = Math.Max(0, cx - half);
+        int y = Math.Max(0, cy - half);
+        int w = Math.Min(padded, imgW - x);
+        int h = Math.Min(padded, imgH - y);
+
+        int side = Math.Min(w, h);
+        return new Rect(x, y, Math.Max(1, side), Math.Max(1, side));
     }
 
     private static Rect ClampRect(Rect r, int imgW, int imgH)

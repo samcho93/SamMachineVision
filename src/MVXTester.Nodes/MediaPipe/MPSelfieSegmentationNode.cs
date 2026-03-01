@@ -64,30 +64,44 @@ public class MPSelfieSegmentationNode : BaseNode
             var blurSize = _blurStrength.GetValue<int>();
             if (blurSize % 2 == 0) blurSize++; // Must be odd
 
-            // Preprocess: resize to 256x256, RGB, [0,1]
-            var inputData = MediaPipeHelper.PreprocessImageNHWC(image, InputSize, InputSize);
+            // Detect input format from model metadata (NCHW vs NHWC)
             var inputName = session.InputNames[0];
+            var inputShape = session.InputMetadata[inputName].Dimensions;
+            bool isNCHW = inputShape.Length >= 4 && inputShape[1] == 3;
+
+            float[] inputData;
+            int[] tensorShape;
+            if (isNCHW)
+            {
+                inputData = MediaPipeHelper.PreprocessImageNCHW(image, InputSize, InputSize);
+                tensorShape = new[] { 1, 3, InputSize, InputSize };
+            }
+            else
+            {
+                inputData = MediaPipeHelper.PreprocessImageNHWC(image, InputSize, InputSize);
+                tensorShape = new[] { 1, InputSize, InputSize, 3 };
+            }
+
             var inputs = new List<NamedOnnxValue>
             {
-                MediaPipeHelper.CreateTensor(inputName, inputData, new[] { 1, InputSize, InputSize, 3 })
+                MediaPipeHelper.CreateTensor(inputName, inputData, tensorShape)
             };
 
             // Run inference
             using var results = session.Run(inputs);
             var outputs = results.ToList();
 
-            // Parse output: segmentation mask [1, 256, 256, 1]
-            var maskData = outputs[0].AsTensor<float>();
+            // Parse output: segmentation mask - use flat array for safe access
+            var maskFlat = MediaPipeHelper.GetFlatArray(outputs[0].AsTensor<float>());
 
-            // Create mask Mat
+            // Create mask Mat from flat array
             using var smallMask = new Mat(InputSize, InputSize, MatType.CV_32FC1);
             for (int y = 0; y < InputSize; y++)
             {
                 for (int x = 0; x < InputSize; x++)
                 {
-                    float val = maskData.Length > y * InputSize + x
-                        ? maskData[0, y, x, 0]
-                        : 0;
+                    int idx = y * InputSize + x;
+                    float val = idx < maskFlat.Length ? maskFlat[idx] : 0;
                     smallMask.Set(y, x, val);
                 }
             }

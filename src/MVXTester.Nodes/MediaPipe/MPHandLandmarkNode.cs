@@ -9,6 +9,7 @@ namespace MVXTester.Nodes.MediaPipe;
 /// <summary>
 /// Detects hand landmarks (21 points per hand) using MediaPipe.
 /// Two-stage pipeline: palm detection → hand landmark extraction.
+/// Uses flat array access for safe tensor handling regardless of output shape.
 /// </summary>
 [NodeInfo("MP Hand Landmark", NodeCategories.MediaPipe,
     Description = "Detect 21 hand landmarks using MediaPipe")]
@@ -61,57 +62,8 @@ public class MPHandLandmarkNode : BaseNode
             if (result.Channels() == 1)
                 Cv2.CvtColor(result, result, ColorConversionCodes.GRAY2BGR);
 
-            // Stage 1: Palm Detection
-            var palmSession = MediaPipeHelper.GetSession(PalmModelFile);
-            var palmInputData = MediaPipeHelper.PreprocessImageNHWC(image, PalmInputSize, PalmInputSize);
-            var palmInputName = palmSession.InputNames[0];
-            var palmInputs = new List<NamedOnnxValue>
-            {
-                MediaPipeHelper.CreateTensor(palmInputName, palmInputData, new[] { 1, PalmInputSize, PalmInputSize, 3 })
-            };
-
-            using var palmResults = palmSession.Run(palmInputs);
-            var palmOutputs = palmResults.ToList();
-
-            var palmRegressors = palmOutputs[0].AsTensor<float>();
-            var palmScores = palmOutputs[1].AsTensor<float>();
-
-            var palmAnchors = MediaPipeHelper.GetPalmDetectionAnchors();
-            int numPalmAnchors = palmAnchors.GetLength(0);
-
-            // Decode palm detections
-            var palmDetections = new List<(Rect Box, float Score)>();
-            for (int i = 0; i < numPalmAnchors; i++)
-            {
-                float score = MediaPipeHelper.Sigmoid(palmScores[0, i, 0]);
-                if (score < threshold) continue;
-
-                float anchorCx = palmAnchors[i, 0];
-                float anchorCy = palmAnchors[i, 1];
-
-                float cx = anchorCx + palmRegressors[0, i, 0] / PalmInputSize;
-                float cy = anchorCy + palmRegressors[0, i, 1] / PalmInputSize;
-                float w = palmRegressors[0, i, 2] / PalmInputSize;
-                float h = palmRegressors[0, i, 3] / PalmInputSize;
-
-                // Add padding for hand ROI (hand is larger than palm)
-                float pad = 0.5f;
-                w *= (1 + pad);
-                h *= (1 + pad);
-
-                int x1 = (int)((cx - w / 2) * image.Width);
-                int y1 = (int)((cy - h / 2) * image.Height);
-                int bw = (int)(w * image.Width);
-                int bh = (int)(h * image.Height);
-
-                x1 = Math.Max(0, x1);
-                y1 = Math.Max(0, y1);
-                bw = Math.Min(bw, image.Width - x1);
-                bh = Math.Min(bh, image.Height - y1);
-
-                if (bw > 10 && bh > 10)
-                    palmDetections.Add((new Rect(x1, y1, bw, bh), score));
-            }
+            // Stage 1: Palm Detection (flat array access for safety)
+            var palmDetections = DetectPalms(image, threshold);
 
             var nmsHands = MediaPipeHelper.NonMaxSuppression(palmDetections, 0.3f);
             if (nmsHands.Count > maxHands)
@@ -123,13 +75,12 @@ public class MPHandLandmarkNode : BaseNode
 
             foreach (var (palmBox, palmScore, _) in nmsHands)
             {
-                // Crop hand ROI from original image
-                var safeBox = ClampRect(palmBox, image.Width, image.Height);
-                if (safeBox.Width < 10 || safeBox.Height < 10) continue;
+                // Make square ROI (prevent distortion when resizing to 224x224)
+                var squareRoi = MakeSquareRoi(palmBox, 0.6f, image.Width, image.Height);
+                if (squareRoi.Width < 10 || squareRoi.Height < 10) continue;
 
-                using var handRoi = new Mat(image, safeBox);
+                using var handRoi = new Mat(image, squareRoi);
 
-                // Preprocess hand ROI
                 var handInputData = MediaPipeHelper.PreprocessImageNHWC(handRoi, HandInputSize, HandInputSize);
                 var handInputName = handSession.InputNames[0];
                 var handInputs = new List<NamedOnnxValue>
@@ -140,10 +91,10 @@ public class MPHandLandmarkNode : BaseNode
                 using var handResults = handSession.Run(handInputs);
                 var handOutputs = handResults.ToList();
 
-                // Parse landmarks - use flat array for safe access
+                // Parse landmarks - flat array for safe access
                 var lmFlat = MediaPipeHelper.GetFlatArray(handOutputs[0].AsTensor<float>());
 
-                // Check hand presence if available
+                // Check hand presence/confidence
                 float handPresence = 1.0f;
                 if (handOutputs.Count > 1)
                 {
@@ -153,37 +104,25 @@ public class MPHandLandmarkNode : BaseNode
 
                 if (handPresence < threshold * 0.5f) continue;
 
-                // Extract landmarks and map back to original image coordinates
+                // Extract landmarks and map to original image coordinates
                 var handLandmarks = new Point[NumHandLandmarks];
                 int totalValues = lmFlat.Length;
-                int stride = Math.Max(1, totalValues / NumHandLandmarks);
-
-                bool isNormalized = MediaPipeHelper.IsNormalizedCoordinates(lmFlat, NumHandLandmarks, stride);
+                int stride = Math.Max(1, totalValues / NumHandLandmarks); // typically 3 (x, y, z)
 
                 for (int i = 0; i < NumHandLandmarks && i * stride + 1 < totalValues; i++)
                 {
                     float lx = lmFlat[i * stride];
                     float ly = lmFlat[i * stride + 1];
 
-                    if (isNormalized)
-                    {
-                        // Normalized [0,1] → original image coordinates
-                        handLandmarks[i] = new Point(
-                            (int)(lx * safeBox.Width + safeBox.X),
-                            (int)(ly * safeBox.Height + safeBox.Y));
-                    }
-                    else
-                    {
-                        // Pixel space [0,HandInputSize] → original image coordinates
-                        handLandmarks[i] = new Point(
-                            (int)(lx * safeBox.Width / HandInputSize + safeBox.X),
-                            (int)(ly * safeBox.Height / HandInputSize + safeBox.Y));
-                    }
+                    // MediaPipe landmark models output pixel coords in [0, inputSize] space
+                    handLandmarks[i] = new Point(
+                        (int)(lx / HandInputSize * squareRoi.Width + squareRoi.X),
+                        (int)(ly / HandInputSize * squareRoi.Height + squareRoi.Y));
                 }
 
                 allLandmarks.AddRange(handLandmarks);
 
-                // Draw on result
+                // Draw
                 if (drawSkel)
                 {
                     MediaPipeHelper.DrawLandmarks(result, handLandmarks,
@@ -191,13 +130,12 @@ public class MPHandLandmarkNode : BaseNode
                         new Scalar(0, 255, 0), 2, 4);
                 }
 
-                // Draw palm box
-                Cv2.Rectangle(result, safeBox, new Scalar(255, 200, 0), 1);
+                Cv2.Rectangle(result, squareRoi, new Scalar(255, 200, 0), 1);
             }
 
+            // Status text
             if (nmsHands.Count == 0)
             {
-                // No hands detected label
                 Cv2.PutText(result, "No hands detected", new Point(10, 25),
                     HersheyFonts.HersheySimplex, 0.6, new Scalar(0, 0, 255), 2);
             }
@@ -223,12 +161,97 @@ public class MPHandLandmarkNode : BaseNode
         }
     }
 
-    private static Rect ClampRect(Rect r, int imgW, int imgH)
+    /// <summary>
+    /// Stage 1: Detect palms using flat array access for safe tensor handling.
+    /// </summary>
+    private List<(Rect Box, float Score)> DetectPalms(Mat image, float threshold)
     {
-        int x = Math.Max(0, r.X);
-        int y = Math.Max(0, r.Y);
-        int w = Math.Min(r.Width, imgW - x);
-        int h = Math.Min(r.Height, imgH - y);
-        return new Rect(x, y, Math.Max(1, w), Math.Max(1, h));
+        var detections = new List<(Rect Box, float Score)>();
+
+        try
+        {
+            var palmSession = MediaPipeHelper.GetSession(PalmModelFile);
+            var palmInputData = MediaPipeHelper.PreprocessImageNHWC(image, PalmInputSize, PalmInputSize);
+            var palmInputName = palmSession.InputNames[0];
+            var palmInputs = new List<NamedOnnxValue>
+            {
+                MediaPipeHelper.CreateTensor(palmInputName, palmInputData, new[] { 1, PalmInputSize, PalmInputSize, 3 })
+            };
+
+            using var palmResults = palmSession.Run(palmInputs);
+            var palmOutputs = palmResults.ToList();
+
+            if (palmOutputs.Count < 2) return detections;
+
+            // Use flat arrays for safe access regardless of tensor shape
+            var regFlat = MediaPipeHelper.GetFlatArray(palmOutputs[0].AsTensor<float>());
+            var scoreFlat = MediaPipeHelper.GetFlatArray(palmOutputs[1].AsTensor<float>());
+
+            var palmAnchors = MediaPipeHelper.GetPalmDetectionAnchors();
+            int numAnchors = palmAnchors.GetLength(0);
+
+            // Regressor stride: values per anchor (typically 18 = 4 bbox + 7 keypoints * 2)
+            int regStride = numAnchors > 0 ? regFlat.Length / numAnchors : 18;
+
+            for (int i = 0; i < numAnchors && i < scoreFlat.Length; i++)
+            {
+                float score = MediaPipeHelper.Sigmoid(scoreFlat[i]);
+                if (score < threshold) continue;
+
+                float anchorCx = palmAnchors[i, 0];
+                float anchorCy = palmAnchors[i, 1];
+
+                int regBase = i * regStride;
+                if (regBase + 3 >= regFlat.Length) continue;
+
+                float cx = anchorCx + regFlat[regBase + 0] / PalmInputSize;
+                float cy = anchorCy + regFlat[regBase + 1] / PalmInputSize;
+                float w = regFlat[regBase + 2] / PalmInputSize;
+                float h = regFlat[regBase + 3] / PalmInputSize;
+
+                int x1 = (int)((cx - w / 2) * image.Width);
+                int y1 = (int)((cy - h / 2) * image.Height);
+                int bw = (int)(w * image.Width);
+                int bh = (int)(h * image.Height);
+
+                x1 = Math.Max(0, x1);
+                y1 = Math.Max(0, y1);
+                bw = Math.Min(bw, image.Width - x1);
+                bh = Math.Min(bh, image.Height - y1);
+
+                if (bw > 10 && bh > 10)
+                    detections.Add((new Rect(x1, y1, bw, bh), score));
+            }
+        }
+        catch
+        {
+            // Palm detection failed, return empty
+        }
+
+        return detections;
+    }
+
+    /// <summary>
+    /// Create a square ROI centered on the detection box with padding.
+    /// Square crop prevents distortion when resizing to the model's square input.
+    /// </summary>
+    private static Rect MakeSquareRoi(Rect box, float padRatio, int imgW, int imgH)
+    {
+        int cx = box.X + box.Width / 2;
+        int cy = box.Y + box.Height / 2;
+        int maxSide = Math.Max(box.Width, box.Height);
+
+        // Apply padding
+        int padded = (int)(maxSide * (1 + padRatio));
+        int half = padded / 2;
+
+        int x = Math.Max(0, cx - half);
+        int y = Math.Max(0, cy - half);
+        int w = Math.Min(padded, imgW - x);
+        int h = Math.Min(padded, imgH - y);
+
+        // Keep square by using the smaller dimension
+        int side = Math.Min(w, h);
+        return new Rect(x, y, Math.Max(1, side), Math.Max(1, side));
     }
 }

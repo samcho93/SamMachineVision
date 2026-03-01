@@ -67,16 +67,27 @@ public class MPObjectDetectionNode : BaseNode
             var maxDet = _maxDetections.GetValue<int>();
             var nmsThresh = (float)_nmsThreshold.GetValue<double>();
 
-            // Determine input format from model metadata
-            var inputMeta = session.InputMetadata;
+            // Determine input format from model metadata (NCHW vs NHWC)
             var inputName = session.InputNames[0];
-            var inputShape = inputMeta[inputName].Dimensions;
+            var inputShape = session.InputMetadata[inputName].Dimensions;
+            bool isNCHW = inputShape.Length >= 4 && inputShape[1] == 3;
 
-            // Most SSD MobileNet models expect [1, 300, 300, 3] uint8 or float
-            var inputData = MediaPipeHelper.PreprocessImageNHWC(image, InputSize, InputSize);
+            float[] inputData;
+            int[] tensorShape;
+            if (isNCHW)
+            {
+                inputData = MediaPipeHelper.PreprocessImageNCHW(image, InputSize, InputSize);
+                tensorShape = new[] { 1, 3, InputSize, InputSize };
+            }
+            else
+            {
+                inputData = MediaPipeHelper.PreprocessImageNHWC(image, InputSize, InputSize);
+                tensorShape = new[] { 1, InputSize, InputSize, 3 };
+            }
+
             var inputs = new List<NamedOnnxValue>
             {
-                MediaPipeHelper.CreateTensor(inputName, inputData, new[] { 1, InputSize, InputSize, 3 })
+                MediaPipeHelper.CreateTensor(inputName, inputData, tensorShape)
             };
 
             // Run inference
