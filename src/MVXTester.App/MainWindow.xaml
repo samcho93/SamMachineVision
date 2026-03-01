@@ -85,7 +85,7 @@
                     <Button Content="{Binding ThemeIcon}" Command="{Binding ToggleThemeCommand}"
                             Margin="2" ToolTip="Toggle Dark/Light Theme"
                             FontSize="14" Padding="6,2" />
-                    <TextBlock Text="MVXTester"
+                    <TextBlock Text="SamMachineVision"
                                Foreground="{DynamicResource ForegroundDimBrush}"
                                VerticalAlignment="Center"
                                FontSize="13" FontWeight="Bold" Margin="8,0,8,0" />

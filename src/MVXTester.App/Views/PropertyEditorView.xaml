@@ -9,6 +9,7 @@
         <conv:NullToVisibilityConverter x:Key="NullToVis" />
         <conv:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVis" />
         <conv:ObjectToDoubleConverter x:Key="ObjToDouble" />
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
@@ -62,7 +63,8 @@
                 <ItemsControl ItemsSource="{Binding Properties}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:PropertyItem}">
-                            <StackPanel Margin="0,3">
+                            <StackPanel Margin="0,3"
+                                        Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="{Binding Name}" FontSize="10"
                                            Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,0,0,2" />
 

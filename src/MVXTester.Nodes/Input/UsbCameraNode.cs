@@ -11,8 +11,9 @@ public enum UsbCameraBackend
     Auto
 }
 
-[NodeInfo("USB Camera", NodeCategories.Input, Description = "USB/Webcam capture using OpenCvSharp VideoCapture")]
-public class UsbCameraNode : BaseNode, IStreamingSource
+// Hidden from palette - use unified CameraNode instead.
+// Kept for backward compatibility (serialization) and as backend for CameraNode.
+public class UsbCameraNode : BaseNode, IStreamingSource, IDeviceEnumerable
 {
     private OutputPort<Mat> _frameOutput = null!;
     private NodeProperty _deviceList = null!;

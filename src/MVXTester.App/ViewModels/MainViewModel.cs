@@ -25,7 +25,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _nodeCount;
     [ObservableProperty] private string _executionTime = "";
     [ObservableProperty] private bool _autoExecute;
-    [ObservableProperty] private string _title = "MVXTester";
+    [ObservableProperty] private string _title = "SamMachineVision";
     [ObservableProperty] private bool _isPaletteVisible = true;
     [ObservableProperty] private bool _isPropertiesVisible = true;
     [ObservableProperty] private int _selectedRightTab;
@@ -62,7 +62,7 @@ public partial class MainViewModel : ObservableObject
     private void UpdateTitle()
     {
         var name = _currentFilePath != null ? Path.GetFileName(_currentFilePath) : "Untitled";
-        Title = _isDirty ? $"MVXTester - {name} *" : $"MVXTester - {name}";
+        Title = _isDirty ? $"SamMachineVision - {name} *" : $"SamMachineVision - {name}";
     }
 
     public MainViewModel()

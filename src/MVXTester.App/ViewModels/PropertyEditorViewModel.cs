@@ -56,6 +56,12 @@ public partial class PropertyItem : ObservableObject
     [ObservableProperty] private object? _value;
 
     /// <summary>
+    /// Controls visibility of this property in the UI.
+    /// Synced from NodeProperty.IsVisible via VisibilityChanged event.
+    /// </summary>
+    [ObservableProperty] private bool _isVisible = true;
+
+    /// <summary>
     /// Slider-friendly double property that converts to/from the actual Value (boxed int or double).
     /// WPF Slider.Value is double, but PropertyItem.Value can be boxed int — direct binding breaks positioning.
     /// </summary>
@@ -89,6 +95,10 @@ public partial class PropertyItem : ObservableObject
         _ownerNode = ownerNode;
         _value = property.Value;
         _previousValue = property.Value;
+        _isVisible = property.IsVisible;
+
+        // Subscribe to visibility changes (e.g., CameraNode hides irrelevant properties)
+        property.VisibilityChanged += () => IsVisible = property.IsVisible;
 
         if (property.PropertyType == PropertyType.DeviceList)
         {
@@ -116,10 +126,8 @@ public partial class PropertyItem : ObservableObject
     [RelayCommand]
     private void RefreshDevices()
     {
-        if (_ownerNode is MVXTester.Nodes.Input.UsbCameraNode usbNode)
-            usbNode.EnumerateDevices();
-        else if (_ownerNode is MVXTester.Nodes.Input.HikCameraNode hikNode)
-            hikNode.EnumerateDevices();
+        if (_ownerNode is MVXTester.Core.Models.IDeviceEnumerable enumerable)
+            enumerable.EnumerateDevices();
     }
 
     partial void OnValueChanged(object? value)

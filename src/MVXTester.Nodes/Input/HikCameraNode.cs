@@ -29,8 +29,9 @@ public enum HikPixelFormat
 /// HIK Camera node using dynamic assembly loading to avoid startup crash
 /// when MvCameraControl.Net.dll (.NET Framework 4.x) is referenced from .NET 8.
 /// </summary>
-[NodeInfo("HIK Camera", NodeCategories.Input, Description = "HIK GigE camera capture using MvCameraControl.Net SDK")]
-public class HikCameraNode : BaseNode, IStreamingSource
+// Hidden from palette - use unified CameraNode instead.
+// Kept for backward compatibility (serialization) and as backend for CameraNode.
+public class HikCameraNode : BaseNode, IStreamingSource, IDeviceEnumerable
 {
     private InputPort<int> _triggerInput = null!;
     private OutputPort<Mat> _frameOutput = null!;

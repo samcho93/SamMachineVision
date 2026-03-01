@@ -26,8 +26,9 @@ public enum CognexPixelFormat
 ///   • Cognex.Vision.Core.Net.dll         (Image8Grey, pixel memory)
 /// This avoids a compile-time reference to the native VisionPro SDK.
 /// </summary>
-[NodeInfo("Cognex GigE Camera", NodeCategories.Input, Description = "Cognex GigE camera capture using VisionPro SDK")]
-public class CognexGigECameraNode : BaseNode, IStreamingSource
+// Hidden from palette - use unified CameraNode instead.
+// Kept for backward compatibility (serialization) and as backend for CameraNode.
+public class CognexGigECameraNode : BaseNode, IStreamingSource, IDeviceEnumerable
 {
     // ── Ports & properties ──────────────────────────────────────────
     private InputPort<int> _triggerInput = null!;

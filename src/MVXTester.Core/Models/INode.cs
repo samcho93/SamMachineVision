@@ -116,6 +116,15 @@ public interface IBackgroundNode
 }
 
 /// <summary>
+/// Interface for nodes that support device enumeration (cameras, serial ports, etc.).
+/// Used by PropertyEditorViewModel to generically refresh device lists.
+/// </summary>
+public interface IDeviceEnumerable
+{
+    void EnumerateDevices();
+}
+
+/// <summary>
 /// Interface for nodes that can receive mouse events from the execution output window.
 /// </summary>
 public interface IMouseEventReceiver
@@ -220,8 +229,24 @@ public class NodeProperty
         EnumType = enumType;
     }
 
+    /// <summary>
+    /// Controls whether this property is visible in the UI.
+    /// Used for dynamic property visibility (e.g., CameraNode shows different properties per backend).
+    /// </summary>
+    public bool IsVisible { get; private set; } = true;
+
     public event Action? ValueChanged;
     public event Action? OptionsChanged;
+    public event Action? VisibilityChanged;
+
+    public void SetVisible(bool visible)
+    {
+        if (IsVisible != visible)
+        {
+            IsVisible = visible;
+            VisibilityChanged?.Invoke();
+        }
+    }
 
     public void SetValue(object? value)
     {
