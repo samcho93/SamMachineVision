@@ -28,8 +28,17 @@ public class GraphExecutor
     private void ExecuteContinuousCore(NodeGraph graph, CancellationToken cancellationToken,
         Action? onFrameComplete, TimeSpan delay)
     {
-        // Initial force execution
+        // Phase 0: Start background nodes
         var (nodes, conns) = graph.Snapshot();
+        var backgroundNodes = nodes.OfType<IBackgroundNode>().ToList();
+        foreach (var bg in backgroundNodes)
+        {
+            try { bg.StartBackground(cancellationToken); } catch { }
+        }
+
+        try
+        {
+        // Initial force execution
         var order = TopologicalSort(nodes, conns);
         ExecuteNodes(order, true, cancellationToken);
 
@@ -68,7 +77,16 @@ public class GraphExecutor
             if (remaining > TimeSpan.Zero)
             {
                 try { Task.Delay(remaining, cancellationToken).Wait(); }
-                catch { return; }
+                catch { break; }
+            }
+        }
+        }
+        finally
+        {
+            // Stop background nodes
+            foreach (var bg in backgroundNodes)
+            {
+                try { bg.StopBackground(); } catch { }
             }
         }
     }

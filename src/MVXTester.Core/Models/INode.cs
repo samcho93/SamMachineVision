@@ -104,6 +104,18 @@ public interface IBreakSignal
 }
 
 /// <summary>
+/// Interface for nodes that run background operations independently during runtime.
+/// Communication nodes (Serial, TCP) implement this to continuously receive data
+/// on a separate thread while the main execution loop runs.
+/// StartBackground is called when runtime begins, StopBackground when it ends.
+/// </summary>
+public interface IBackgroundNode
+{
+    void StartBackground(CancellationToken ct);
+    void StopBackground();
+}
+
+/// <summary>
 /// Interface for nodes that can receive mouse events from the execution output window.
 /// </summary>
 public interface IMouseEventReceiver
