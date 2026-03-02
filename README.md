@@ -17,7 +17,7 @@
 
 ## 스크린샷
 
-<img width="1380" height="792" alt="image" src="https://github.com/user-attachments/assets/4241d261-60c0-4bb1-ab52-a6f973060417" />
+<img width="800" height="600" alt="image" src="https://github.com/user-attachments/assets/4241d261-60c0-4bb1-ab52-a6f973060417" />
 
 | 구성요소 | 설명 |
 |---------|------|
