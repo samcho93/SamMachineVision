@@ -44,4 +44,11 @@
     </None>
   </ItemGroup>
 
+  <!-- Example projects: copy to output examples/ -->
+  <ItemGroup>
+    <None Include="..\..\examples\*.mvxp" Link="examples\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
