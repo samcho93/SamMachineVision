@@ -1,0 +1,2776 @@
+<!-- ============================================================
+     주제 4: 형상 분석 노드 & 주제 5: 시각화 및 변환
+     Chapters 14-21  |  MVXTester Textbook
+     ============================================================ -->
+
+<div class="chapter-divider" id="topic4">
+  <h1>주제 4: 형상 분석 노드</h1>
+  <p>윤곽선 검출, 특징점 추출, 객체 탐지, 영역 분할 등 이미지 내 형상을 분석하는 노드들을 학습합니다.</p>
+  <div class="divider-toc">
+    <a href="#ch14">Ch 14. Contour</a>
+    <a href="#ch15">Ch 15. Feature Detection</a>
+    <a href="#ch16">Ch 16. Detection</a>
+    <a href="#ch17">Ch 17. Segmentation</a>
+  </div>
+</div>
+
+<div class="chapter" id="ch14">
+
+<h2>Chapter 14. Contour &mdash; 윤곽선 분석</h2>
+
+<p>Contour 카테고리는 이진 이미지에서 윤곽선을 검출하고, 면적, 둘레, 중심점, 외접 도형 등 다양한 형상 정보를 계산하는 13개 노드를 제공합니다.</p>
+
+<h4>FindContours</h4>
+<p>이진 이미지에서 윤곽선(컨투어)을 검출하는 기본 노드입니다. OpenCV의 FindContours 알고리즘으로 모든 객체의 경계를 추출합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">FindContours</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Contours</td><td class="type-col">Point[][]</td><td>출력 Contours</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Mode</td><td>RetrievalModes</td><td>List</td><td>윤곽선 검색 모드 (List, External, Tree 등)</td></tr>
+  <tr><td>Method</td><td>ContourApproxModes</td><td>ApproxSimple</td><td>윤곽선 근사 방법</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>FindContours 노드는 이진 이미지에서 연결 영역의 경계를 Point[][] 형태로 추출합니다. 다채널 입력은 자동으로 그레이스케일 변환됩니다.</p>
+<p>Mode 속성으로 검색 구조를 설정합니다. List는 모든 윤곽선을 평면 리스트로, External은 최외곽만, Tree는 계층 구조를 반환합니다. Method는 점 압축 방식을 제어합니다.</p>
+<p>후속 Contour 분석 노드(ContourArea, BoundingRect, ApproxPoly 등)의 입력으로 직접 연결됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>제조 라인 부품 외형 검사</li>
+  <li>이진화 후 객체 개수 파악</li>
+  <li>형상 기반 분류 전처리</li>
+  <li>결함 영역 경계 추출</li>
+</ul>
+
+<h4>DrawContours</h4>
+<p>검출된 윤곽선을 이미지 위에 시각적으로 그려주는 노드입니다. 색상, 두께, 인덱스를 지정할 수 있습니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">DrawContours</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>ColorR</td><td>int</td><td>0</td><td>빨간색 성분 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>255</td><td>초록색 성분 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>0</td><td>파란색 성분 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>선 두께 (1~50)</td></tr>
+  <tr><td>Index</td><td>int</td><td>-1</td><td>윤곽선 인덱스 (-1=전체, -1~10000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>DrawContours 노드는 FindContours 결과를 원본 이미지 위에 지정 색상/두께로 렌더링합니다. Index -1이면 전체, 특정 숫자면 해당 인덱스만 그립니다.</p>
+<p>BGR 색상 체계 사용. 디버깅 및 결과 시각화에 필수적인 노드입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>검출 결과 시각적 확인 및 디버깅</li>
+  <li>검사 결과 리포트 이미지 생성</li>
+  <li>특정 윤곽선만 강조 표시</li>
+</ul>
+
+<h4>ContourArea</h4>
+<p>각 윤곽선의 면적을 계산하여 배열로 출력하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">ContourArea</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Areas</span> <span class="port-type">double[]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Areas</td><td class="type-col">double[]</td><td>출력 Areas</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>ContourArea 노드는 모든 윤곽선에 대해 Cv2.ContourArea()를 호출하여 면적을 double 배열로 반환합니다.</p>
+<p>ContourFilter와 연계하여 특정 크기 범위의 객체만 선별하거나, 면적 기반 품질 판정에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>객체 크기 측정 및 분류</li>
+  <li>노이즈 제거 (작은 면적 필터링)</li>
+  <li>면적 기반 양/불량 판정</li>
+</ul>
+
+<h4>BoundingRect</h4>
+<p>각 윤곽선의 축 정렬 외접 사각형(Bounding Rectangle)을 계산하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">BoundingRect</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Rects</span> <span class="port-type">Rect[]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Rects</td><td class="type-col">Rect[]</td><td>출력 Rects</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>BoundingRect 노드는 각 윤곽선을 완전히 포함하는 축 정렬(axis-aligned) 최소 사각형을 계산합니다. Rect에는 X, Y, Width, Height 정보가 포함됩니다.</p>
+<p>DrawBoundingBoxes 노드와 연결하여 시각화하거나, ROI 크롭이나 객체 위치 추적에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>객체 위치 및 크기 추정</li>
+  <li>ROI 자동 설정</li>
+  <li>바운딩 박스 기반 추적</li>
+</ul>
+
+<h4>ApproxPoly</h4>
+<p>윤곽선을 다각형으로 근사하는 노드입니다. Douglas-Peucker 알고리즘을 사용합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">ApproxPoly</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Approx</span> <span class="port-type">Point[][]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Approx</td><td class="type-col">Point[][]</td><td>출력 Approx</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Epsilon</td><td>double</td><td>2.0</td><td>호 길이 대비 근사 정확도 % (0.01~50.0)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>ApproxPoly 노드는 각 윤곽선의 호 길이에 Epsilon 비율을 곱한 값을 허용 오차로 사용하여 다각형 근사를 수행합니다.</p>
+<p>근사 결과의 꼭짓점 수로 도형을 분류할 수 있습니다 (3개=삼각형, 4개=사각형 등).</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>도형 분류 (삼각형, 사각형 판별)</li>
+  <li>윤곽선 단순화</li>
+  <li>형상 특징 추출</li>
+</ul>
+
+<h4>ConvexHull</h4>
+<p>각 윤곽선의 볼록 껍질(Convex Hull)을 계산하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">ConvexHull</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Hulls</span> <span class="port-type">Point[][]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Hulls</td><td class="type-col">Point[][]</td><td>출력 Hulls</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>ConvexHull 노드는 각 윤곽선을 감싸는 최소 볼록 다각형을 계산합니다.</p>
+<p>원본 윤곽선과 볼록 껍질의 면적 비율(Solidity)로 객체의 볼록 정도를 측정하거나, 오목 결함 분석에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>Solidity 계산을 통한 형상 분석</li>
+  <li>제스처 인식 (볼록 결함 분석)</li>
+  <li>객체 외형 단순화</li>
+</ul>
+
+<h4>MinEnclosingCircle</h4>
+<p>각 윤곽선을 포함하는 최소 외접원을 계산하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">MinEnclosingCircle</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Centers</span> <span class="port-type">Point2f[]</span></div>
+    <div class="port-badge"><span class="port-name">Radii</span> <span class="port-type">float[]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Centers</td><td class="type-col">Point2f[]</td><td>출력 Centers</td></tr>
+  <tr><td class="dir-out">출력</td><td>Radii</td><td class="type-col">float[]</td><td>출력 Radii</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>MinEnclosingCircle 노드는 각 윤곽선을 완전히 포함하는 최소 크기의 원을 계산합니다. 중심 좌표 배열과 반지름 배열을 출력합니다.</p>
+<p>원형 객체의 크기 측정이나 원형도 분석에 유용합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>원형 부품 크기 측정</li>
+  <li>원형도(circularity) 분석</li>
+  <li>볼, 링 등 원형 객체 검사</li>
+</ul>
+
+<h4>ContourCenters</h4>
+<p>모멘트를 이용하여 각 윤곽선의 무게 중심(centroid)을 계산하고 이미지에 표시하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">ContourCenters</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Centers</span> <span class="port-type">Point[]</span></div>
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Centers</td><td class="type-col">Point[]</td><td>출력 Centers</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>MinArea</td><td>double</td><td>0</td><td>포함할 최소 윤곽선 면적 (0~1000000)</td></tr>
+  <tr><td>DrawRadius</td><td>int</td><td>5</td><td>중심점 표시 반지름 (1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>ContourCenters 노드는 이미지 모멘트(M10/M00, M01/M00)를 사용하여 각 윤곽선의 질량 중심을 계산합니다. MinArea로 노이즈를 필터링합니다.</p>
+<p>Image 입력이 연결되면 결과 이미지에 빨간색 원으로 중심점을 표시합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>객체 위치 추적</li>
+  <li>정렬 검사 (중심점 편차 측정)</li>
+  <li>로봇 비전 좌표 산출</li>
+</ul>
+
+<h4>ContourFilter</h4>
+<p>면적 및 둘레 범위 조건으로 윤곽선을 필터링하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">ContourFilter</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Filtered</span> <span class="port-type">Point[][]</span></div>
+    <div class="port-badge"><span class="port-name">Count</span> <span class="port-type">int</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Filtered</td><td class="type-col">Point[][]</td><td>출력 Filtered</td></tr>
+  <tr><td class="dir-out">출력</td><td>Count</td><td class="type-col">int</td><td>출력 Count</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>MinArea</td><td>double</td><td>100</td><td>최소 면적 (0~1000000)</td></tr>
+  <tr><td>MaxArea</td><td>double</td><td>10000000</td><td>최대 면적 (0~10000000)</td></tr>
+  <tr><td>MinPerimeter</td><td>double</td><td>0</td><td>최소 둘레 (0~100000)</td></tr>
+  <tr><td>MaxPerimeter</td><td>double</td><td>1000000</td><td>최대 둘레 (0~1000000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>ContourFilter 노드는 면적과 둘레의 최소/최대 범위를 기준으로 윤곽선을 선별합니다. 두 조건을 동시에 만족하는 윤곽선만 출력됩니다.</p>
+<p>노이즈 윤곽선이나 이미지 경계의 과대 윤곽선을 제거하여 관심 객체만 추출합니다. Count 출력으로 객체 수를 확인합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>노이즈 윤곽선 제거</li>
+  <li>특정 크기 범위의 객체만 선택</li>
+  <li>객체 수량 카운팅</li>
+</ul>
+
+<h4>Moments</h4>
+<p>각 윤곽선의 이미지 모멘트를 계산하여 면적과 중심 좌표를 출력하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">Moments</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Areas</span> <span class="port-type">double[]</span></div>
+    <div class="port-badge"><span class="port-name">CenterX</span> <span class="port-type">double[]</span></div>
+    <div class="port-badge"><span class="port-name">CenterY</span> <span class="port-type">double[]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Areas</td><td class="type-col">double[]</td><td>출력 Areas</td></tr>
+  <tr><td class="dir-out">출력</td><td>CenterX</td><td class="type-col">double[]</td><td>출력 CenterX</td></tr>
+  <tr><td class="dir-out">출력</td><td>CenterY</td><td class="type-col">double[]</td><td>출력 CenterY</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Moments 노드는 Cv2.Moments()를 사용하여 각 윤곽선의 공간 모멘트를 계산합니다. M00은 면적, M10/M00과 M01/M00은 X, Y 중심입니다.</p>
+<p>면적과 중심을 동시에 얻을 수 있어 효율적이며 노이즈에 강건합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>객체 면적 및 위치 동시 측정</li>
+  <li>모멘트 기반 형상 분석</li>
+  <li>객체 방향 추정</li>
+</ul>
+
+<h4>FitEllipse</h4>
+<p>윤곽선에 최적 타원을 피팅하여 이미지에 그려주는 노드입니다. 최소 5개 점이 필요합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">FitEllipse</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>MinPoints</td><td>int</td><td>5</td><td>타원 피팅 최소 점 수 (5~100)</td></tr>
+  <tr><td>DrawThickness</td><td>int</td><td>2</td><td>타원 선 두께 (1~10)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>FitEllipse 노드는 최소 5개 이상의 점을 가진 윤곽선에 대해 최적 타원을 피팅하고 초록색으로 그립니다.</p>
+<p>타원의 장축/단축 비율로 편심도를, 회전 각도로 방향을 측정할 수 있습니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>타원형 부품 검사</li>
+  <li>객체 방향(회전각) 측정</li>
+  <li>편심도 분석</li>
+</ul>
+
+<h4>MinAreaRect</h4>
+<p>각 윤곽선의 최소 면적 회전 사각형을 계산하여 이미지에 그려주는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">MinAreaRect</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>DrawThickness</td><td>int</td><td>2</td><td>사각형 선 두께 (1~10)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>MinAreaRect 노드는 각 윤곽선을 감싸는 최소 면적의 회전 사각형(RotatedRect)을 계산합니다. BoundingRect와 달리 최적 회전 각도를 가집니다.</p>
+<p>회전된 객체의 실제 폭/높이를 정확하게 측정할 수 있어 경사진 부품의 치수 검사에 적합합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>회전된 부품의 정밀 치수 측정</li>
+  <li>객체 회전 각도 추정</li>
+  <li>직사각형 객체 정합</li>
+</ul>
+
+<h4>MatchShapes</h4>
+<p>두 윤곽선 집합 간의 형상 유사도를 Hu 모멘트 기반으로 비교하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Contours1</span> <span class="port-type">Point[][]</span></div>
+    <div class="port-badge"><span class="port-name">Contours2</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-contour">
+    <div class="node-name">MatchShapes</div>
+    <div class="node-cat">Contour</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Similarities</span> <span class="port-type">double[]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Contours1</td><td class="type-col">Point[][]</td><td>입력 Contours1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Contours2</td><td class="type-col">Point[][]</td><td>입력 Contours2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Similarities</td><td class="type-col">double[]</td><td>출력 Similarities</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Method</td><td>ShapeMatchModes</td><td>I1</td><td>형상 매칭 방법</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>MatchShapes 노드는 Contours2의 첫 번째 윤곽선을 참조로 사용하여 Contours1의 각 윤곽선과의 유사도를 계산합니다. 0에 가까울수록 유사합니다.</p>
+<p>Hu 모멘트 기반이므로 크기, 위치, 회전에 불변하는 안정적 형상 비교가 가능합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>형상 기반 부품 분류</li>
+  <li>결함 유형 매칭</li>
+  <li>참조 형상 대비 유사도 판정</li>
+</ul>
+
+</div><!-- end ch14 -->
+
+<div class="chapter" id="ch15">
+
+<h2>Chapter 15. Feature Detection &mdash; 특징점 검출</h2>
+
+<p>Feature 카테고리는 이미지에서 코너, 블롭 등의 특징점을 검출하고, 특징 기술자를 생성하여 매칭하는 8개 노드를 제공합니다.</p>
+
+<h4>ORB Features</h4>
+<p>ORB(Oriented FAST and Rotated BRIEF) 특징점 검출 및 기술자 추출 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">ORB Features</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Descriptors</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Keypoints Image</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Descriptors</td><td class="type-col">Mat</td><td>출력 Descriptors</td></tr>
+  <tr><td class="dir-out">출력</td><td>Keypoints Image</td><td class="type-col">Mat</td><td>출력 Keypoints Image</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>NFeatures</td><td>int</td><td>500</td><td>최대 특징점 수 (1~10000)</td></tr>
+  <tr><td>ScaleFactor</td><td>float</td><td>1.2</td><td>피라미드 축소 비율 (1.01~2.0)</td></tr>
+  <tr><td>NLevels</td><td>int</td><td>8</td><td>피라미드 레벨 수 (1~20)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>ORB Features 노드는 FAST 기반 키포인트 검출과 BRIEF 기반 기술자 생성을 결합한 고속 특징 추출을 수행합니다.</p>
+<p>Descriptors 출력은 MatchFeatures 노드에 연결하여 이미지 간 매칭에 사용합니다. Keypoints Image는 키포인트 시각화 결과입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>실시간 특징점 매칭</li>
+  <li>객체 인식 및 추적</li>
+  <li>이미지 정합(Registration)</li>
+</ul>
+
+<h4>SIFT Features</h4>
+<p>SIFT(Scale-Invariant Feature Transform) 특징점 검출 및 기술자 추출 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">SIFT Features</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Descriptors</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Keypoints Image</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Descriptors</td><td class="type-col">Mat</td><td>출력 Descriptors</td></tr>
+  <tr><td class="dir-out">출력</td><td>Keypoints Image</td><td class="type-col">Mat</td><td>출력 Keypoints Image</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>NFeatures</td><td>int</td><td>0</td><td>최대 특징점 수 (0=무제한, 0~10000)</td></tr>
+  <tr><td>NOctaveLayers</td><td>int</td><td>3</td><td>옥타브당 레이어 수 (1~10)</td></tr>
+  <tr><td>ContrastThreshold</td><td>double</td><td>0.04</td><td>대비 임계값 (0.0~1.0)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>SIFT Features 노드는 스케일 불변 특징 변환을 수행합니다. 크기와 회전에 불변하는 128차원 기술자를 생성합니다.</p>
+<p>ORB보다 정확하지만 속도가 느립니다. 정밀한 매칭이 필요한 경우에 적합합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>정밀 이미지 매칭</li>
+  <li>파노라마 스티칭</li>
+  <li>3D 재구성</li>
+</ul>
+
+<h4>FAST Features</h4>
+<p>FAST(Features from Accelerated Segment Test) 코너 검출 노드입니다. 고속 코너 검출에 특화되어 있습니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">FAST Features</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Threshold</td><td>int</td><td>10</td><td>검출 임계값 (0~255)</td></tr>
+  <tr><td>NonmaxSuppression</td><td>bool</td><td>true</td><td>비최대 억제 적용 여부</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>FAST Features 노드는 원형 경계 픽셀을 비교하여 코너를 고속으로 검출합니다. NonmaxSuppression을 활성화하면 인접 중복 특징점을 억제합니다.</p>
+<p>실시간 처리에 적합한 가장 빠른 코너 검출기 중 하나입니다. Result 출력에 키포인트가 시각화됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>실시간 비전 시스템</li>
+  <li>모바일/임베디드 특징점 검출</li>
+  <li>고속 추적 전처리</li>
+</ul>
+
+<h4>Harris Corner</h4>
+<p>Harris 코너 검출 노드입니다. 클래식한 코너 검출 알고리즘을 구현합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">Harris Corner</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>BlockSize</td><td>int</td><td>2</td><td>이웃 크기 (1~31)</td></tr>
+  <tr><td>KSize</td><td>int</td><td>3</td><td>Sobel 커널 크기 (1~31)</td></tr>
+  <tr><td>K</td><td>double</td><td>0.04</td><td>Harris 자유 매개변수 (0.0~1.0)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Harris Corner 노드는 이미지의 그래디언트 공분산 행렬을 분석하여 코너를 검출합니다. 결과는 정규화된 코너 응답 맵(0-255)으로 출력됩니다.</p>
+<p>K 값이 작을수록 더 많은 코너가 검출됩니다. BlockSize로 이웃 크기를 제어합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>정밀 코너 검출</li>
+  <li>캘리브레이션 패턴 검출</li>
+  <li>구조적 특징 분석</li>
+</ul>
+
+<h4>Shi-Tomasi Corners</h4>
+<p>Shi-Tomasi 코너 검출 노드입니다. Harris의 개선 버전으로 더 안정적인 코너를 검출합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">Shi-Tomasi Corners</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>MaxCorners</td><td>int</td><td>100</td><td>최대 코너 수 (1~10000)</td></tr>
+  <tr><td>QualityLevel</td><td>double</td><td>0.01</td><td>최소 품질 수준 (0.0~1.0)</td></tr>
+  <tr><td>MinDistance</td><td>double</td><td>10.0</td><td>코너 간 최소 거리 (0.0~1000.0)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Shi-Tomasi Corners 노드는 GoodFeaturesToTrack 알고리즘을 사용합니다. 고유값 중 작은 값을 기준으로 코너 품질을 평가합니다.</p>
+<p>빨간색 원으로 검출된 코너를 시각화합니다. MinDistance로 코너 간 최소 간격을 보장합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>추적을 위한 특징점 선별</li>
+  <li>안정적 코너 검출</li>
+  <li>광학 흐름 전처리</li>
+</ul>
+
+<h4>Good Features To Track</h4>
+<p>Shi-Tomasi/Harris 기반 코너 검출 노드입니다. 코너 좌표를 Point[] 배열로 직접 출력합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">Good Features To Track</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Corners</span> <span class="port-type">Point[]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+  <tr><td class="dir-out">출력</td><td>Corners</td><td class="type-col">Point[]</td><td>출력 Corners</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>MaxCorners</td><td>int</td><td>100</td><td>최대 코너 수 (1~10000)</td></tr>
+  <tr><td>QualityLevel</td><td>double</td><td>0.01</td><td>최소 품질 (0.001~1.0)</td></tr>
+  <tr><td>MinDistance</td><td>double</td><td>10.0</td><td>최소 거리 (1.0~1000.0)</td></tr>
+  <tr><td>BlockSize</td><td>int</td><td>3</td><td>블록 크기 (3~31)</td></tr>
+  <tr><td>UseHarris</td><td>bool</td><td>false</td><td>Harris 검출기 사용 여부</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Good Features To Track 노드는 Corners 출력 포트로 코너 좌표를 Point 배열로 직접 제공합니다. UseHarris 속성으로 Shi-Tomasi와 Harris를 선택합니다.</p>
+<p>검출된 코너는 초록색 원으로 시각화됩니다. BlockSize로 미분 공분산 행렬의 평균화 블록을 제어합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>정밀 코너 좌표 추출</li>
+  <li>이미지 정합 제어점</li>
+  <li>객체 추적 초기화</li>
+</ul>
+
+<h4>Simple Blob Detector</h4>
+<p>SimpleBlobDetector를 사용하여 블롭(덩어리)을 검출하는 노드입니다. 면적, 원형도, 볼록도, 관성비 필터를 지원합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">Simple Blob Detector</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Centers</span> <span class="port-type">Point[]</span></div>
+    <div class="port-badge"><span class="port-name">Sizes</span> <span class="port-type">double[]</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+  <tr><td class="dir-out">출력</td><td>Centers</td><td class="type-col">Point[]</td><td>출력 Centers</td></tr>
+  <tr><td class="dir-out">출력</td><td>Sizes</td><td class="type-col">double[]</td><td>출력 Sizes</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>MinThreshold</td><td>int</td><td>50</td><td>최소 이진화 임계값 (0~255)</td></tr>
+  <tr><td>MaxThreshold</td><td>int</td><td>220</td><td>최대 이진화 임계값 (0~255)</td></tr>
+  <tr><td>FilterByArea</td><td>bool</td><td>true</td><td>면적 필터 사용</td></tr>
+  <tr><td>MinArea</td><td>double</td><td>100.0</td><td>최소 블롭 면적 (0~100000)</td></tr>
+  <tr><td>MaxArea</td><td>double</td><td>50000.0</td><td>최대 블롭 면적 (0~1000000)</td></tr>
+  <tr><td>FilterByCircularity</td><td>bool</td><td>false</td><td>원형도 필터 사용</td></tr>
+  <tr><td>MinCircularity</td><td>double</td><td>0.1</td><td>최소 원형도 (0~1)</td></tr>
+  <tr><td>FilterByConvexity</td><td>bool</td><td>false</td><td>볼록도 필터 사용</td></tr>
+  <tr><td>MinConvexity</td><td>double</td><td>0.5</td><td>최소 볼록도 (0~1)</td></tr>
+  <tr><td>FilterByInertia</td><td>bool</td><td>false</td><td>관성비 필터 사용</td></tr>
+  <tr><td>MinInertiaRatio</td><td>double</td><td>0.1</td><td>최소 관성비 (0~1)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Simple Blob Detector 노드는 여러 임계값으로 이진화한 후 연결 영역을 분석하여 블롭을 검출합니다. Centers와 Sizes 출력으로 각 블롭의 중심과 크기를 제공합니다.</p>
+<p>4가지 필터(면적, 원형도, 볼록도, 관성비)를 조합하여 원하는 형태의 블롭만 선별할 수 있습니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>원형 객체 검출</li>
+  <li>점/홀 검출</li>
+  <li>LED/마커 위치 추출</li>
+  <li>결함 블롭 검출</li>
+</ul>
+
+<h4>Match Features</h4>
+<p>두 이미지의 특징 기술자를 매칭하는 노드입니다. BruteForce, BruteForceHamming, FlannBased 매처를 지원합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Desc1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Desc2</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-feature">
+    <div class="node-name">Match Features</div>
+    <div class="node-cat">Feature</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Matches Image</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Desc1</td><td class="type-col">Mat</td><td>입력 Desc1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Desc2</td><td class="type-col">Mat</td><td>입력 Desc2</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Matches Image</td><td class="type-col">Mat</td><td>출력 Matches Image</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>MatcherType</td><td>MatcherType</td><td>BruteForce</td><td>매칭 알고리즘 (BruteForce/BruteForceHamming/FlannBased)</td></tr>
+  <tr><td>MaxMatches</td><td>int</td><td>50</td><td>표시할 최대 매칭 수 (1~1000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Match Features 노드는 두 기술자 세트 간의 거리를 계산하여 유사한 특징점 쌍을 찾습니다. 결과를 거리순으로 정렬하여 상위 N개를 시각화합니다.</p>
+<p>ORB 기술자에는 BruteForceHamming, SIFT 기술자에는 BruteForce 또는 FlannBased가 적합합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>이미지 간 대응점 매칭</li>
+  <li>파노라마 합성</li>
+  <li>객체 인식 확인</li>
+  <li>호모그래피 추정 전처리</li>
+</ul>
+
+</div><!-- end ch15 -->
+
+<div class="chapter" id="ch16">
+
+<h2>Chapter 16. Detection &mdash; 객체 탐지</h2>
+
+<p>Detection 카테고리는 허프 변환, 템플릿 매칭, Haar 캐스케이드 등 다양한 객체 탐지 알고리즘을 제공하는 9개 노드로 구성됩니다.</p>
+
+<h4>Hough Lines</h4>
+<p>허프 변환을 사용하여 이미지에서 직선을 검출하는 노드입니다. HoughLinesP(확률적 허프) 알고리즘을 사용합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Hough Lines</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Rho</td><td>double</td><td>1.0</td><td>거리 해상도 (0.1~10.0 픽셀)</td></tr>
+  <tr><td>Theta</td><td>double</td><td>1.0</td><td>각도 해상도 (0.1~90.0 도)</td></tr>
+  <tr><td>Threshold</td><td>int</td><td>100</td><td>누산기 임계값 (1~1000)</td></tr>
+  <tr><td>MinLineLength</td><td>double</td><td>50.0</td><td>최소 직선 길이 (0~10000)</td></tr>
+  <tr><td>MaxLineGap</td><td>double</td><td>10.0</td><td>최대 직선 간격 (0~1000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Hough Lines 노드는 확률적 허프 변환(HoughLinesP)으로 선분의 시작/끝 좌표를 검출합니다. 다채널 입력은 자동 그레이스케일 변환됩니다.</p>
+<p>검출된 선분은 빨간색으로 결과 이미지에 표시됩니다. Threshold를 높이면 더 확실한 직선만, MinLineLength를 높이면 긴 직선만 검출됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>직선 에지 검출</li>
+  <li>도로 차선 인식</li>
+  <li>기하학적 검사</li>
+  <li>PCB 패턴 검사</li>
+</ul>
+
+<h4>Hough Circles</h4>
+<p>허프 변환을 사용하여 이미지에서 원을 검출하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Hough Circles</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Dp</td><td>double</td><td>1.0</td><td>해상도 역비율 (0.1~10.0)</td></tr>
+  <tr><td>MinDist</td><td>double</td><td>50.0</td><td>원 중심 간 최소 거리 (1~10000)</td></tr>
+  <tr><td>Param1</td><td>double</td><td>200.0</td><td>Canny 상위 임계값 (1~1000)</td></tr>
+  <tr><td>Param2</td><td>double</td><td>100.0</td><td>누산기 임계값 (1~1000)</td></tr>
+  <tr><td>MinRadius</td><td>int</td><td>0</td><td>최소 반지름 (0~5000)</td></tr>
+  <tr><td>MaxRadius</td><td>int</td><td>0</td><td>최대 반지름 (0=무제한, 0~5000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Hough Circles 노드는 허프 그래디언트 방법으로 원을 검출합니다. 초록색 원과 빨간색 중심점으로 결과를 시각화합니다.</p>
+<p>Param2를 낮추면 더 많은 원이 검출되지만 오탐이 증가합니다. MinDist로 겹치는 원을 방지합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>원형 부품 검출</li>
+  <li>홀/핀 검사</li>
+  <li>동전/원형 마커 검출</li>
+  <li>눈동자/동공 검출</li>
+</ul>
+
+<h4>Template Match</h4>
+<p>템플릿 매칭으로 이미지에서 최적 일치 위치를 찾는 노드입니다. 단일 최고 매칭을 반환합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Template</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Template Match</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Template</td><td class="type-col">Mat</td><td>입력 Template</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Method</td><td>TemplateMatchModes</td><td>CCoeffNormed</td><td>매칭 방법</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Template Match 노드는 템플릿 이미지를 원본에서 슬라이딩하며 유사도를 계산합니다. 최고 매칭 위치에 초록색 사각형과 점수를 표시합니다.</p>
+<p>CCoeffNormed 방법이 가장 안정적이며, 1.0에 가까울수록 완벽한 매칭입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>패턴 위치 검출</li>
+  <li>정밀 정렬 확인</li>
+  <li>마크/로고 검색</li>
+</ul>
+
+<h4>Template Match Multi</h4>
+<p>NMS(비최대 억제)를 사용하여 이미지에서 여러 템플릿 매칭을 찾는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Template</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Template Match Multi</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Matches</span> <span class="port-type">Point[]</span></div>
+    <div class="port-badge"><span class="port-name">Count</span> <span class="port-type">int</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Template</td><td class="type-col">Mat</td><td>입력 Template</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+  <tr><td class="dir-out">출력</td><td>Matches</td><td class="type-col">Point[]</td><td>출력 Matches</td></tr>
+  <tr><td class="dir-out">출력</td><td>Count</td><td class="type-col">int</td><td>출력 Count</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Method</td><td>TemplateMatchModes</td><td>CCoeffNormed</td><td>매칭 방법</td></tr>
+  <tr><td>MatchThreshold</td><td>double</td><td>0.8</td><td>최소 매칭 점수 (0.0~1.0)</td></tr>
+  <tr><td>MaxMatches</td><td>int</td><td>100</td><td>최대 매칭 수 (1~1000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Template Match Multi 노드는 임계값 이상의 모든 매칭 위치를 NMS로 찾습니다. 영역 억제 방식으로 중복 검출을 방지합니다.</p>
+<p>Matches 출력으로 모든 매칭 좌표를, Count로 총 매칭 수를 제공합니다. 반복 패턴 검출에 최적화되어 있습니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>반복 패턴 위치 검출</li>
+  <li>다중 객체 검색</li>
+  <li>PCB 부품 위치 확인</li>
+  <li>결함 패턴 탐지</li>
+</ul>
+
+<h4>Haar Cascade</h4>
+<p>Haar 캐스케이드 분류기를 사용한 객체 탐지 노드입니다. XML 분류기 파일이 필요합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Haar Cascade</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>FilePath</td><td>string</td><td></td><td>Haar 캐스케이드 XML 파일 경로</td></tr>
+  <tr><td>ScaleFactor</td><td>double</td><td>1.1</td><td>이미지 스케일 팩터 (1.01~2.0)</td></tr>
+  <tr><td>MinNeighbors</td><td>int</td><td>3</td><td>최소 이웃 수 (0~50)</td></tr>
+  <tr><td>MinSizeW</td><td>int</td><td>30</td><td>최소 탐지 너비 (0~1000)</td></tr>
+  <tr><td>MinSizeH</td><td>int</td><td>30</td><td>최소 탐지 높이 (0~1000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Haar Cascade 노드는 사전 학습된 XML 분류기를 로드하여 슬라이딩 윈도우 방식의 객체 탐지를 수행합니다. 분류기가 캐싱되어 반복 실행 시 효율적입니다.</p>
+<p>검출 결과는 초록색 사각형으로 표시됩니다. ScaleFactor를 높이면 속도가 빨라지지만 정확도가 감소합니다. MinNeighbors를 높이면 오탐이 줄어듭니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>얼굴 탐지</li>
+  <li>눈/코/입 검출</li>
+  <li>사람/차량 검출</li>
+  <li>사전 학습 모델 활용</li>
+</ul>
+
+<h4>Line Profile</h4>
+<p>지정된 직선을 따라 픽셀 밝기 프로파일을 측정하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Line Profile</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Profile</span> <span class="port-type">double[]</span></div>
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Profile</td><td class="type-col">double[]</td><td>출력 Profile</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>X1</td><td>int</td><td>0</td><td>시작 X 좌표 (0~10000)</td></tr>
+  <tr><td>Y1</td><td>int</td><td>0</td><td>시작 Y 좌표 (0~10000)</td></tr>
+  <tr><td>X2</td><td>int</td><td>100</td><td>끝 X 좌표 (0~10000)</td></tr>
+  <tr><td>Y2</td><td>int</td><td>100</td><td>끝 Y 좌표 (0~10000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Line Profile 노드는 두 점 사이의 직선을 따라 픽셀 밝기를 샘플링하여 1D 프로파일을 생성합니다. 결과 이미지에 측정 선과 하단 그래프를 표시합니다.</p>
+<p>시작점은 빨간색, 끝점은 파란색으로 표시되며 프로파일 곡선이 하단에 오버레이됩니다. 에지 위치 측정에 유용합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>에지 위치 정밀 측정</li>
+  <li>표면 밝기 분포 분석</li>
+  <li>간격/폭 측정</li>
+  <li>라인 스캔 프로파일</li>
+</ul>
+
+<h4>Pixel Count</h4>
+<p>이미지에서 비제로(또는 임계값 이상) 픽셀 수와 비율을 계산하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Pixel Count</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Count</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Ratio</span> <span class="port-type">double</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Count</td><td class="type-col">int</td><td>출력 Count</td></tr>
+  <tr><td class="dir-out">출력</td><td>Ratio</td><td class="type-col">double</td><td>출력 Ratio</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>UseThreshold</td><td>bool</td><td>false</td><td>임계값 적용 여부</td></tr>
+  <tr><td>ThresholdValue</td><td>int</td><td>128</td><td>임계값 (0~255)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Pixel Count 노드는 이미지의 비제로 픽셀을 카운트합니다. UseThreshold 활성화 시 먼저 이진화한 후 카운팅합니다.</p>
+<p>Ratio 출력은 비제로 픽셀 비율(0.0~1.0)로, 영역 점유율이나 커버리지 판정에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>영역 점유율 측정</li>
+  <li>이진 마스크 면적 계산</li>
+  <li>충전율(fill ratio) 검사</li>
+</ul>
+
+<h4>Min Max Loc</h4>
+<p>이미지에서 최소/최대 밝기 값과 그 위치를 찾는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Min Max Loc</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">MinVal</span> <span class="port-type">double</span></div>
+    <div class="port-badge"><span class="port-name">MaxVal</span> <span class="port-type">double</span></div>
+    <div class="port-badge"><span class="port-name">MinLoc</span> <span class="port-type">Point</span></div>
+    <div class="port-badge"><span class="port-name">MaxLoc</span> <span class="port-type">Point</span></div>
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>MinVal</td><td class="type-col">double</td><td>출력 MinVal</td></tr>
+  <tr><td class="dir-out">출력</td><td>MaxVal</td><td class="type-col">double</td><td>출력 MaxVal</td></tr>
+  <tr><td class="dir-out">출력</td><td>MinLoc</td><td class="type-col">Point</td><td>출력 MinLoc</td></tr>
+  <tr><td class="dir-out">출력</td><td>MaxLoc</td><td class="type-col">Point</td><td>출력 MaxLoc</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Min Max Loc 노드는 Cv2.MinMaxLoc()을 사용하여 이미지의 최소/최대 픽셀 값과 위치를 찾습니다. 다채널 이미지는 자동 그레이스케일 변환됩니다.</p>
+<p>결과 이미지에 최소 위치는 파란색, 최대 위치는 빨간색 마커와 값으로 표시됩니다. 밝점/암점 탐지에 필수적입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>밝점/암점 탐지</li>
+  <li>핫스팟 검출</li>
+  <li>최대 밝기 위치 추적</li>
+  <li>품질 검사 기준점 설정</li>
+</ul>
+
+<h4>Connected Components</h4>
+<p>연결 요소 라벨링을 수행하여 각 영역에 고유 라벨을 부여하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-detect">
+    <div class="node-name">Connected Components</div>
+    <div class="node-cat">Detection</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Labels</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Count</span> <span class="port-type">int</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Labels</td><td class="type-col">Mat</td><td>출력 Labels</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+  <tr><td class="dir-out">출력</td><td>Count</td><td class="type-col">int</td><td>출력 Count</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Connectivity</td><td>ConnectivityType</td><td>Eight</td><td>픽셀 연결 방식 (Four/Eight)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Connected Components 노드는 이진 이미지에서 연결된 영역을 식별하고 각각에 고유한 정수 라벨을 부여합니다. 배경(라벨 0)을 제외한 영역 수를 Count로 출력합니다.</p>
+<p>Result 출력은 각 영역을 고유 색상으로 칠한 시각화 이미지입니다. 4-연결과 8-연결 방식을 선택할 수 있습니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>개별 객체 식별 및 카운팅</li>
+  <li>영역별 통계 분석</li>
+  <li>라벨 기반 객체 분류</li>
+  <li>입자 분석</li>
+</ul>
+
+</div><!-- end ch16 -->
+
+<div class="chapter" id="ch17">
+
+<h2>Chapter 17. Segmentation &mdash; 영역 분할</h2>
+
+<p>Segmentation 카테고리는 FloodFill, GrabCut, Watershed 등 고급 영역 분할 알고리즘을 제공하는 3개 노드로 구성됩니다.</p>
+
+<h4>Flood Fill</h4>
+<p>시드 포인트에서 시작하여 유사한 픽셀 영역을 채우는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-segment">
+    <div class="node-name">Flood Fill</div>
+    <div class="node-cat">Segmentation</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>SeedX</td><td>int</td><td>0</td><td>시드 X 좌표 (0~10000)</td></tr>
+  <tr><td>SeedY</td><td>int</td><td>0</td><td>시드 Y 좌표 (0~10000)</td></tr>
+  <tr><td>NewValR</td><td>int</td><td>255</td><td>새 색상 R (0~255)</td></tr>
+  <tr><td>NewValG</td><td>int</td><td>0</td><td>새 색상 G (0~255)</td></tr>
+  <tr><td>NewValB</td><td>int</td><td>0</td><td>새 색상 B (0~255)</td></tr>
+  <tr><td>LoDiff</td><td>int</td><td>20</td><td>하한 밝기 차이 (0~255)</td></tr>
+  <tr><td>UpDiff</td><td>int</td><td>20</td><td>상한 밝기 차이 (0~255)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Flood Fill 노드는 시드 포인트의 픽셀 값을 기준으로 LoDiff~UpDiff 범위 내의 인접 픽셀을 새 색상으로 채웁니다.</p>
+<p>영역 선택, 배경 제거, 마스크 생성에 활용됩니다. 시드 포인트가 이미지 범위를 벗어나면 오류를 반환합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>영역 선택 및 색상 치환</li>
+  <li>배경 제거 전처리</li>
+  <li>마스크 자동 생성</li>
+  <li>영역 기반 세그멘테이션</li>
+</ul>
+
+<h4>GrabCut</h4>
+<p>GrabCut 알고리즘으로 전경/배경을 분리하는 노드입니다. ROI 사각형으로 초기 영역을 지정합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-segment">
+    <div class="node-name">GrabCut</div>
+    <div class="node-cat">Segmentation</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Mask</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+  <tr><td class="dir-out">출력</td><td>Mask</td><td class="type-col">Mat</td><td>출력 Mask</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>RectX</td><td>int</td><td>10</td><td>ROI X 위치 (0~10000)</td></tr>
+  <tr><td>RectY</td><td>int</td><td>10</td><td>ROI Y 위치 (0~10000)</td></tr>
+  <tr><td>RectW</td><td>int</td><td>200</td><td>ROI 너비 (1~10000)</td></tr>
+  <tr><td>RectH</td><td>int</td><td>200</td><td>ROI 높이 (1~10000)</td></tr>
+  <tr><td>Iterations</td><td>int</td><td>5</td><td>GrabCut 반복 횟수 (1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>GrabCut 노드는 3채널 BGR 이미지에서 지정된 ROI를 기반으로 전경/배경 분리를 수행합니다. GMM(가우시안 혼합 모델) 기반 반복 최적화를 통해 정밀한 분할을 달성합니다.</p>
+<p>Result는 전경만 추출된 이미지, Mask는 전경 마스크(255)입니다. Iterations를 높이면 정확도가 향상되지만 처리 시간이 증가합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>전경/배경 분리</li>
+  <li>객체 추출</li>
+  <li>배경 제거</li>
+  <li>인터랙티브 세그멘테이션</li>
+</ul>
+
+<h4>Watershed</h4>
+<p>Watershed(분수령) 알고리즘으로 이미지를 영역 분할하는 노드입니다. 마커 입력 또는 자동 생성을 지원합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Markers</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-segment">
+    <div class="node-name">Watershed</div>
+    <div class="node-cat">Segmentation</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Markers</td><td class="type-col">Mat</td><td>입력 Markers</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>DistThreshold</td><td>double</td><td>0.5</td><td>거리 변환 임계값 (0.0~1.0, 자동 마커 생성 시 사용)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Watershed 노드는 마커 기반 분수령 알고리즘으로 이미지를 여러 영역으로 분할합니다. Markers 입력이 없으면 거리 변환과 연결 요소 분석으로 자동 마커를 생성합니다.</p>
+<p>결과는 각 영역을 고유 색상으로, 경계를 흰색으로 표시한 이미지입니다. DistThreshold는 자동 마커 생성 시 전경 영역의 민감도를 조절합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>겹친 객체 분리</li>
+  <li>셀/입자 분할</li>
+  <li>영역 기반 분석</li>
+  <li>인스턴스 세그멘테이션</li>
+</ul>
+
+</div><!-- end ch17 -->
+
+<div class="chapter-divider" id="topic5">
+  <h1>주제 5: 시각화 및 변환</h1>
+  <p>이미지에 도형/텍스트를 그리고, 기하학적 변환을 적용하며, 히스토그램 분석과 산술 연산을 수행하는 노드들을 학습합니다.</p>
+  <div class="divider-toc">
+    <a href="#ch18">Ch 18. Drawing</a>
+    <a href="#ch19">Ch 19. Transform</a>
+    <a href="#ch20">Ch 20. Histogram</a>
+    <a href="#ch21">Ch 21. Arithmetic</a>
+  </div>
+</div>
+
+<div class="chapter" id="ch18">
+
+<h2>Chapter 18. Drawing &mdash; 도형 그리기</h2>
+
+<p>Drawing 카테고리는 이미지 위에 선, 사각형, 원, 타원, 텍스트 등 다양한 시각 요소를 그리는 10개 노드를 제공합니다. 대부분 GetPortOrProperty 패턴을 사용하여 포트 입력과 속성 폴백을 지원합니다.</p>
+
+<h4>Draw Line</h4>
+<p>이미지 위에 직선을 그리는 노드입니다. 시작/끝 좌표를 포트 또는 속성으로 지정합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Pt1X</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Pt1Y</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Pt2X</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Pt2Y</span> <span class="port-type">int</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Line</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Pt1X</td><td class="type-col">int</td><td>입력 Pt1X</td></tr>
+  <tr><td class="dir-in">입력</td><td>Pt1Y</td><td class="type-col">int</td><td>입력 Pt1Y</td></tr>
+  <tr><td class="dir-in">입력</td><td>Pt2X</td><td class="type-col">int</td><td>입력 Pt2X</td></tr>
+  <tr><td class="dir-in">입력</td><td>Pt2Y</td><td class="type-col">int</td><td>입력 Pt2Y</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Pt1X</td><td>int</td><td>0</td><td>시작 X (0~10000)</td></tr>
+  <tr><td>Pt1Y</td><td>int</td><td>0</td><td>시작 Y (0~10000)</td></tr>
+  <tr><td>Pt2X</td><td>int</td><td>100</td><td>끝 X (0~10000)</td></tr>
+  <tr><td>Pt2Y</td><td>int</td><td>100</td><td>끝 Y (0~10000)</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>255</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>0</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>0</td><td>파랑 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>두께 (1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Line 노드는 두 점 사이에 직선을 그립니다. 포트 입력이 연결되면 포트 값을, 없으면 속성 값을 사용합니다 (GetPortOrProperty 패턴).</p>
+<p>BGR 색상 순서로 색상을 지정합니다. 측정 라인이나 가이드 표시에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>측정 라인 표시</li>
+  <li>가이드라인 오버레이</li>
+  <li>검사 결과 마킹</li>
+</ul>
+
+<h4>Draw Rectangle</h4>
+<p>이미지 위에 사각형을 그리는 노드입니다. 채우기도 가능합니다 (Thickness = -1).</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">X</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Y</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Width</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Height</span> <span class="port-type">int</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Rectangle</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>X</td><td class="type-col">int</td><td>입력 X</td></tr>
+  <tr><td class="dir-in">입력</td><td>Y</td><td class="type-col">int</td><td>입력 Y</td></tr>
+  <tr><td class="dir-in">입력</td><td>Width</td><td class="type-col">int</td><td>입력 Width</td></tr>
+  <tr><td class="dir-in">입력</td><td>Height</td><td class="type-col">int</td><td>입력 Height</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>X</td><td>int</td><td>10</td><td>X 좌표 (0~10000)</td></tr>
+  <tr><td>Y</td><td>int</td><td>10</td><td>Y 좌표 (0~10000)</td></tr>
+  <tr><td>Width</td><td>int</td><td>100</td><td>너비 (1~10000)</td></tr>
+  <tr><td>Height</td><td>int</td><td>100</td><td>높이 (1~10000)</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>0</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>255</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>0</td><td>파랑 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>두께 (-1=채우기, -1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Rectangle 노드는 지정 위치에 사각형을 그립니다. Thickness를 -1로 설정하면 내부를 채웁니다.</p>
+<p>ROI 영역 표시, 검출 결과 강조, 관심 영역 마킹에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>ROI 영역 표시</li>
+  <li>검출 결과 사각형 표시</li>
+  <li>관심 영역 마킹</li>
+</ul>
+
+<h4>Draw Circle</h4>
+<p>이미지 위에 원을 그리는 노드입니다. 중심과 반지름을 포트 또는 속성으로 지정합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">CenterX</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">CenterY</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Radius</span> <span class="port-type">int</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Circle</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>CenterX</td><td class="type-col">int</td><td>입력 CenterX</td></tr>
+  <tr><td class="dir-in">입력</td><td>CenterY</td><td class="type-col">int</td><td>입력 CenterY</td></tr>
+  <tr><td class="dir-in">입력</td><td>Radius</td><td class="type-col">int</td><td>입력 Radius</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>CenterX</td><td>int</td><td>100</td><td>중심 X (0~10000)</td></tr>
+  <tr><td>CenterY</td><td>int</td><td>100</td><td>중심 Y (0~10000)</td></tr>
+  <tr><td>Radius</td><td>int</td><td>50</td><td>반지름 (1~5000)</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>0</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>0</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>255</td><td>파랑 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>두께 (-1=채우기, -1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Circle 노드는 지정된 중심과 반지름으로 원을 그립니다. Thickness -1이면 채운 원을 그립니다.</p>
+<p>검출된 원형 객체 강조, 마커 표시, 관심 포인트 표시에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>원형 객체 강조</li>
+  <li>마커/포인트 표시</li>
+  <li>검사 결과 시각화</li>
+</ul>
+
+<h4>Draw Ellipse</h4>
+<p>이미지 위에 타원을 그리는 노드입니다. 중심, 축 크기, 회전 각도를 지정할 수 있습니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">CenterX</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">CenterY</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">AxisW</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">AxisH</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Angle</span> <span class="port-type">double</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Ellipse</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>CenterX</td><td class="type-col">int</td><td>입력 CenterX</td></tr>
+  <tr><td class="dir-in">입력</td><td>CenterY</td><td class="type-col">int</td><td>입력 CenterY</td></tr>
+  <tr><td class="dir-in">입력</td><td>AxisW</td><td class="type-col">int</td><td>입력 AxisW</td></tr>
+  <tr><td class="dir-in">입력</td><td>AxisH</td><td class="type-col">int</td><td>입력 AxisH</td></tr>
+  <tr><td class="dir-in">입력</td><td>Angle</td><td class="type-col">double</td><td>입력 Angle</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>CenterX</td><td>int</td><td>100</td><td>중심 X (0~10000)</td></tr>
+  <tr><td>CenterY</td><td>int</td><td>100</td><td>중심 Y (0~10000)</td></tr>
+  <tr><td>AxisW</td><td>int</td><td>80</td><td>축 너비 (1~5000)</td></tr>
+  <tr><td>AxisH</td><td>int</td><td>50</td><td>축 높이 (1~5000)</td></tr>
+  <tr><td>Angle</td><td>double</td><td>0.0</td><td>회전 각도 (0~360도)</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>255</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>255</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>0</td><td>파랑 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>두께 (-1=채우기, -1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Ellipse 노드는 중심, 장축/단축, 회전 각도를 지정하여 타원을 그립니다. 0~360도 전체 호를 그립니다.</p>
+<p>FitEllipse 결과를 시각화하거나, 타원형 ROI를 표시하는 데 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>타원형 객체 강조</li>
+  <li>FitEllipse 결과 시각화</li>
+  <li>타원 ROI 표시</li>
+</ul>
+
+<h4>Draw Text</h4>
+<p>이미지 위에 텍스트를 그리는 노드입니다. 폰트, 크기, 색상을 지정할 수 있습니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">PosX</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">PosY</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Text</span> <span class="port-type">string</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Text</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>PosX</td><td class="type-col">int</td><td>입력 PosX</td></tr>
+  <tr><td class="dir-in">입력</td><td>PosY</td><td class="type-col">int</td><td>입력 PosY</td></tr>
+  <tr><td class="dir-in">입력</td><td>Text</td><td class="type-col">string</td><td>입력 Text</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Text</td><td>string</td><td>Hello</td><td>표시할 텍스트</td></tr>
+  <tr><td>PosX</td><td>int</td><td>10</td><td>X 위치 (0~10000)</td></tr>
+  <tr><td>PosY</td><td>int</td><td>30</td><td>Y 위치 (0~10000)</td></tr>
+  <tr><td>Font</td><td>HersheyFonts</td><td>HersheySimplex</td><td>폰트 종류</td></tr>
+  <tr><td>Scale</td><td>double</td><td>1.0</td><td>폰트 크기 (0.1~20.0)</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>255</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>255</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>255</td><td>파랑 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>두께 (1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Text 노드는 OpenCV의 PutText로 텍스트를 렌더링합니다. Text 입력 포트가 연결되면 동적 텍스트를, 없으면 속성 값을 사용합니다.</p>
+<p>측정값 표시, 라벨링, 타임스탬프 오버레이 등에 활용됩니다. HersheyFonts 열거형으로 다양한 폰트를 선택합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>측정값 라벨 표시</li>
+  <li>결과 텍스트 오버레이</li>
+  <li>타임스탬프/메타 정보 표시</li>
+</ul>
+
+<h4>Draw Crosshair</h4>
+<p>이미지 위에 십자선(레티클) 오버레이를 그리는 노드입니다. 중심 좌표 -1이면 자동 센터입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">CenterX</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">CenterY</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">Size</span> <span class="port-type">int</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Crosshair</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>CenterX</td><td class="type-col">int</td><td>입력 CenterX</td></tr>
+  <tr><td class="dir-in">입력</td><td>CenterY</td><td class="type-col">int</td><td>입력 CenterY</td></tr>
+  <tr><td class="dir-in">입력</td><td>Size</td><td class="type-col">int</td><td>입력 Size</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>CenterX</td><td>int</td><td>-1</td><td>중심 X (-1=자동 센터, -1~10000)</td></tr>
+  <tr><td>CenterY</td><td>int</td><td>-1</td><td>중심 Y (-1=자동 센터, -1~10000)</td></tr>
+  <tr><td>Size</td><td>int</td><td>50</td><td>팔 길이 (10~1000)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>1</td><td>두께 (1~5)</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>0</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>255</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>0</td><td>파랑 (0~255)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Crosshair 노드는 수평/수직 직선으로 구성된 십자선을 그립니다. CenterX/Y가 -1이면 이미지 중앙을 자동 사용합니다.</p>
+<p>정렬 검사, 중심점 확인, 조준 오버레이에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>정렬 검사 가이드</li>
+  <li>중심점 시각화</li>
+  <li>카메라 조준 오버레이</li>
+</ul>
+
+<h4>Draw Grid</h4>
+<p>이미지 위에 격자 오버레이를 그리는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">CellWidth</span> <span class="port-type">int</span></div>
+    <div class="port-badge"><span class="port-name">CellHeight</span> <span class="port-type">int</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Grid</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>CellWidth</td><td class="type-col">int</td><td>입력 CellWidth</td></tr>
+  <tr><td class="dir-in">입력</td><td>CellHeight</td><td class="type-col">int</td><td>입력 CellHeight</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>CellWidth</td><td>int</td><td>50</td><td>셀 너비 (5~500 픽셀)</td></tr>
+  <tr><td>CellHeight</td><td>int</td><td>50</td><td>셀 높이 (5~500 픽셀)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>1</td><td>두께 (1~5)</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>128</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>128</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>128</td><td>파랑 (0~255)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Grid 노드는 지정된 셀 크기로 수직/수평 격자선을 이미지 전체에 그립니다.</p>
+<p>간격 측정, 영역 분할 시각화, 캘리브레이션 확인에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>간격 측정 가이드</li>
+  <li>영역 분할 시각화</li>
+  <li>캘리브레이션 확인</li>
+</ul>
+
+<h4>Draw Polylines</h4>
+<p>이미지 위에 다각선(폴리라인)을 그리는 노드입니다. Point[][] 배열을 입력받습니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Points</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Polylines</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Points</td><td class="type-col">Point[][]</td><td>입력 Points</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>IsClosed</td><td>bool</td><td>true</td><td>폴리라인 닫힘 여부</td></tr>
+  <tr><td>ColorR</td><td>int</td><td>255</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>0</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>0</td><td>파랑 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>두께 (1~50)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Polylines 노드는 Point[][] 배열의 점들을 연결하여 다각선을 그립니다. IsClosed가 true이면 마지막 점과 첫 점을 연결합니다.</p>
+<p>ApproxPoly, ConvexHull 등의 결과를 시각화하는 데 적합합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>윤곽 근사 결과 시각화</li>
+  <li>볼록 껍질 그리기</li>
+  <li>다각형 ROI 표시</li>
+</ul>
+
+<h4>Draw Bounding Boxes</h4>
+<p>Rect[] 배열을 입력받아 바운딩 박스를 그리는 노드입니다. 크기 라벨도 표시할 수 있습니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Rects</span> <span class="port-type">Rect[]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Bounding Boxes</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Rects</td><td class="type-col">Rect[]</td><td>입력 Rects</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>ColorR</td><td>int</td><td>0</td><td>빨강 (0~255)</td></tr>
+  <tr><td>ColorG</td><td>int</td><td>255</td><td>초록 (0~255)</td></tr>
+  <tr><td>ColorB</td><td>int</td><td>0</td><td>파랑 (0~255)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>2</td><td>두께 (1~10)</td></tr>
+  <tr><td>ShowLabel</td><td>bool</td><td>true</td><td>크기 라벨 표시 여부</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Bounding Boxes 노드는 BoundingRect 노드의 Rect[] 출력을 직접 연결하여 바운딩 박스를 그립니다. ShowLabel이 활성화되면 각 박스 위에 WxH 치수를 표시합니다.</p>
+<p>객체 검출 결과 시각화의 마지막 단계로 자주 사용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>객체 검출 결과 시각화</li>
+  <li>BoundingRect 결과 표시</li>
+  <li>치수 라벨 오버레이</li>
+</ul>
+
+<h4>Draw Contours Info</h4>
+<p>윤곽선을 그리면서 인덱스, 면적, 중심 좌표 등의 정보를 라벨로 표시하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Contours</span> <span class="port-type">Point[][]</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-drawing">
+    <div class="node-name">Draw Contours Info</div>
+    <div class="node-cat">Drawing</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Contours</td><td class="type-col">Point[][]</td><td>입력 Contours</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>ShowCenter</td><td>bool</td><td>true</td><td>중심점 표시</td></tr>
+  <tr><td>ShowArea</td><td>bool</td><td>true</td><td>면적 텍스트 표시</td></tr>
+  <tr><td>ShowIndex</td><td>bool</td><td>true</td><td>인덱스 번호 표시</td></tr>
+  <tr><td>MinArea</td><td>double</td><td>0</td><td>최소 표시 면적 (0~1000000)</td></tr>
+  <tr><td>FontScale</td><td>double</td><td>0.4</td><td>폰트 크기 (0.1~5.0)</td></tr>
+  <tr><td>Thickness</td><td>int</td><td>1</td><td>선 두께 (1~10)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Draw Contours Info 노드는 윤곽선을 색상별로 구분하여 그리고, 각 윤곽선에 인덱스 번호(#N), 면적(A:xxx), 중심 좌표를 라벨로 표시합니다.</p>
+<p>8가지 색상이 순환 사용되며, MinArea 이하의 작은 윤곽선은 건너뜁니다. 디버깅과 분석에 매우 유용합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>윤곽선 분석 결과 종합 시각화</li>
+  <li>디버깅용 상세 정보 표시</li>
+  <li>검사 리포트 이미지 생성</li>
+</ul>
+
+</div><!-- end ch18 -->
+
+<div class="chapter" id="ch19">
+
+<h2>Chapter 19. Transform &mdash; 기하학적 변환</h2>
+
+<p>Transform 카테고리는 크기 조정, 회전, 자르기, 뒤집기, 어파인/원근 변환 등 기하학적 이미지 변환을 수행하는 8개 노드를 제공합니다.</p>
+
+<h4>Resize</h4>
+<p>이미지 크기를 조정하는 노드입니다. 목표 크기 또는 스케일 팩터로 지정합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Resize</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Width</td><td>int</td><td>0</td><td>목표 너비 (0=스케일 사용, 0~10000)</td></tr>
+  <tr><td>Height</td><td>int</td><td>0</td><td>목표 높이 (0=스케일 사용, 0~10000)</td></tr>
+  <tr><td>ScaleX</td><td>double</td><td>1.0</td><td>수평 스케일 (0.01~100.0)</td></tr>
+  <tr><td>ScaleY</td><td>double</td><td>1.0</td><td>수직 스케일 (0.01~100.0)</td></tr>
+  <tr><td>Interpolation</td><td>InterpolationFlags</td><td>Linear</td><td>보간법</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Resize 노드는 Width/Height가 지정되면 해당 크기로, 0이면 ScaleX/ScaleY 비율로 이미지를 조정합니다.</p>
+<p>Interpolation 속성으로 보간법을 선택합니다. Linear(기본), Nearest(고속), Cubic(고품질) 등이 있습니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>이미지 크기 정규화</li>
+  <li>성능 최적화를 위한 축소</li>
+  <li>출력 해상도 조정</li>
+</ul>
+
+<h4>Rotate</h4>
+<p>이미지를 지정 각도로 회전하는 노드입니다. 자동 중심 또는 수동 중심을 선택합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Rotate</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Angle</td><td>double</td><td>0.0</td><td>회전 각도 (-360~360도)</td></tr>
+  <tr><td>AutoCenter</td><td>bool</td><td>true</td><td>이미지 중심 자동 사용</td></tr>
+  <tr><td>CenterX</td><td>int</td><td>0</td><td>수동 중심 X (0~10000)</td></tr>
+  <tr><td>CenterY</td><td>int</td><td>0</td><td>수동 중심 Y (0~10000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Rotate 노드는 Cv2.GetRotationMatrix2D로 회전 행렬을 생성하고 WarpAffine으로 적용합니다. AutoCenter가 true이면 이미지 중심을 기준으로 회전합니다.</p>
+<p>양수 각도는 반시계 방향 회전입니다. 회전 후 잘리는 영역이 있을 수 있습니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>기울어진 이미지 보정</li>
+  <li>객체 방향 정규화</li>
+  <li>회전 변환 테스트</li>
+</ul>
+
+<h4>Crop</h4>
+<p>이미지에서 사각형 영역을 잘라내는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Crop</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>X</td><td>int</td><td>0</td><td>시작 X (0~10000)</td></tr>
+  <tr><td>Y</td><td>int</td><td>0</td><td>시작 Y (0~10000)</td></tr>
+  <tr><td>Width</td><td>int</td><td>100</td><td>크롭 너비 (1~10000)</td></tr>
+  <tr><td>Height</td><td>int</td><td>100</td><td>크롭 높이 (1~10000)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Crop 노드는 지정된 ROI 영역을 잘라내어 새 이미지로 반환합니다. 좌표는 자동으로 이미지 경계에 클램프됩니다.</p>
+<p>BoundingRect 결과를 활용하여 검출된 객체만 잘라내거나, 관심 영역을 추출하는 데 사용합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>ROI 영역 추출</li>
+  <li>검출 객체 크롭</li>
+  <li>부분 이미지 분석</li>
+</ul>
+
+<h4>Flip</h4>
+<p>이미지를 수평, 수직 또는 양방향으로 뒤집는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Flip</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>FlipCode</td><td>FlipDirection</td><td>Horizontal</td><td>뒤집기 방향 (Horizontal/Vertical/Both)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Flip 노드는 세 가지 방향으로 이미지를 뒤집습니다. Horizontal은 좌우, Vertical은 상하, Both는 180도 회전과 동일합니다.</p>
+<p>카메라 미러링 보정이나 데이터 증강에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>카메라 미러링 보정</li>
+  <li>데이터 증강</li>
+  <li>이미지 방향 보정</li>
+</ul>
+
+<h4>Warp Affine</h4>
+<p>3쌍의 대응점을 사용하여 어파인 변환을 적용하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Warp Affine</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>SrcX0</td><td>int</td><td>0</td><td>소스 점0 X</td></tr>
+  <tr><td>SrcY0</td><td>int</td><td>0</td><td>소스 점0 Y</td></tr>
+  <tr><td>SrcX1</td><td>int</td><td>100</td><td>소스 점1 X</td></tr>
+  <tr><td>SrcY1</td><td>int</td><td>0</td><td>소스 점1 Y</td></tr>
+  <tr><td>SrcX2</td><td>int</td><td>0</td><td>소스 점2 X</td></tr>
+  <tr><td>SrcY2</td><td>int</td><td>100</td><td>소스 점2 Y</td></tr>
+  <tr><td>DstX0</td><td>int</td><td>10</td><td>대상 점0 X</td></tr>
+  <tr><td>DstY0</td><td>int</td><td>10</td><td>대상 점0 Y</td></tr>
+  <tr><td>DstX1</td><td>int</td><td>90</td><td>대상 점1 X</td></tr>
+  <tr><td>DstY1</td><td>int</td><td>10</td><td>대상 점1 Y</td></tr>
+  <tr><td>DstX2</td><td>int</td><td>10</td><td>대상 점2 X</td></tr>
+  <tr><td>DstY2</td><td>int</td><td>90</td><td>대상 점2 Y</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Warp Affine 노드는 3쌍의 소스/대상 대응점으로 2x3 어파인 변환 행렬을 계산하고 적용합니다. 이동, 회전, 스케일링, 전단을 동시에 수행합니다.</p>
+<p>평행선이 보존되는 변환입니다. 이미지 정합이나 왜곡 보정에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>이미지 정합(Registration)</li>
+  <li>왜곡 보정</li>
+  <li>기하 변환 테스트</li>
+</ul>
+
+<h4>Warp Perspective</h4>
+<p>4쌍의 대응점을 사용하여 원근 변환을 적용하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Warp Perspective</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>SrcX0</td><td>int</td><td>0</td><td>소스 점0 X</td></tr>
+  <tr><td>SrcY0</td><td>int</td><td>0</td><td>소스 점0 Y</td></tr>
+  <tr><td>SrcX1</td><td>int</td><td>100</td><td>소스 점1 X</td></tr>
+  <tr><td>SrcY1</td><td>int</td><td>0</td><td>소스 점1 Y</td></tr>
+  <tr><td>SrcX2</td><td>int</td><td>100</td><td>소스 점2 X</td></tr>
+  <tr><td>SrcY2</td><td>int</td><td>100</td><td>소스 점2 Y</td></tr>
+  <tr><td>SrcX3</td><td>int</td><td>0</td><td>소스 점3 X</td></tr>
+  <tr><td>SrcY3</td><td>int</td><td>100</td><td>소스 점3 Y</td></tr>
+  <tr><td>DstX0</td><td>int</td><td>10</td><td>대상 점0 X</td></tr>
+  <tr><td>DstY0</td><td>int</td><td>10</td><td>대상 점0 Y</td></tr>
+  <tr><td>DstX1</td><td>int</td><td>90</td><td>대상 점1 X</td></tr>
+  <tr><td>DstY1</td><td>int</td><td>10</td><td>대상 점1 Y</td></tr>
+  <tr><td>DstX2</td><td>int</td><td>90</td><td>대상 점2 X</td></tr>
+  <tr><td>DstY2</td><td>int</td><td>90</td><td>대상 점2 Y</td></tr>
+  <tr><td>DstX3</td><td>int</td><td>10</td><td>대상 점3 X</td></tr>
+  <tr><td>DstY3</td><td>int</td><td>90</td><td>대상 점3 Y</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Warp Perspective 노드는 4쌍의 대응점으로 3x3 원근 변환 행렬을 계산하고 적용합니다. 어파인 변환과 달리 평행선이 보존되지 않습니다.</p>
+<p>문서 스캔 보정, 탑뷰 변환, 경사 보정 등에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>문서/카드 스캔 보정</li>
+  <li>탑뷰(Bird Eye) 변환</li>
+  <li>경사 보정</li>
+  <li>AR 이미지 합성</li>
+</ul>
+
+<h4>Pyramid</h4>
+<p>이미지 피라미드 연산(업스케일/다운스케일)을 수행하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Pyramid</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Direction</td><td>PyramidDirection</td><td>Down</td><td>피라미드 방향 (Up=확대, Down=축소)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Pyramid 노드는 PyrUp(2배 확대) 또는 PyrDown(2배 축소)을 수행합니다. 가우시안 블러를 적용한 후 스케일링하여 안티앨리어싱 효과를 제공합니다.</p>
+<p>다중 해상도 분석이나 이미지 크기 조정에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>다중 해상도 분석</li>
+  <li>안티앨리어싱 축소</li>
+  <li>피라미드 기반 처리</li>
+</ul>
+
+<h4>Distance Transform</h4>
+<p>이진 이미지의 거리 변환을 수행하는 노드입니다. 각 픽셀에서 가장 가까운 배경까지의 거리를 계산합니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-transform">
+    <div class="node-name">Distance Transform</div>
+    <div class="node-cat">Transform</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>DistanceType</td><td>DistanceType</td><td>L2</td><td>거리 타입 (L1/L2/C)</td></tr>
+  <tr><td>MaskSize</td><td>DistanceMaskSize</td><td>Five</td><td>마스크 크기 (Three/Five/Precise)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Distance Transform 노드는 전경 픽셀에서 가장 가까운 배경(0) 픽셀까지의 거리를 계산합니다. 결과는 0-255로 정규화됩니다.</p>
+<p>L2(유클리드)가 가장 정확하며, Watershed 마커 생성이나 객체 분리에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>Watershed 마커 생성</li>
+  <li>겹친 객체 분리</li>
+  <li>골격화 전처리</li>
+  <li>형태학적 분석</li>
+</ul>
+
+</div><!-- end ch19 -->
+
+<div class="chapter" id="ch20">
+
+<h2>Chapter 20. Histogram &mdash; 히스토그램 분석</h2>
+
+<p>Histogram 카테고리는 히스토그램 계산, 평활화, CLAHE, 역투영 등 밝기 분포 분석 및 보정을 위한 4개 노드를 제공합니다.</p>
+
+<h4>Calc Histogram</h4>
+<p>이미지의 밝기 히스토그램을 계산하고 시각화하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-histogram">
+    <div class="node-name">Calc Histogram</div>
+    <div class="node-cat">Histogram</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Histogram</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Histogram</td><td class="type-col">Mat</td><td>출력 Histogram</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Calc Histogram 노드는 그레이스케일(또는 자동 변환) 이미지의 256-bin 히스토그램을 계산합니다. 출력 Histogram은 각 밝기 레벨의 빈도를 담은 Mat입니다.</p>
+<p>512x400 크기의 히스토그램 시각화 이미지가 미리보기에 표시됩니다. 밝기 분포 확인 및 노출 평가에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>밝기 분포 분석</li>
+  <li>노출 적정성 평가</li>
+  <li>이미지 품질 검사</li>
+</ul>
+
+<h4>Equalize Histogram</h4>
+<p>히스토그램 평활화로 이미지의 대비를 개선하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-histogram">
+    <div class="node-name">Equalize Histogram</div>
+    <div class="node-cat">Histogram</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Equalize Histogram 노드는 Cv2.EqualizeHist()로 히스토그램을 균일 분포로 변환하여 대비를 향상시킵니다. 다채널 입력은 자동 그레이스케일 변환됩니다.</p>
+<p>전체 이미지에 동일한 변환을 적용하므로 조명이 균일한 경우에 적합합니다. 불균일 조명에는 CLAHE를 권장합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>대비 향상</li>
+  <li>저조도 이미지 보정</li>
+  <li>히스토그램 분포 정규화</li>
+</ul>
+
+<h4>CLAHE</h4>
+<p>CLAHE(Contrast Limited Adaptive Histogram Equalization)로 적응적 대비 향상을 수행하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-histogram">
+    <div class="node-name">CLAHE</div>
+    <div class="node-cat">Histogram</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>ClipLimit</td><td>double</td><td>2.0</td><td>대비 제한 임계값 (0.0~100.0)</td></tr>
+  <tr><td>TileGridSize</td><td>int</td><td>8</td><td>타일 격자 크기 (1~64)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>CLAHE 노드는 이미지를 타일로 분할하여 각 영역별로 독립적인 히스토그램 평활화를 적용합니다. ClipLimit으로 과도한 대비 증가를 방지합니다.</p>
+<p>불균일 조명 환경에서 EqualizeHistogram보다 우수한 결과를 제공합니다. TileGridSize가 작을수록 더 세밀한 적응이 이루어집니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>불균일 조명 보정</li>
+  <li>의료 영상 대비 향상</li>
+  <li>국소 대비 개선</li>
+  <li>전처리 파이프라인</li>
+</ul>
+
+<h4>Calc Back Project</h4>
+<p>히스토그램 역투영으로 타겟 영역과 유사한 색상 분포를 찾는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">TargetRegion</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-histogram">
+    <div class="node-name">Calc Back Project</div>
+    <div class="node-cat">Histogram</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>TargetRegion</td><td class="type-col">Mat</td><td>입력 TargetRegion</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>HistBins</td><td>int</td><td>180</td><td>히스토그램 빈 수 (1~256)</td></tr>
+  <tr><td>RangeMin</td><td>int</td><td>0</td><td>범위 최소 (0~255)</td></tr>
+  <tr><td>RangeMax</td><td>int</td><td>180</td><td>범위 최대 (0~255)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Calc Back Project 노드는 TargetRegion의 Hue 히스토그램을 계산한 후, Image 전체에서 해당 색상 분포와 일치하는 영역을 찾아 확률 맵을 생성합니다.</p>
+<p>HSV 색공간의 Hue 채널을 사용하므로 조명 변화에 강건합니다. 특정 색상의 객체를 추적하는 데 효과적입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>색상 기반 객체 추적</li>
+  <li>특정 색상 영역 검출</li>
+  <li>CamShift/MeanShift 전처리</li>
+  <li>색상 유사도 맵 생성</li>
+</ul>
+
+</div><!-- end ch20 -->
+
+<div class="chapter" id="ch21">
+
+<h2>Chapter 21. Arithmetic &mdash; 산술 연산</h2>
+
+<p>Arithmetic 카테고리는 이미지 간 덧셈, 뺄셈, 곱셈, 차이, 비트 연산, 블렌딩, 마스크 적용 등 11개 산술 연산 노드를 제공합니다.</p>
+
+<h4>Add</h4>
+<p>두 이미지를 픽셀 단위로 더하는 노드입니다. 포화 연산이 적용됩니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Add</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Add 노드는 Cv2.Add()로 두 이미지를 픽셀 단위로 더합니다. 8비트 이미지의 경우 255를 초과하면 255로 클리핑(포화)됩니다.</p>
+<p>밝기 증가, 이미지 합성, 노이즈 마스크 적용 등에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>이미지 밝기 증가</li>
+  <li>이미지 합성</li>
+  <li>마스크 합산</li>
+</ul>
+
+<h4>Subtract</h4>
+<p>두 이미지를 픽셀 단위로 빼는 노드입니다. 포화 연산이 적용됩니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Subtract</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Subtract 노드는 Cv2.Subtract()로 Image1에서 Image2를 뺍니다. 음수 결과는 0으로 클리핑됩니다.</p>
+<p>배경 제거(이전 프레임 차이), 마스크 기반 영역 제거 등에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>배경 차분</li>
+  <li>이미지 간 변화 검출</li>
+  <li>밝기 감소</li>
+</ul>
+
+<h4>Multiply</h4>
+<p>두 이미지를 픽셀 단위로 곱하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Multiply</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Multiply 노드는 Cv2.Multiply()로 두 이미지를 요소별 곱셈합니다. 마스크 기반 영역 강조나 밝기 스케일링에 사용됩니다.</p>
+<p>결과가 타입 범위를 초과하면 포화됩니다. 정밀한 곱셈이 필요하면 부동소수점 변환 후 처리합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>마스크 기반 영역 강조</li>
+  <li>밝기 스케일링</li>
+  <li>가중 합성</li>
+</ul>
+
+<h4>Abs Diff</h4>
+<p>두 이미지의 절대 차이를 계산하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Abs Diff</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Abs Diff 노드는 Cv2.Absdiff()로 |Image1 - Image2|를 계산합니다. Subtract와 달리 음수 결과가 절대값으로 변환되어 양방향 변화를 모두 감지합니다.</p>
+<p>프레임 차이 검출, 변화 감지, 이미지 비교에 필수적인 노드입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>프레임 간 변화 감지</li>
+  <li>이미지 비교/차이 분석</li>
+  <li>결함 검출 (참조 대비)</li>
+</ul>
+
+<h4>Bitwise AND</h4>
+<p>두 이미지의 비트 AND 연산을 수행하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Bitwise AND</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Bitwise AND 노드는 Cv2.BitwiseAnd()로 두 이미지의 각 픽셀에 비트 AND를 적용합니다. 마스크 적용의 기본 연산입니다.</p>
+<p>마스크가 255인 영역만 원본을 유지하고, 0인 영역은 제거됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>마스크 적용</li>
+  <li>영역 선택적 추출</li>
+  <li>이진 마스크 교집합</li>
+</ul>
+
+<h4>Bitwise OR</h4>
+<p>두 이미지의 비트 OR 연산을 수행하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Bitwise OR</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Bitwise OR 노드는 Cv2.BitwiseOr()로 두 이미지의 각 픽셀에 비트 OR을 적용합니다.</p>
+<p>두 마스크의 합집합을 구하거나, 이미지를 중첩하는 데 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>마스크 합집합</li>
+  <li>이미지 중첩</li>
+  <li>영역 병합</li>
+</ul>
+
+<h4>Bitwise XOR</h4>
+<p>두 이미지의 비트 XOR 연산을 수행하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Bitwise XOR</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Bitwise XOR 노드는 Cv2.BitwiseXor()로 두 이미지의 각 픽셀에 비트 XOR을 적용합니다. 동일한 영역은 0, 다른 영역만 남깁니다.</p>
+<p>두 이미지의 차이 영역만 추출하는 데 유용합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>이미지 차이 영역 추출</li>
+  <li>마스크 배타적 영역</li>
+  <li>변경점 감지</li>
+</ul>
+
+<h4>Bitwise NOT</h4>
+<p>이미지의 비트 반전(NOT)을 수행하는 노드입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Bitwise NOT</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Bitwise NOT 노드는 Cv2.BitwiseNot()으로 각 픽셀을 비트 반전합니다. 255에서 해당 값을 뺀 것과 동일합니다.</p>
+<p>마스크 반전, 네거티브 이미지 생성에 활용됩니다. 단일 입력 노드입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>마스크 반전</li>
+  <li>네거티브 이미지 생성</li>
+  <li>이진 마스크 보수</li>
+</ul>
+
+<h4>Weighted Add</h4>
+<p>두 이미지의 가중 합(alpha blending)을 수행하는 노드입니다. Result = Alpha*Image1 + Beta*Image2 + Gamma.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Weighted Add</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Alpha</td><td>double</td><td>0.5</td><td>Image1 가중치 (0.0~10.0)</td></tr>
+  <tr><td>Beta</td><td>double</td><td>0.5</td><td>Image2 가중치 (0.0~10.0)</td></tr>
+  <tr><td>Gamma</td><td>double</td><td>0.0</td><td>스칼라 보정 (-255~255)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Weighted Add 노드는 Cv2.AddWeighted()로 두 이미지를 가중 합산합니다. Alpha+Beta=1.0으로 설정하면 자연스러운 블렌딩이 됩니다.</p>
+<p>Gamma로 전체 밝기를 조정할 수 있습니다. 반투명 오버레이, 이미지 합성에 활용됩니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>반투명 오버레이 합성</li>
+  <li>이미지 블렌딩</li>
+  <li>밝기 가중 조합</li>
+</ul>
+
+<h4>Image Blend</h4>
+<p>두 이미지를 Alpha 비율로 블렌딩하는 간편 노드입니다. Image2 가중치는 자동으로 (1-Alpha)가 됩니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image1</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Image2</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Image Blend</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image1</td><td class="type-col">Mat</td><td>입력 Image1</td></tr>
+  <tr><td class="dir-in">입력</td><td>Image2</td><td class="type-col">Mat</td><td>입력 Image2</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Alpha</td><td>double</td><td>0.5</td><td>Image1 블렌드 비율 (0.0~1.0)</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Image Blend 노드는 Alpha 하나만으로 블렌딩을 제어합니다. Image2의 크기/타입이 다르면 자동으로 Image1에 맞춰 리사이즈합니다.</p>
+<p>간편한 투명도 합성에 최적화되어 있으며, Weighted Add의 단순화 버전입니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>간편 이미지 합성</li>
+  <li>크로스페이드 효과</li>
+  <li>오버레이 투명도 조절</li>
+</ul>
+
+<h4>Mask Apply</h4>
+<p>마스크를 이미지에 적용하여 관심 영역만 추출하는 노드입니다. BitwiseAnd 기반입니다.</p>
+<div class="node-diagram">
+  <div class="port-group-in">
+    <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    <div class="port-badge"><span class="port-name">Mask</span> <span class="port-type">Mat</span></div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="node-box cat-arith">
+    <div class="node-name">Mask Apply</div>
+    <div class="node-cat">Arithmetic</div>
+  </div>
+  <span class="arrow">&rarr;</span>
+  <div class="port-group-out">
+    <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+  </div>
+</div>
+<p class="section-label">포트 상세</p>
+<table>
+  <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+  <tr><td class="dir-in">입력</td><td>Image</td><td class="type-col">Mat</td><td>입력 Image</td></tr>
+  <tr><td class="dir-in">입력</td><td>Mask</td><td class="type-col">Mat</td><td>입력 Mask</td></tr>
+  <tr><td class="dir-out">출력</td><td>Result</td><td class="type-col">Mat</td><td>출력 Result</td></tr>
+</table>
+<p class="section-label">속성</p>
+<table>
+  <tr><th>이름</th><th>타입</th><th>기본값</th><th>설명</th></tr>
+  <tr><td>Invert</td><td>bool</td><td>false</td><td>마스크 반전 여부</td></tr>
+</table>
+<p class="section-label">기능 설명</p>
+<p>Mask Apply 노드는 Cv2.BitwiseAnd(image, image, mask)로 마스크의 비제로 영역만 원본에서 추출합니다. 다채널 마스크는 자동 그레이스케일 변환됩니다.</p>
+<p>Invert 속성을 활성화하면 마스크를 반전하여 마스크 외부 영역을 추출합니다.</p>
+<p class="section-label">응용 분야</p>
+<ul>
+  <li>ROI 마스킹</li>
+  <li>배경 제거</li>
+  <li>관심 영역만 추출</li>
+  <li>마스크 기반 분석</li>
+</ul>
+
+</div><!-- end ch21 -->

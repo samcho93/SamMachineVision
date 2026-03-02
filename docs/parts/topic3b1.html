@@ -1,0 +1,732 @@
+<!-- ═══════════════════════════════════════════════════════════
+     Chapter 10: Color 노드
+     ═══════════════════════════════════════════════════════════ -->
+<div class="chapter" id="ch10">
+  <h2>Chapter 10: Color 노드</h2>
+
+  <h3>10.1 개요</h3>
+  <p>Color 노드 그룹은 이미지의 색상 공간 변환, 채널 분리/병합, 색상 범위 필터링 등 색상 관련 처리를 담당하는 노드들로 구성됩니다. 머신 비전에서 색상 정보는 객체 분류, 결함 검출, 영역 분할 등 다양한 작업의 핵심 요소이며, 적절한 색상 공간 변환과 채널 조작을 통해 특정 특징을 효과적으로 추출할 수 있습니다. 예를 들어 BGR 이미지를 HSV 공간으로 변환하면 조명 변화에 강인한 색상 기반 검출이 가능하고, 채널을 분리하면 개별 색상 성분에 대한 독립적인 분석이 가능합니다.</p>
+
+  <p>MVXTester의 Color 카테고리에는 4개의 노드가 등록되어 있습니다: Convert Color(색상 공간 변환), In Range(색상 범위 필터링), Split Channels(채널 분리), Merge Channels(채널 병합). 이 노드들은 서로 조합하여 사용되는 경우가 많으며, 특히 Convert Color와 In Range를 연결하면 특정 색상의 객체만 마스킹하는 강력한 파이프라인을 구성할 수 있습니다.</p>
+
+  <!-- ── 10.2 Convert Color ── -->
+  <h3>10.2 Convert Color 노드</h3>
+  <h4>Convert Color</h4>
+  <p>입력 이미지의 색상 공간을 변환하는 노드입니다. OpenCvSharp의 <code>Cv2.CvtColor</code>를 사용하여 BGR, GRAY, HSV, HLS, YCrCb, Lab 등 다양한 색상 공간 간의 변환을 지원합니다. ColorConversionCodes 열거형에서 원하는 변환 코드를 선택하여 사용합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-color">
+      <div class="node-name">Convert Color</div>
+      <div class="node-cat">Color</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>변환할 원본 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>색상 공간이 변환된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Conversion</td><td class="type-col">ColorConversionCodes</td><td>BGR2GRAY</td><td>ColorConversionCodes 열거형 전체</td><td>적용할 색상 변환 코드</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Convert Color 노드는 입력 이미지의 색상 공간을 지정된 변환 코드에 따라 변환합니다. 기본값은 BGR2GRAY로, 컬러 이미지를 그레이스케일로 변환합니다. BGR2HSV를 선택하면 색상(Hue), 채도(Saturation), 명도(Value) 공간으로 변환되어, 조명 변화에 영향을 받지 않는 색상 기반 검출에 유리합니다.</p>
+
+  <p>OpenCV의 ColorConversionCodes 열거형에 정의된 모든 변환 코드를 지원하므로, BGR2Lab(CIE Lab 색상 공간), BGR2YCrCb(YCbCr 색상 공간), BGR2HLS(HLS 색상 공간) 등 다양한 변환이 가능합니다. 변환 코드와 입력 이미지의 채널 수가 일치하지 않으면 에러가 발생하므로, 예를 들어 GRAY2BGR 변환은 반드시 단일 채널 이미지에 적용해야 합니다.</p>
+
+  <p>변환 결과는 새로운 Mat 객체로 생성되어 출력 포트로 전달되며, 노드 미리보기에도 표시됩니다. 이 노드는 대부분의 색상 기반 처리 파이프라인에서 전처리 단계로 사용되며, 특히 In Range 노드와 함께 사용하여 특정 색상 영역을 마스킹하는 패턴이 가장 일반적입니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>그레이스케일 변환: 에지 검출, 이진화 등 후속 처리를 위한 전처리</li>
+    <li>HSV 변환 후 색상 검출: 특정 색상 객체의 분류 및 검출</li>
+    <li>Lab 색상 공간 활용: 색차(Color Difference) 기반 품질 검사</li>
+    <li>YCrCb 변환: 피부색 검출, 영상 압축 전처리</li>
+    <li>채널 수 변환: 단일 채널 이미지를 3채널로 확장하여 컬러 오버레이 적용</li>
+  </ul>
+
+  <!-- ── 10.3 In Range ── -->
+  <h3>10.3 In Range 노드</h3>
+  <h4>In Range</h4>
+  <p>이미지의 각 픽셀 값이 지정된 범위 내에 있는지 확인하여 이진 마스크를 생성하는 노드입니다. 주로 HSV 색상 공간으로 변환된 이미지에서 특정 색상 범위를 필터링하는 데 사용되며, H(색상), S(채도), V(명도) 각각에 대해 상한/하한 값을 설정할 수 있습니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-color">
+      <div class="node-name">In Range</div>
+      <div class="node-cat">Color</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Mask</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>색상 범위를 검사할 입력 이미지 (일반적으로 HSV 이미지)</td></tr>
+    <tr><td class="dir-out">Output</td><td>Mask</td><td class="type-col">Mat</td><td>범위 내 픽셀은 255, 범위 외 픽셀은 0인 이진 마스크</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Lower H</td><td class="type-col">int</td><td>0</td><td>0 ~ 255</td><td>색상(Hue) 하한값</td></tr>
+    <tr><td>Lower S</td><td class="type-col">int</td><td>0</td><td>0 ~ 255</td><td>채도(Saturation) 하한값</td></tr>
+    <tr><td>Lower V</td><td class="type-col">int</td><td>0</td><td>0 ~ 255</td><td>명도(Value) 하한값</td></tr>
+    <tr><td>Upper H</td><td class="type-col">int</td><td>180</td><td>0 ~ 255</td><td>색상(Hue) 상한값</td></tr>
+    <tr><td>Upper S</td><td class="type-col">int</td><td>255</td><td>0 ~ 255</td><td>채도(Saturation) 상한값</td></tr>
+    <tr><td>Upper V</td><td class="type-col">int</td><td>255</td><td>0 ~ 255</td><td>명도(Value) 상한값</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>In Range 노드는 OpenCV의 <code>Cv2.InRange</code> 함수를 사용하여 입력 이미지의 각 픽셀이 지정된 범위 (Lower, Upper) 사이에 있는지 판별합니다. 범위 내에 있는 픽셀은 255(흰색), 범위 밖 픽셀은 0(검정)으로 설정된 이진 마스크를 생성합니다. Lower와 Upper 값은 각각 3채널(H, S, V)에 대해 독립적으로 설정할 수 있습니다.</p>
+
+  <p>이 노드의 가장 일반적인 사용 패턴은 Convert Color 노드에서 BGR2HSV로 변환한 이미지를 입력으로 받아 특정 색상 범위를 필터링하는 것입니다. 예를 들어 빨간색 객체를 검출하려면 H 범위를 0~10 또는 160~180으로, S와 V를 적절히 설정합니다. OpenCV의 HSV에서 H 범위는 0~180이므로, Upper H의 기본값이 180으로 설정되어 있습니다.</p>
+
+  <p>생성된 마스크는 후속 노드에서 Morphology 연산으로 노이즈를 제거하거나, Contour 검출의 입력으로 사용하거나, 원본 이미지와 Bitwise And 연산을 통해 특정 색상 영역만 추출하는 데 활용됩니다. 속성 범위가 0~255로 통일되어 있으나, HSV 공간의 경우 실제 H 값은 0~180 범위임을 유의해야 합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>색상 기반 객체 검출: 특정 색상의 부품, 라벨, 마커 등을 검출</li>
+    <li>불량 색상 감지: 제품의 변색, 오염, 색상 불균일 검출</li>
+    <li>배경 제거: 크로마키(Chroma Key) 방식의 배경 분리</li>
+    <li>과일/식품 품질 검사: 색상 변화를 통한 숙성도, 신선도 판별</li>
+    <li>교통 표지판 인식: 특정 색상(빨강, 파랑, 노랑)의 표지판 영역 추출</li>
+  </ul>
+
+  <!-- ── 10.4 Split Channels ── -->
+  <h3>10.4 Split Channels 노드</h3>
+  <h4>Split Channels</h4>
+  <p>다채널 이미지를 개별 채널로 분리하는 노드입니다. 3채널(BGR) 이미지를 입력하면 각 채널(B, G, R)을 독립적인 단일 채널 이미지로 분리하여 세 개의 출력 포트로 전달합니다. OpenCvSharp의 <code>Cv2.Split</code> 함수를 사용합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-color">
+      <div class="node-name">Split Channels</div>
+      <div class="node-cat">Color</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Ch0</span> <span class="port-type">Mat</span></div>
+      <div class="port-badge"><span class="port-name">Ch1</span> <span class="port-type">Mat</span></div>
+      <div class="port-badge"><span class="port-name">Ch2</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>분리할 다채널 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Ch0</td><td class="type-col">Mat</td><td>첫 번째 채널 (BGR 이미지의 경우 Blue)</td></tr>
+    <tr><td class="dir-out">Output</td><td>Ch1</td><td class="type-col">Mat</td><td>두 번째 채널 (BGR 이미지의 경우 Green)</td></tr>
+    <tr><td class="dir-out">Output</td><td>Ch2</td><td class="type-col">Mat</td><td>세 번째 채널 (BGR 이미지의 경우 Red)</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td colspan="5" style="text-align:center; color:#888;">속성 없음</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Split Channels 노드는 다채널 이미지를 개별 단일 채널 이미지로 분리합니다. BGR 이미지를 입력하면 Ch0에 Blue 채널, Ch1에 Green 채널, Ch2에 Red 채널이 각각 출력됩니다. HSV 이미지의 경우 Ch0=Hue, Ch1=Saturation, Ch2=Value가 됩니다. 입력 이미지의 채널 수에 따라 유효한 출력 포트가 결정되며, 단일 채널 이미지를 입력하면 Ch0에만 결과가 출력됩니다.</p>
+
+  <p>분리된 각 채널은 독립적인 그레이스케일 이미지로 출력되므로, 후속 노드에서 개별 채널에 대해 독립적인 처리(이진화, 히스토그램 분석, 에지 검출 등)를 수행할 수 있습니다. 이는 특정 채널에서만 나타나는 결함이나 특징을 분석할 때 매우 유용합니다.</p>
+
+  <p>노드 미리보기에는 첫 번째 채널(Ch0)이 표시됩니다. Merge Channels 노드와 함께 사용하면 특정 채널만 가공한 후 다시 다채널 이미지로 합성하는 워크플로우를 구성할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>채널별 독립 분석: 특정 색상 채널에서만 나타나는 결함 검출</li>
+    <li>HSV 분리: Hue 채널만 추출하여 색상 분포 분석</li>
+    <li>채널 교환: 개별 채널을 다른 순서로 재조합</li>
+    <li>색상 보정: 특정 채널에만 필터나 보정을 적용 후 병합</li>
+  </ul>
+
+  <!-- ── 10.5 Merge Channels ── -->
+  <h3>10.5 Merge Channels 노드</h3>
+  <h4>Merge Channels</h4>
+  <p>개별 단일 채널 이미지를 하나의 다채널 이미지로 병합하는 노드입니다. Split Channels 노드의 역연산으로, 최대 3개의 채널을 합쳐 BGR 또는 다른 색상 공간의 다채널 이미지를 생성합니다. OpenCvSharp의 <code>Cv2.Merge</code> 함수를 사용합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Ch0</span> <span class="port-type">Mat</span></div>
+      <div class="port-badge"><span class="port-name">Ch1</span> <span class="port-type">Mat</span></div>
+      <div class="port-badge"><span class="port-name">Ch2</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-color">
+      <div class="node-name">Merge Channels</div>
+      <div class="node-cat">Color</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Ch0</td><td class="type-col">Mat</td><td>첫 번째 채널 (필수)</td></tr>
+    <tr><td class="dir-in">Input</td><td>Ch1</td><td class="type-col">Mat</td><td>두 번째 채널 (선택적)</td></tr>
+    <tr><td class="dir-in">Input</td><td>Ch2</td><td class="type-col">Mat</td><td>세 번째 채널 (선택적)</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>병합된 다채널 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td colspan="5" style="text-align:center; color:#888;">속성 없음</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Merge Channels 노드는 최대 3개의 단일 채널 이미지를 하나의 다채널 이미지로 병합합니다. Ch0은 필수 입력이며, Ch1과 Ch2는 선택적입니다. Ch0만 연결하면 단일 채널 이미지가 그대로 출력되고, Ch0과 Ch1을 연결하면 2채널 이미지, 세 개 모두 연결하면 3채널 이미지가 생성됩니다.</p>
+
+  <p>주로 Split Channels로 분리한 채널 중 일부를 가공한 후 다시 합성하는 워크플로우에서 사용됩니다. 예를 들어 HSV 이미지를 분리하여 Saturation 채널의 대비를 높인 후 다시 병합하면 색상 강조 효과를 얻을 수 있습니다. 또한 서로 다른 처리 결과를 각 채널에 배치하여 하나의 이미지로 합성하는 용도로도 활용됩니다.</p>
+
+  <p>모든 입력 채널은 동일한 크기(가로 x 세로)와 데이터 타입을 가져야 합니다. 크기나 타입이 다른 채널을 병합하면 OpenCV 에러가 발생합니다. 비어 있거나 null인 채널은 자동으로 건너뛰므로, 부분적인 채널 병합도 가능합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>채널별 처리 후 재합성: 특정 채널만 필터링/보정 후 다시 컬러 이미지로 복원</li>
+    <li>커스텀 색상 이미지 생성: 서로 다른 처리 결과를 채널별로 합성</li>
+    <li>HSV 조작: Hue, Saturation, Value를 독립적으로 수정 후 재합성</li>
+    <li>의사 색상 표현: 그레이스케일 데이터를 다채널로 매핑하여 시각화</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     Chapter 11: Filter 노드
+     ═══════════════════════════════════════════════════════════ -->
+<div class="chapter" id="ch11">
+  <h2>Chapter 11: Filter 노드</h2>
+
+  <h3>11.1 개요</h3>
+  <p>Filter 노드 그룹은 이미지의 노이즈 제거, 블러링, 샤프닝, 정규화, 커스텀 컨볼루션 등 다양한 필터링 연산을 수행하는 노드들로 구성됩니다. 머신 비전 파이프라인에서 필터링은 노이즈를 제거하여 후속 처리의 정확도를 높이거나, 이미지의 특정 주파수 성분을 강조/억제하여 관심 특징을 부각시키는 핵심 전처리 단계입니다. 적절한 필터 선택과 파라미터 조정은 최종 검사 결과의 품질에 직접적인 영향을 미칩니다.</p>
+
+  <p>MVXTester의 Filter 카테고리에는 10개의 노드가 등록되어 있습니다: Gaussian Blur(가우시안 블러), Median Blur(미디안 블러), Bilateral Filter(양방향 필터), Box Filter(박스 필터), Sharpen(샤프닝), Filter 2D(커스텀 컨볼루션), Non-Local Means Denoise(비로컬 평균 디노이즈), Inpaint(인페인팅), Normalize(정규화), LUT(룩업 테이블). 각 노드는 서로 다른 필터링 특성을 가지며, 노이즈 유형과 처리 목적에 따라 적합한 필터를 선택해야 합니다.</p>
+
+  <!-- ── 11.2 Gaussian Blur ── -->
+  <h3>11.2 Gaussian Blur 노드</h3>
+  <h4>Gaussian Blur</h4>
+  <p>가우시안(정규분포) 커널을 사용하여 이미지에 블러(흐림) 효과를 적용하는 노드입니다. OpenCvSharp의 <code>Cv2.GaussianBlur</code> 함수를 사용하며, 커널 크기와 시그마 값을 조절하여 블러 강도를 제어할 수 있습니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Gaussian Blur</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>블러를 적용할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>가우시안 블러가 적용된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Kernel Width</td><td class="type-col">int</td><td>5</td><td>1 ~ 99</td><td>가우시안 커널의 가로 크기 (홀수)</td></tr>
+    <tr><td>Kernel Height</td><td class="type-col">int</td><td>5</td><td>1 ~ 99</td><td>가우시안 커널의 세로 크기 (홀수)</td></tr>
+    <tr><td>Sigma X</td><td class="type-col">double</td><td>0.0</td><td>0.0 ~ 100.0</td><td>X축 방향 가우시안 표준편차 (0이면 커널 크기에서 자동 계산)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Gaussian Blur 노드는 가우시안(정규분포) 가중치 커널을 이미지에 적용하여 부드럽게 만듭니다. 커널의 중심에 가까운 픽셀에 더 큰 가중치를 부여하므로, 단순 평균 블러(Box Filter)에 비해 자연스러운 블러 효과를 생성합니다. 커널 크기가 클수록 블러 효과가 강해지며, 커널 크기는 반드시 홀수여야 합니다. 짝수 값을 입력하면 자동으로 1을 더하여 홀수로 보정합니다.</p>
+
+  <p>Sigma X 값이 0인 경우, OpenCV가 커널 크기로부터 적절한 시그마 값을 자동으로 계산합니다. 시그마 값을 직접 지정하면 커널 크기와 독립적으로 블러의 확산 정도를 세밀하게 제어할 수 있습니다. 커널의 가로/세로 크기를 다르게 설정하면 방향성 블러 효과를 만들 수 있습니다.</p>
+
+  <p>가우시안 블러는 에지 검출(Canny, Sobel) 전처리로 가장 널리 사용되는 필터입니다. 노이즈를 효과적으로 제거하면서 에지 정보의 손실을 최소화하므로, 대부분의 비전 파이프라인에서 기본 전처리 단계로 채택됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>에지 검출 전처리: Canny, Sobel 등 에지 검출기 적용 전 노이즈 제거</li>
+    <li>가우시안 노이즈 제거: 센서 노이즈가 포함된 이미지의 전처리</li>
+    <li>이미지 피라미드: 다해상도 분석을 위한 블러 적용</li>
+    <li>배경 모델링: 블러된 이미지를 배경 모델로 활용</li>
+    <li>텍스처 억제: 표면 텍스처를 제거하여 형상 특징만 추출</li>
+  </ul>
+
+  <!-- ── 11.3 Median Blur ── -->
+  <h3>11.3 Median Blur 노드</h3>
+  <h4>Median Blur</h4>
+  <p>커널 영역 내 픽셀들의 중앙값(Median)으로 중심 픽셀을 대체하는 비선형 필터 노드입니다. OpenCvSharp의 <code>Cv2.MedianBlur</code> 함수를 사용하며, 솔트앤페퍼(Salt-and-Pepper) 노이즈 제거에 매우 효과적입니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Median Blur</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>미디안 블러를 적용할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>미디안 블러가 적용된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Kernel Size</td><td class="type-col">int</td><td>5</td><td>1 ~ 99</td><td>미디안 필터의 커널 크기 (홀수)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Median Blur 노드는 각 픽셀을 주변 커널 영역 내 픽셀 값들의 중앙값으로 대체합니다. 가우시안 블러와 달리 비선형 필터이므로, 이미지의 에지를 상대적으로 잘 보존하면서 노이즈를 제거하는 특성을 가집니다. 특히 솔트앤페퍼(임펄스) 노이즈에 대해 매우 효과적인데, 극단적인 노이즈 값이 중앙값 계산에서 자연스럽게 제거되기 때문입니다.</p>
+
+  <p>커널 크기는 반드시 홀수여야 하며, 짝수 값이 입력되면 자동으로 1을 더하여 홀수로 보정합니다. 커널 크기가 클수록 더 넓은 영역의 노이즈를 제거할 수 있지만, 동시에 미세한 디테일도 손실될 수 있습니다. 일반적으로 3~7 범위의 커널 크기가 가장 많이 사용됩니다.</p>
+
+  <p>미디안 블러는 가우시안 블러보다 에지 보존 성능이 좋으므로, 에지 정보가 중요한 검사 작업에서 전처리로 자주 활용됩니다. 다만 커널 크기가 커질수록 연산 시간이 급격히 증가하므로, 실시간 처리 시에는 적절한 크기를 선택해야 합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>솔트앤페퍼 노이즈 제거: 임펄스 노이즈가 많은 이미지의 전처리</li>
+    <li>에지 보존 스무딩: 에지를 유지하면서 표면 노이즈 제거</li>
+    <li>이진화 전처리: 이진화 노이즈를 줄이기 위한 사전 필터링</li>
+    <li>의료 영상 처리: CT, MRI 등 의료 영상의 노이즈 제거</li>
+  </ul>
+
+  <!-- ── 11.4 Bilateral Filter ── -->
+  <h3>11.4 Bilateral Filter 노드</h3>
+  <h4>Bilateral Filter</h4>
+  <p>공간 거리와 색상 차이를 동시에 고려하여 에지를 보존하면서 스무딩하는 필터 노드입니다. OpenCvSharp의 <code>Cv2.BilateralFilter</code> 함수를 사용하며, 노이즈 제거와 에지 보존을 동시에 달성하는 고급 필터입니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Bilateral Filter</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>양방향 필터를 적용할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>양방향 필터가 적용된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Diameter</td><td class="type-col">int</td><td>9</td><td>1 ~ 100</td><td>각 픽셀 이웃 영역의 지름</td></tr>
+    <tr><td>Sigma Color</td><td class="type-col">double</td><td>75.0</td><td>0.0 ~ 500.0</td><td>색상 공간에서의 필터 시그마</td></tr>
+    <tr><td>Sigma Space</td><td class="type-col">double</td><td>75.0</td><td>0.0 ~ 500.0</td><td>좌표 공간에서의 필터 시그마</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Bilateral Filter 노드는 공간 도메인과 색상 도메인 모두에서 가우시안 가중치를 적용하는 비선형 필터입니다. 일반 가우시안 블러는 공간 거리만 고려하여 에지 경계에서도 동일하게 블러를 적용하지만, 양방향 필터는 색상 차이가 큰 픽셀(에지)에는 낮은 가중치를 부여하므로 에지를 효과적으로 보존합니다.</p>
+
+  <p>Diameter는 필터링에 사용할 이웃 픽셀 영역의 크기를 결정합니다. Sigma Color 값이 크면 색상 차이가 큰 픽셀도 스무딩에 포함되어 더 강한 평활화 효과가 나타나고, 작으면 비슷한 색상의 픽셀만 스무딩되어 에지 보존 효과가 강해집니다. Sigma Space 값은 공간적으로 더 먼 픽셀의 영향력을 제어합니다.</p>
+
+  <p>양방향 필터는 다른 블러 필터에 비해 연산 비용이 높지만, 노이즈 제거와 에지 보존을 동시에 달성할 수 있다는 장점이 있습니다. 실시간 처리보다는 높은 품질이 요구되는 정밀 검사에서 주로 활용됩니다. Diameter 값을 크게 하면 처리 시간이 크게 증가하므로, 실시간 응용에서는 5~9 범위를 권장합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>에지 보존 스무딩: 에지 정보가 중요한 검사 전처리</li>
+    <li>표면 검사: 텍스처 노이즈를 제거하면서 결함 에지 보존</li>
+    <li>미용/의료 영상: 피부 결점 제거 등 에지 보존 필터링</li>
+    <li>카툰 효과: 반복 적용으로 만화 스타일 렌더링</li>
+    <li>정밀 계측: 노이즈에 의한 에지 위치 오차를 줄이면서 에지 보존</li>
+  </ul>
+
+  <!-- ── 11.5 Box Filter ── -->
+  <h3>11.5 Box Filter 노드</h3>
+  <h4>Box Filter</h4>
+  <p>커널 영역 내 모든 픽셀에 동일한 가중치를 적용하여 평균을 계산하는 단순 블러 필터 노드입니다. OpenCvSharp의 <code>Cv2.BoxFilter</code> 함수를 사용하며, 가장 기본적인 공간 필터링 연산을 수행합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Box Filter</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>박스 필터를 적용할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>박스 필터가 적용된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Kernel Width</td><td class="type-col">int</td><td>5</td><td>1 ~ 99</td><td>커널의 가로 크기</td></tr>
+    <tr><td>Kernel Height</td><td class="type-col">int</td><td>5</td><td>1 ~ 99</td><td>커널의 세로 크기</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Box Filter 노드는 지정된 크기의 커널 영역 내 모든 픽셀에 동일한 가중치(1/N, N은 커널 내 총 픽셀 수)를 적용하여 평균값을 계산합니다. 가장 단순한 형태의 공간 필터로, 가우시안 블러에 비해 연산 속도가 빠르지만 에지 보존 성능은 떨어집니다. 출력 이미지의 깊이는 입력과 동일하게 유지됩니다(-1 매개변수).</p>
+
+  <p>커널의 가로/세로 크기를 독립적으로 설정할 수 있어, 방향성 블러 효과를 구현할 수 있습니다. 예를 들어 가로 크기를 크게 하고 세로 크기를 1로 설정하면 수평 방향으로만 블러가 적용됩니다. 가우시안 블러와 달리 커널 크기가 짝수여도 동작하지만, 일반적으로 홀수 크기를 사용하는 것이 권장됩니다.</p>
+
+  <p>Box Filter는 연산 효율이 높아 실시간 처리에서 단순 노이즈 제거가 필요한 경우에 적합합니다. 적분 이미지(Integral Image)를 활용하면 커널 크기에 관계없이 일정한 시간에 연산이 완료되므로, 대규모 커널이 필요한 배경 모델링이나 평균 밝기 계산에도 효율적입니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>고속 블러 처리: 실시간 파이프라인에서 빠른 노이즈 제거</li>
+    <li>배경 평균화: 넓은 영역의 평균 밝기 계산</li>
+    <li>방향성 블러: 가로/세로 방향 선택적 스무딩</li>
+    <li>적응적 이진화 전처리: 로컬 평균 밝기 기반 이진화의 기초</li>
+  </ul>
+
+  <!-- ── 11.6 Sharpen ── -->
+  <h3>11.6 Sharpen 노드</h3>
+  <h4>Sharpen</h4>
+  <p>언샤프 마스크(Unsharp Mask) 기법을 사용하여 이미지의 에지와 디테일을 강조하는 샤프닝 노드입니다. 원본 이미지와 블러된 이미지의 차이를 원본에 더하는 방식으로 샤프닝 효과를 생성합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Sharpen</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>샤프닝을 적용할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>샤프닝이 적용된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Amount</td><td class="type-col">double</td><td>1.0</td><td>0.0 ~ 10.0</td><td>샤프닝 강도</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Sharpen 노드는 언샤프 마스크(Unsharp Mask) 알고리즘을 사용하여 이미지를 샤프닝합니다. 내부적으로 먼저 가우시안 블러(시그마=3)를 적용하여 저주파 성분만 남긴 후, 원본에서 블러 이미지를 빼서 고주파 성분(에지, 디테일)을 추출합니다. 이 고주파 성분에 Amount 계수를 곱하여 원본에 더함으로써 에지를 강조합니다. 수식으로 표현하면 <code>result = (1 + amount) * image - amount * blurred</code> 입니다.</p>
+
+  <p>Amount 값이 0이면 원본과 동일한 결과가 출력되고, 값이 클수록 에지와 디테일이 더 강하게 강조됩니다. 그러나 Amount를 너무 높게 설정하면 노이즈까지 증폭되어 이미지 품질이 저하될 수 있으므로, 일반적으로 0.5~2.0 범위에서 사용하는 것이 권장됩니다. 내부적으로 사용되는 블러된 이미지(blurred)는 처리 완료 후 자동으로 해제(Dispose)됩니다.</p>
+
+  <p>샤프닝은 블러된 이미지의 디테일을 복원하거나, 에지 검출 전에 에지를 더 뚜렷하게 만들거나, 인쇄/디스플레이 출력 시 선명도를 높이는 용도로 사용됩니다. 다만 이미 노이즈가 많은 이미지에는 노이즈 제거를 먼저 수행한 후 샤프닝을 적용하는 것이 좋습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>에지 강조: 약한 에지를 강조하여 에지 검출 성능 향상</li>
+    <li>디테일 복원: 광학 시스템에 의해 블러된 이미지의 선명도 개선</li>
+    <li>문자 인식 전처리: 인쇄된 텍스트의 가독성 향상</li>
+    <li>출력물 최적화: 인쇄나 디스플레이용 이미지의 선명도 조정</li>
+  </ul>
+
+  <!-- ── 11.7 Filter 2D ── -->
+  <h3>11.7 Filter 2D 노드</h3>
+  <h4>Filter 2D</h4>
+  <p>사용자가 직접 정의한 커스텀 컨볼루션 커널을 이미지에 적용하는 노드입니다. OpenCvSharp의 <code>Cv2.Filter2D</code> 함수를 사용하며, 텍스트로 입력된 행렬을 파싱하여 커널로 사용합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Filter 2D</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>컨볼루션을 적용할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>커스텀 커널이 적용된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Kernel</td><td class="type-col">MultilineString</td><td>0 -1 0<br>-1 5 -1<br>0 -1 0</td><td>-</td><td>커널 행렬 (공백 구분, 한 줄에 한 행)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Filter 2D 노드는 사용자가 텍스트로 직접 입력한 커널 행렬을 파싱하여 이미지에 2D 컨볼루션을 수행합니다. 커널은 여러 줄의 텍스트로 입력하며, 각 줄이 행렬의 한 행에 해당합니다. 값은 공백, 탭, 또는 쉼표로 구분합니다. 기본값은 3x3 샤프닝 커널로, 중심 값이 5이고 상하좌우가 -1인 라플라시안 기반 샤프닝 커널입니다.</p>
+
+  <p>커널 행렬의 크기와 값을 자유롭게 설정할 수 있으므로, 블러, 샤프닝, 에지 검출, 엠보싱 등 다양한 컨볼루션 연산을 하나의 노드로 구현할 수 있습니다. 커널의 모든 행은 동일한 열 수를 가져야 하며, 행 수가 다르면 에러가 발생합니다. 커널 값은 실수(float)로 파싱되므로 소수점 값도 사용 가능합니다.</p>
+
+  <p>이 노드는 고급 사용자가 OpenCV에서 직접 제공하지 않는 특수한 필터를 실험하거나, 논문이나 알고리즘에서 제시된 특정 커널을 테스트할 때 유용합니다. 출력 이미지의 깊이는 입력과 동일하게 유지됩니다(-1). 사용 후 커널 Mat 객체는 자동으로 해제됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>커스텀 에지 검출: Prewitt, Roberts 등 다양한 에지 검출 커널 적용</li>
+    <li>엠보싱 효과: 방향성 엠보싱 커널을 통한 입체감 표현</li>
+    <li>특수 필터 실험: 연구/논문에서 제시된 커널 직접 테스트</li>
+    <li>방향성 필터: 특정 방향의 에지나 패턴만 검출하는 커스텀 커널</li>
+    <li>학습 도구: 컨볼루션 연산의 효과를 직관적으로 확인</li>
+  </ul>
+
+  <!-- ── 11.8 Non-Local Means Denoise ── -->
+  <h3>11.8 Non-Local Means Denoise 노드</h3>
+  <h4>Non-Local Means Denoise</h4>
+  <p>비로컬 평균(Non-Local Means) 알고리즘을 사용하여 고급 노이즈 제거를 수행하는 노드입니다. 유사한 패치를 이미지 전역에서 검색하여 평균함으로써, 텍스처와 디테일을 보존하면서 노이즈를 효과적으로 제거합니다. 컬러 이미지와 그레이스케일 이미지를 자동으로 구분하여 적절한 함수를 호출합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Non-Local Means Denoise</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>노이즈를 제거할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>노이즈가 제거된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Filter Strength (H)</td><td class="type-col">float</td><td>10</td><td>1 ~ 100</td><td>휘도 성분 필터 강도 (값이 클수록 노이즈 제거 강함)</td></tr>
+    <tr><td>Color Filter Strength</td><td class="type-col">float</td><td>10</td><td>1 ~ 100</td><td>색상 성분 필터 강도 (컬러 이미지 전용)</td></tr>
+    <tr><td>Template Window Size</td><td class="type-col">int</td><td>7</td><td>3 ~ 21</td><td>템플릿 패치 크기 (홀수)</td></tr>
+    <tr><td>Search Window Size</td><td class="type-col">int</td><td>21</td><td>3 ~ 51</td><td>유사 패치 탐색 영역 크기 (홀수)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Non-Local Means Denoise 노드는 각 픽셀의 이웃 패치와 유사한 패치를 이미지 전역(Search Window 내)에서 찾아 가중 평균하는 알고리즘을 사용합니다. 일반적인 공간 필터(가우시안, 미디안)가 인접 픽셀만 사용하는 것과 달리, 멀리 떨어진 위치에 있는 유사한 패턴도 활용하므로 텍스처와 반복 패턴을 훨씬 잘 보존합니다.</p>
+
+  <p>입력 이미지의 채널 수에 따라 자동으로 적절한 함수를 선택합니다. 3채널 이상의 컬러 이미지에는 <code>FastNlMeansDenoisingColored</code>를, 단일 채널 그레이스케일 이미지에는 <code>FastNlMeansDenoising</code>를 호출합니다. Filter Strength(H) 값이 클수록 더 강한 노이즈 제거가 적용되지만, 동시에 디테일 손실이 증가합니다. 일반적으로 가우시안 노이즈에 대해 10~20 범위가 적합합니다.</p>
+
+  <p>Template Window Size는 비교에 사용할 패치의 크기이고, Search Window Size는 유사 패치를 검색할 영역의 크기입니다. 검색 영역이 클수록 더 많은 유사 패치를 찾을 수 있지만 연산 시간이 크게 증가합니다. 윈도우 크기는 반드시 홀수여야 하며, 짝수 값이 입력되면 자동으로 1을 더합니다. 이 알고리즘은 연산 비용이 높으므로 실시간 처리보다는 고품질 노이즈 제거가 필요한 오프라인 처리에 적합합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>고품질 노이즈 제거: 저조도 환경에서 촬영된 이미지의 노이즈 제거</li>
+    <li>의료 영상 처리: CT, MRI, X-ray 영상의 정밀 디노이즈</li>
+    <li>텍스처 보존 스무딩: 텍스처와 패턴을 유지하면서 가우시안 노이즈 제거</li>
+    <li>과학 영상 분석: 현미경, 천문 관측 등 고감도 센서 이미지의 노이즈 저감</li>
+    <li>OCR 전처리: 문서 이미지의 노이즈를 제거하여 문자 인식 정확도 향상</li>
+  </ul>
+
+  <!-- ── 11.9 Inpaint ── -->
+  <h3>11.9 Inpaint 노드</h3>
+  <h4>Inpaint</h4>
+  <p>마스크로 지정된 손상 영역을 주변 픽셀 정보를 활용하여 자동으로 복원하는 인페인팅 노드입니다. OpenCvSharp의 <code>Cv2.Inpaint</code> 함수를 사용하며, Navier-Stokes 방정식 기반과 Telea(Fast Marching) 기반의 두 가지 알고리즘을 제공합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+      <div class="port-badge"><span class="port-name">Mask</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Inpaint</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>복원할 원본 이미지</td></tr>
+    <tr><td class="dir-in">Input</td><td>Mask</td><td class="type-col">Mat</td><td>복원 대상 영역을 표시한 이진 마스크 (흰색=복원 영역)</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>인페인팅이 완료된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Inpaint Radius</td><td class="type-col">double</td><td>3.0</td><td>1.0 ~ 100.0</td><td>인페인팅 시 참조할 주변 영역의 반지름</td></tr>
+    <tr><td>Method</td><td class="type-col">InpaintType</td><td>Telea</td><td>NavierStokes, Telea</td><td>인페인팅 알고리즘</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Inpaint 노드는 마스크 이미지에서 흰색(255)으로 표시된 영역을 주변 픽셀 정보를 기반으로 자동 복원합니다. 두 가지 알고리즘을 제공합니다: Telea 방식은 Fast Marching Method를 기반으로 복원 영역의 경계에서부터 안쪽으로 점진적으로 채워나가며, 작은 결함에 빠르고 효과적입니다. NavierStokes 방식은 유체역학의 Navier-Stokes 방정식을 영상 처리에 적용한 것으로, 더 자연스러운 결과를 생성할 수 있으나 연산 비용이 높습니다.</p>
+
+  <p>Inpaint Radius는 복원 시 참조할 주변 영역의 크기를 결정합니다. 반지름이 클수록 더 넓은 영역의 정보를 활용하지만, 너무 크면 복원 결과가 부자연스러워질 수 있습니다. 일반적으로 결함의 크기와 비슷하거나 약간 큰 값을 설정합니다. 마스크가 다채널(BGR) 이미지인 경우 자동으로 그레이스케일로 변환하여 사용합니다.</p>
+
+  <p>입력 이미지와 마스크 모두 필수 입력이며, 둘 중 하나라도 없으면 에러를 보고합니다. 마스크는 이진 이미지여야 하며, In Range, Threshold, 또는 수동으로 생성한 마스크를 사용할 수 있습니다. 인페인팅은 손상된 이미지 복원뿐 아니라, 불필요한 객체를 제거하는 용도로도 활용됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>결함 제거: 제품 표면의 스크래치, 먼지, 오염 영역 자동 복원</li>
+    <li>워터마크 제거: 이미지에서 워터마크나 로고 제거</li>
+    <li>센서 결함 보상: 카메라 센서의 데드 픽셀이나 결함 픽셀 복원</li>
+    <li>텍스트 제거: 이미지 위의 텍스트나 주석을 제거하고 배경 복원</li>
+    <li>객체 제거: 이미지에서 불필요한 객체를 마스킹하여 제거</li>
+  </ul>
+
+  <!-- ── 11.10 Normalize ── -->
+  <h3>11.10 Normalize 노드</h3>
+  <h4>Normalize</h4>
+  <p>이미지의 픽셀 강도 범위를 정규화하는 노드입니다. OpenCvSharp의 <code>Cv2.Normalize</code> 함수를 사용하며, MinMax, L1, L2, Inf 등 다양한 정규화 방식을 지원합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">Normalize</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>정규화할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>정규화된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Alpha</td><td class="type-col">double</td><td>0.0</td><td>0.0 ~ 255.0</td><td>정규화 범위의 하한값 (MinMax 모드에서 최솟값)</td></tr>
+    <tr><td>Beta</td><td class="type-col">double</td><td>255.0</td><td>0.0 ~ 255.0</td><td>정규화 범위의 상한값 (MinMax 모드에서 최댓값)</td></tr>
+    <tr><td>Norm Type</td><td class="type-col">NormalizeType</td><td>MinMax</td><td>MinMax, Inf, L1, L2</td><td>정규화 방식</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Normalize 노드는 입력 이미지의 픽셀 값을 지정된 범위나 노름(Norm)으로 정규화합니다. 가장 많이 사용되는 MinMax 모드에서는 이미지의 최솟값을 Alpha로, 최댓값을 Beta로 매핑하여 전체 강도 범위를 재조정합니다. 기본 설정(Alpha=0, Beta=255)은 이미지의 히스토그램을 전체 8비트 범위(0~255)로 스트레칭하는 효과를 가집니다.</p>
+
+  <p>L1 노름 정규화는 모든 픽셀 절대값의 합이 Alpha가 되도록 스케일링하고, L2 노름 정규화는 모든 픽셀 제곱합의 제곱근이 Alpha가 되도록 합니다. Inf 노름 정규화는 최대 절대값이 Alpha가 되도록 스케일링합니다. 이러한 노름 기반 정규화는 주로 특징 벡터나 히스토그램의 정규화에 사용됩니다.</p>
+
+  <p>정규화 결과의 데이터 타입이 원본과 다른 경우(예: 부동소수점으로 변환된 경우), 자동으로 원본과 동일한 타입으로 다시 변환합니다. 이를 통해 후속 노드에서 타입 불일치로 인한 에러를 방지합니다. 대비가 낮은 이미지의 히스토그램 스트레칭이나, 조명 편차가 있는 이미지의 밝기 균일화에 효과적입니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>히스토그램 스트레칭: 대비가 낮은 이미지의 동적 범위 확장</li>
+    <li>조명 보정: 조명 편차로 인한 밝기 불균일 보정</li>
+    <li>특징 벡터 정규화: 매칭이나 분류를 위한 특징 데이터의 스케일 통일</li>
+    <li>디스플레이 최적화: 이미지의 밝기 범위를 디스플레이에 적합하게 조정</li>
+    <li>센서 데이터 정규화: 서로 다른 센서에서 취득한 데이터의 범위 통일</li>
+  </ul>
+
+  <!-- ── 11.11 LUT ── -->
+  <h3>11.11 LUT 노드</h3>
+  <h4>LUT</h4>
+  <p>룩업 테이블(Look-Up Table)을 사용하여 감마 보정, 밝기 조절, 대비 조절을 통합적으로 수행하는 노드입니다. 256개 엔트리의 LUT를 내부적으로 생성하여 OpenCvSharp의 <code>Cv2.LUT</code> 함수로 빠르게 적용합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-filter">
+      <div class="node-name">LUT</div>
+      <div class="node-cat">Filter</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>LUT를 적용할 입력 이미지</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">Mat</td><td>LUT가 적용된 결과 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>이름</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Gamma</td><td class="type-col">double</td><td>1.0</td><td>0.1 ~ 10.0</td><td>감마 보정 값 (1.0=보정 없음, &lt;1 어둡게, &gt;1 밝게)</td></tr>
+    <tr><td>Brightness</td><td class="type-col">int</td><td>0</td><td>-255 ~ 255</td><td>밝기 오프셋 (양수=밝게, 음수=어둡게)</td></tr>
+    <tr><td>Contrast</td><td class="type-col">double</td><td>1.0</td><td>0.1 ~ 5.0</td><td>대비 배율 (1.0=원본, &gt;1 대비 증가, &lt;1 대비 감소)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>LUT 노드는 감마 보정, 밝기 조절, 대비 조절의 세 가지 강도 변환을 하나의 룩업 테이블로 통합하여 수행합니다. 내부적으로 0~255 범위의 256개 엔트리를 가진 LUT 배열을 생성하며, 각 입력 값에 대해 다음 순서로 변환을 적용합니다: (1) 감마 보정 <code>(i/255)^(1/gamma) * 255</code>, (2) 대비 조절 <code>(value - 128) * contrast + 128</code>, (3) 밝기 오프셋 <code>value + brightness</code>. 최종 값은 0~255 범위로 클램핑됩니다.</p>
+
+  <p>감마 값이 1.0보다 크면 어두운 영역이 밝아지고, 1.0보다 작으면 밝은 영역이 어두워집니다. 대비(Contrast) 값이 1.0보다 크면 밝은 부분은 더 밝게, 어두운 부분은 더 어둡게 되어 대비가 증가합니다. 밝기(Brightness)는 모든 픽셀에 균일하게 오프셋을 더하거나 빼는 단순 조절입니다. 세 속성을 조합하면 다양한 톤 매핑 효과를 만들 수 있습니다.</p>
+
+  <p>LUT 기반 변환은 한 번 테이블을 생성한 후 단순 배열 참조로 처리하므로, 픽셀별 수학 연산에 비해 매우 빠릅니다. 8비트 이미지에서는 256개 엔트리만 필요하므로 메모리 효율도 우수합니다. 사용 후 내부 LUT 객체는 using 문을 통해 자동으로 해제됩니다. 이 노드는 실시간 밝기/대비/감마 조절에 매우 적합합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>감마 보정: 카메라 센서의 비선형 응답 보정</li>
+    <li>밝기/대비 조절: 검사 이미지의 시인성 개선</li>
+    <li>톤 매핑: HDR 이미지의 디스플레이 적합도 조정</li>
+    <li>조명 보정: 조명 환경 변화에 따른 이미지 밝기 균일화</li>
+    <li>영상 강조: 특정 밝기 범위의 디테일을 강조하여 검사 민감도 향상</li>
+  </ul>
+</div>

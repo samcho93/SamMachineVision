@@ -15,6 +15,7 @@
     <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.*" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.*" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +33,13 @@
   <!-- API config: copy to output Models/API/ -->
   <ItemGroup>
     <None Include="..\..\Models\API\api_config.json" Link="Models\API\api_config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Textbook PDF: copy to output docs/ -->
+  <ItemGroup>
+    <None Include="..\..\docs\SamMachineVision (MVXTester) 학습 교재.pdf" Link="docs\MVXTester_Textbook.pdf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

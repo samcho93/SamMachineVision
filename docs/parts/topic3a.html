@@ -1,0 +1,1001 @@
+<!-- ██████████████████████████████████████████████████████████
+     TOPIC 3: 기본 노드 그룹 (Part A — Chapter 8, 9)
+     ██████████████████████████████████████████████████████████ -->
+<div class="chapter-divider" id="topic3">
+  <h1>주제 3<br>기본 노드 그룹</h1>
+  <div class="divider-toc">
+    <div class="dt-item">Chapter 8: Input/Output 노드</div>
+    <div class="dt-item">Chapter 9: Value 노드</div>
+    <div class="dt-item">Chapter 10: Color 노드</div>
+    <div class="dt-item">Chapter 11: Filter 노드</div>
+    <div class="dt-item">Chapter 12: Edge Detection 노드</div>
+    <div class="dt-item">Chapter 13: Morphology 및 Threshold 노드</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     Chapter 8: Input/Output 노드
+     ═══════════════════════════════════════════════════════════ -->
+<div class="chapter" id="ch8">
+  <h2>Chapter 8: Input/Output 노드</h2>
+
+  <h3>8.1 개요</h3>
+  <p>Input/Output 노드 그룹은 머신 비전 파이프라인의 시작과 끝을 담당하는 가장 기본적인 노드들로 구성됩니다. 이미지를 파일에서 읽어들이거나 카메라에서 실시간으로 캡처하여 파이프라인에 공급하는 입력 노드와, 처리 결과를 파일로 저장하거나 화면에 표시하는 출력 노드를 포함합니다. 모든 비전 처리 플로우는 반드시 하나 이상의 입력 노드에서 시작되며, 결과를 확인하기 위해 출력 노드를 연결하는 것이 일반적인 패턴입니다.</p>
+
+  <p>MVXTester의 Input/Output 카테고리에는 5개의 사용자 노드가 등록되어 있습니다: Image Read(이미지 파일 읽기), Image Write(이미지 파일 저장), Video Read(비디오 프레임 읽기), Camera(통합 카메라 캡처), Image Show(이미지 화면 표시). Camera 노드는 내부적으로 USB, HIK(하이크비전), Cognex GigE 세 가지 백엔드를 통합한 통합 카메라 노드로, 연결된 모든 카메라를 하나의 디바이스 목록에서 선택할 수 있습니다. Video Read와 Camera 노드는 <code>IStreamingSource</code> 인터페이스를 구현하여 Stream 모드(F6)에서 연속 프레임을 공급할 수 있습니다.</p>
+
+  <!-- ── 8.2 Image Read ── -->
+  <h3>8.2 Image Read 노드</h3>
+  <h4>Image Read</h4>
+  <p>파일 시스템에서 이미지를 읽어 Mat 객체로 출력하는 기본 입력 노드입니다. OpenCvSharp의 <code>Cv2.ImRead</code>를 사용하여 다양한 이미지 포맷(PNG, JPG, BMP, TIFF 등)을 지원하며, <code>ImreadModes.Unchanged</code> 모드로 원본 채널 수와 비트 깊이를 유지합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-input">
+      <div class="node-name">Image Read</div>
+      <div class="node-cat">Input/Output</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Image</td><td class="type-col">Mat</td><td>읽어들인 이미지 (원본 채널/깊이 유지)</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>File Path</td><td class="type-col">FilePath</td><td>""</td><td>-</td><td>읽어들일 이미지 파일 경로</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Image Read 노드는 지정된 파일 경로에서 이미지를 읽어 Mat 객체로 변환합니다. <code>ImreadModes.Unchanged</code> 모드를 사용하므로, 그레이스케일(1채널), 컬러(3채널), 알파 채널 포함(4채널) 이미지 모두 원본 그대로 읽어들입니다. 16비트나 32비트 깊이의 이미지도 변환 없이 원본 깊이를 유지합니다.</p>
+
+  <p>파일 경로가 비어 있거나 파일이 존재하지 않는 경우 에러 메시지를 설정하며, 이미지 디코딩에 실패한 경우에도 적절한 에러를 보고합니다. 정상적으로 읽어들인 이미지는 출력 포트로 전달됨과 동시에 노드 미리보기(Preview)로도 설정되어, 에디터에서 직접 이미지를 확인할 수 있습니다.</p>
+
+  <p>이 노드는 파이프라인의 가장 일반적인 시작점으로, 단일 실행(F5 Runtime)과 강제 실행(Ctrl+F5) 모두에서 사용됩니다. 비디오나 카메라 캡처가 아닌 정적 이미지 분석 시나리오에 적합합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>정적 이미지 검사: 저장된 이미지 파일을 기반으로 한 품질 검사 파이프라인 구축</li>
+    <li>알고리즘 개발: 고정된 테스트 이미지로 비전 알고리즘 파라미터 튜닝</li>
+    <li>배치 처리: 여러 이미지 파일을 순차적으로 로드하여 일괄 처리</li>
+    <li>기준 이미지 로드: 템플릿 매칭이나 비교 검사에서 레퍼런스 이미지 제공</li>
+  </ul>
+
+  <!-- ── 8.3 Image Write ── -->
+  <h3>8.3 Image Write 노드</h3>
+  <h4>Image Write</h4>
+  <p>입력으로 받은 이미지를 지정된 파일 경로에 저장하는 출력 노드입니다. PNG, JPG, BMP, TIFF 네 가지 포맷을 지원하며, 선택한 포맷에 따라 자동으로 파일 확장자를 설정합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-input">
+      <div class="node-name">Image Write</div>
+      <div class="node-cat">Input/Output</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>저장할 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>File Path</td><td class="type-col">FilePath</td><td>""</td><td>-</td><td>출력 파일 경로</td></tr>
+    <tr><td>Format</td><td class="type-col">ImageFormat</td><td>PNG</td><td>PNG, JPG, BMP, TIFF</td><td>이미지 저장 포맷</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Image Write 노드는 파이프라인에서 처리된 이미지를 파일로 저장합니다. Format 속성에서 선택한 포맷(PNG, JPG, BMP, TIFF)에 따라 파일 확장자가 자동으로 결정되므로, 사용자가 지정한 경로의 확장자와 관계없이 올바른 포맷으로 저장됩니다. 예를 들어 파일 경로가 "output.bmp"이고 포맷이 PNG인 경우, 실제 저장 파일은 "output.png"이 됩니다.</p>
+
+  <p>출력 디렉토리가 존재하지 않는 경우 자동으로 디렉토리를 생성합니다. 입력 이미지가 없거나 비어 있는 경우, 또는 파일 경로가 지정되지 않은 경우에는 에러를 보고합니다. OpenCvSharp의 <code>Cv2.ImWrite</code>를 사용하여 실제 저장을 수행하며, 저장 완료 후 노드 미리보기에도 이미지를 표시합니다.</p>
+
+  <p>이 노드는 검사 결과 이미지 저장, 중간 처리 결과 기록, 디버깅용 이미지 출력 등 다양한 시나리오에서 활용됩니다. 특히 자동화된 검사 라인에서 불량 이미지를 자동으로 저장하는 용도로 자주 사용됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>검사 결과 저장: 처리 완료된 이미지를 시각화와 함께 파일로 보관</li>
+    <li>불량 이미지 기록: 검사 불합격 이미지를 자동으로 저장하여 추후 분석</li>
+    <li>중간 결과 디버깅: 파이프라인 중간 단계의 이미지를 파일로 저장하여 확인</li>
+    <li>보고서 생성: 검사 결과 이미지를 PNG/JPG로 저장하여 품질 보고서에 첨부</li>
+  </ul>
+
+  <!-- ── 8.4 Video Read ── -->
+  <h3>8.4 Video Read 노드</h3>
+  <h4>Video Read</h4>
+  <p>비디오 파일에서 프레임을 순차적으로 읽어 출력하는 스트리밍 소스 노드입니다. <code>IStreamingSource</code> 인터페이스를 구현하여 Stream 모드(F6)에서 연속적으로 프레임을 공급하며, 비디오의 끝에 도달하면 자동으로 처음으로 되돌아가 반복 재생합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-input">
+      <div class="node-name">Video Read</div>
+      <div class="node-cat">Input/Output</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Frame</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Frame</td><td class="type-col">Mat</td><td>현재 프레임 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>File Path</td><td class="type-col">FilePath</td><td>""</td><td>-</td><td>비디오 파일 경로</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Video Read 노드는 OpenCvSharp의 <code>VideoCapture</code>를 사용하여 비디오 파일을 프레임 단위로 읽어들입니다. 매 Process() 호출 시 다음 프레임을 읽어 Frame 출력 포트로 전달합니다. 비디오 파일 경로가 변경되면 기존 캡처를 해제하고 새로운 비디오 파일을 열어, 실행 중에도 다른 비디오로 전환할 수 있습니다.</p>
+
+  <p>비디오의 마지막 프레임까지 읽은 후에는 자동으로 프레임 위치를 0으로 리셋하여 처음부터 다시 재생합니다. 이러한 루프 재생 기능은 Stream 모드에서 알고리즘을 지속적으로 테스트할 때 유용합니다. 프레임 읽기에 실패한 경우 리셋 후 재시도하며, 재시도마저 실패하면 에러를 보고합니다.</p>
+
+  <p><code>IStreamingSource</code> 인터페이스를 구현하므로, Stream 모드(F6)에서 약 30fps로 자동 반복 실행됩니다. Cleanup 시에는 VideoCapture 리소스를 해제하여 메모리 누수를 방지합니다. AVI, MP4, MOV 등 OpenCV가 지원하는 모든 비디오 코덱을 사용할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>비디오 기반 검사: 녹화된 영상에서 프레임 단위 분석 수행</li>
+    <li>알고리즘 검증: 카메라 없이 비디오 파일로 실시간 처리 알고리즘 테스트</li>
+    <li>시연 및 데모: 사전 녹화 영상을 활용한 비전 시스템 데모</li>
+    <li>교육용: 다양한 비디오 샘플로 비전 알고리즘 학습</li>
+  </ul>
+
+  <!-- ── 8.5 Camera ── -->
+  <h3>8.5 Camera 노드</h3>
+  <h4>Camera</h4>
+  <p>USB 웹캠, HIK(하이크비전) 산업용 카메라, Cognex GigE 카메라를 하나의 통합 인터페이스로 제공하는 카메라 노드입니다. 세 가지 카메라 백엔드를 자동으로 탐색하여 연결 가능한 모든 카메라를 단일 디바이스 목록에 표시합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Trigger</span> <span class="port-type">int</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-input">
+      <div class="node-name">Camera</div>
+      <div class="node-cat">Input/Output</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Frame</span> <span class="port-type">Mat</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Trigger</td><td class="type-col">int</td><td>소프트웨어 트리거 입력 (HIK/Cognex 소프트웨어 트리거 모드에서 사용)</td></tr>
+    <tr><td class="dir-out">Output</td><td>Frame</td><td class="type-col">Mat</td><td>캡처된 프레임 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Camera</td><td class="type-col">DeviceList</td><td>-1</td><td>-</td><td>카메라 디바이스 선택 (자동 탐색 결과)</td></tr>
+    <tr><td>Width</td><td class="type-col">int</td><td>640</td><td>0 ~ 10000</td><td>캡처 폭 (0 = 기본값/최대)</td></tr>
+    <tr><td>Height</td><td class="type-col">int</td><td>480</td><td>0 ~ 10000</td><td>캡처 높이 (0 = 기본값/최대)</td></tr>
+    <tr><td>FPS</td><td class="type-col">int</td><td>30</td><td>1 ~ 120</td><td>목표 프레임 레이트 (USB만 해당)</td></tr>
+    <tr><td>USB Backend</td><td class="type-col">UsbCameraBackend</td><td>DirectShow</td><td>DirectShow, MSMF, Auto</td><td>캡처 백엔드 API (USB만 해당)</td></tr>
+    <tr><td>Trigger Mode</td><td class="type-col">CameraTriggerMode</td><td>Continuous</td><td>Continuous, Software, Hardware</td><td>트리거 모드 (HIK/Cognex)</td></tr>
+    <tr><td>Exposure Time</td><td class="type-col">double</td><td>10000.0</td><td>16.0 ~ 10000000.0</td><td>노출 시간 (마이크로초, HIK/Cognex)</td></tr>
+    <tr><td>Pixel Format</td><td class="type-col">CameraPixelFormat</td><td>Auto</td><td>Auto, Mono8, BayerRG8, BayerGR8, BayerBG8, BayerGB8, RGB8, BGR8, Color24, YUV422_8</td><td>픽셀 포맷 (HIK/Cognex)</td></tr>
+    <tr><td>Gain</td><td class="type-col">double</td><td>0.0</td><td>0.0 ~ 20.0</td><td>아날로그 게인 dB (HIK)</td></tr>
+    <tr><td>Auto Exposure</td><td class="type-col">bool</td><td>false</td><td>-</td><td>자동 노출 활성화 (HIK)</td></tr>
+    <tr><td>Auto Gain</td><td class="type-col">bool</td><td>false</td><td>-</td><td>자동 게인 활성화 (HIK)</td></tr>
+    <tr><td>Gamma Enable</td><td class="type-col">bool</td><td>false</td><td>-</td><td>감마 보정 활성화 (HIK)</td></tr>
+    <tr><td>Gamma</td><td class="type-col">double</td><td>0.7</td><td>0.1 ~ 4.0</td><td>감마 값 (HIK)</td></tr>
+    <tr><td>Reverse X</td><td class="type-col">bool</td><td>false</td><td>-</td><td>수평 반전 (HIK)</td></tr>
+    <tr><td>Reverse Y</td><td class="type-col">bool</td><td>false</td><td>-</td><td>수직 반전 (HIK)</td></tr>
+    <tr><td>Brightness</td><td class="type-col">double</td><td>0.5</td><td>0.0 ~ 1.0</td><td>밝기 (Cognex)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Camera 노드는 MVXTester의 통합 카메라 인터페이스입니다. 내부적으로 세 가지 백엔드 노드(UsbCameraNode, HikCameraNode, CognexGigECameraNode)를 인스턴스화하여 각 백엔드의 <code>EnumerateDevices()</code>를 호출하고, 발견된 모든 디바이스를 하나의 통합 리스트로 병합합니다. USB 카메라는 [USB] 접두사, HIK 카메라는 [GigE] 또는 [USB3] 접두사, Cognex 카메라는 [Cognex] 접두사로 표시됩니다.</p>
+
+  <p>사용자가 디바이스를 선택하면, 해당 카메라의 백엔드 타입에 따라 관련 속성만 표시되는 동적 속성 가시성 기능이 동작합니다. USB 카메라 선택 시 FPS, USB Backend 속성이 표시되고, HIK 카메라 선택 시 Trigger Mode, Exposure Time, Gain, Gamma 등의 산업용 카메라 속성이 표시됩니다. Cognex 카메라는 Trigger Mode, Exposure Time, Brightness 속성이 표시됩니다. Process() 실행 시 선택된 백엔드의 속성을 동기화한 후 해당 백엔드의 Process()를 호출하여 프레임을 캡처합니다.</p>
+
+  <p>HIK 카메라 백엔드는 동적 어셈블리 로딩(Reflection)을 사용하여 MvCameraControl.Net.dll을 런타임에 로드합니다. 이를 통해 SDK가 설치되지 않은 환경에서도 앱이 정상적으로 실행되며, GigE 카메라의 서브넷 불일치 시 자동 ForceIP 기능도 내장되어 있습니다. Cognex 백엔드도 마찬가지로 VisionPro SDK를 동적으로 로드하며, Bayer 디모자이킹과 다양한 픽셀 포맷 변환을 자동으로 처리합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>실시간 비전 검사: 산업용 카메라에서 실시간 이미지를 캡처하여 인라인 품질 검사</li>
+    <li>멀티 카메라 시스템: 여러 Camera 노드를 사용하여 다각도 검사 구현</li>
+    <li>프로토타이핑: USB 웹캠으로 빠르게 비전 알고리즘을 프로토타이핑한 후 산업용 카메라로 전환</li>
+    <li>하드웨어 트리거 연동: 외부 센서 신호에 동기화된 이미지 캡처</li>
+  </ul>
+
+  <!-- ── 8.6 Image Show ── -->
+  <h3>8.6 Image Show 노드</h3>
+  <h4>Image Show</h4>
+  <p>입력 이미지를 OpenCV HighGUI 창에 표시하는 출력 노드입니다. Runtime 모드(F5)에서만 창이 생성되며, 마우스 및 키보드 이벤트를 <code>RuntimeEventBus</code>를 통해 Event 노드로 전달하여 상호작용 기능을 제공합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Image</span> <span class="port-type">Mat</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-input">
+      <div class="node-name">Image Show</div>
+      <div class="node-cat">Input/Output</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Image</td><td class="type-col">Mat</td><td>표시할 이미지</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Window Name</td><td class="type-col">string</td><td>"Image"</td><td>-</td><td>표시 창의 제목</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Image Show 노드는 입력으로 받은 이미지를 OpenCV HighGUI 창에 표시합니다. OpenCV의 HighGUI는 모든 ImShow/WaitKey/SetMouseCallback 호출이 동일 스레드에서 이루어져야 하는 제약이 있기 때문에, MVXTester는 <code>ImageShowManager</code>라는 싱글턴 관리자를 사용하여 모든 Image Show 노드의 창을 하나의 전용 디스플레이 스레드에서 처리합니다. 여러 Image Show 노드가 동시에 사용되어도 스레드 안전성이 보장됩니다.</p>
+
+  <p>Runtime 모드(F5 Execute)에서만 실제 OpenCV 창이 생성되며, 에디터에서는 노드의 미리보기 패널에만 이미지가 표시됩니다. OpenCV 창에서 발생하는 마우스 이벤트(클릭, 이동, 휠 등)는 <code>RuntimeEventBus.RaiseMouseEvent()</code>를 통해 전역 이벤트 버스로 발행되며, MouseEventNode나 MouseRoiNode 등의 이벤트 노드에서 이를 수신하여 인터랙티브 기능을 구현할 수 있습니다. 키보드 이벤트도 마찬가지로 <code>RuntimeEventBus.RaiseKeyEvent()</code>를 통해 발행됩니다.</p>
+
+  <p>Cleanup 시에는 해당 창의 등록을 해제하며, ImageShowManager가 디스플레이 스레드에서 안전하게 창을 파괴합니다. 모든 창이 제거되면 디스플레이 스레드도 자동으로 종료됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>결과 시각화: 비전 처리 결과를 실시간으로 모니터링</li>
+    <li>인터랙티브 ROI 설정: 마우스 이벤트와 연동하여 관심 영역을 직접 지정</li>
+    <li>다중 뷰: 여러 Image Show 노드를 사용하여 원본/처리 결과를 동시에 비교</li>
+    <li>디버깅: 파이프라인 중간 단계의 이미지를 별도 창에 표시하여 확인</li>
+  </ul>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     Chapter 9: Value 노드
+     ═══════════════════════════════════════════════════════════ -->
+<div class="chapter" id="ch9">
+  <h2>Chapter 9: Value 노드</h2>
+
+  <h3>9.1 개요</h3>
+  <p>Value 노드 그룹은 비전 파이프라인에서 사용되는 기본 데이터 값을 생성하고 조작하는 노드들로 구성됩니다. 정수, 실수, 문자열, 불리언 등의 기본 자료형 상수 노드부터, OpenCV의 Point, Size, Rect, Scalar 같은 구조체 생성 노드, 그리고 산술 연산, 비교 연산, 논리 연산 등의 데이터 처리 노드까지 포함합니다. 이 노드들은 다른 노드의 파라미터를 동적으로 제공하거나, 조건부 로직을 구현하는 데 핵심적인 역할을 합니다.</p>
+
+  <p>Value 카테고리에는 총 15개의 노드가 등록되어 있습니다: 기본 자료형 상수 노드 5개(Integer, Float, Double, String, Bool), OpenCV 구조체 노드 4개(Point, Size, Scalar, Rect), 연산 노드 3개(Math Operation, Comparison, Logic Gate), 유틸리티 노드 3개(List Create, String Format, Print). 상수 노드들은 속성에서 값을 설정하여 출력 포트로 전달하는 단순한 구조이고, 연산 노드들은 입력 포트의 값을 받아 계산 결과를 출력합니다. Print 노드는 어떤 타입의 데이터든 포맷팅하여 텍스트로 표시하는 범용 디버깅 도구입니다.</p>
+
+  <!-- ── 9.2 Integer ── -->
+  <h3>9.2 Integer 노드</h3>
+  <h4>Integer</h4>
+  <p>정수 상수 값을 출력하는 가장 기본적인 값 노드입니다. 속성에서 설정한 정수 값을 출력 포트로 전달합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Integer</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Value</span> <span class="port-type">int</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Value</td><td class="type-col">int</td><td>정수 값 출력</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Value</td><td class="type-col">int</td><td>0</td><td>int.MinValue ~ int.MaxValue</td><td>출력할 정수 값</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Integer 노드는 속성 패널에서 설정한 정수 값을 그대로 출력 포트에 전달하는 단순한 상수 노드입니다. Process() 실행 시 항상 에러 없이 현재 속성 값을 출력합니다.</p>
+
+  <p>이 노드는 다른 노드의 정수형 입력 포트에 고정 값을 공급할 때 사용됩니다. 예를 들어 임계값(threshold), 커널 크기, 반복 횟수 등의 파라미터를 동적으로 변경 가능한 형태로 제공할 수 있습니다. 속성 값을 변경하면 다음 실행에서 새로운 값이 반영되므로, 런타임 중에도 파라미터를 조정할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>파라미터 공급: 필터 커널 크기, 임계값 등 정수형 파라미터 제공</li>
+    <li>카운터/인덱스: 리스트 인덱스, 반복 횟수 등 지정</li>
+    <li>좌표 값: 특정 픽셀 위치의 X, Y 좌표 지정</li>
+  </ul>
+
+  <!-- ── 9.3 Float ── -->
+  <h3>9.3 Float 노드</h3>
+  <h4>Float</h4>
+  <p>단정밀도 부동소수점(float) 상수 값을 출력하는 노드입니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Float</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Value</span> <span class="port-type">float</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Value</td><td class="type-col">float</td><td>단정밀도 부동소수점 값 출력</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Value</td><td class="type-col">float</td><td>0</td><td>float.MinValue ~ float.MaxValue</td><td>출력할 float 값</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Float 노드는 Integer 노드와 동일한 구조를 가지며, 단정밀도 부동소수점 값을 출력합니다. 소수점 이하 값이 필요한 파라미터에 사용됩니다.</p>
+
+  <p>float 타입은 약 7자리의 유효 숫자를 제공하며, 더 높은 정밀도가 필요한 경우 Double 노드를 사용하는 것이 적합합니다. 주로 OpenCV 함수에서 float 타입 파라미터를 요구하는 경우에 사용됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>스케일 팩터: 이미지 리사이즈 비율, 알파 블렌딩 가중치 등</li>
+    <li>OpenCV 파라미터: float 타입을 요구하는 필터/변환 파라미터 공급</li>
+    <li>좌표 보간: 서브픽셀 정밀도의 좌표 값 제공</li>
+  </ul>
+
+  <!-- ── 9.4 Double ── -->
+  <h3>9.4 Double 노드</h3>
+  <h4>Double</h4>
+  <p>배정밀도 부동소수점(double) 상수 값을 출력하는 노드입니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Double</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Value</span> <span class="port-type">double</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Value</td><td class="type-col">double</td><td>배정밀도 부동소수점 값 출력</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Value</td><td class="type-col">double</td><td>0.0</td><td>double.MinValue ~ double.MaxValue</td><td>출력할 double 값</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Double 노드는 배정밀도 부동소수점 값을 출력합니다. 약 15~17자리의 유효 숫자를 제공하므로 높은 정밀도가 필요한 계산에 적합합니다.</p>
+
+  <p>Math Operation 노드의 입력 타입이 double이므로, 산술 연산 파이프라인에서 가장 자주 사용되는 상수 노드입니다. Comparison 노드와 조합하여 임계값 기반 판정 로직을 구현할 때도 활용됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>정밀 파라미터: 높은 정밀도가 요구되는 측정/계산 파라미터</li>
+    <li>산술 연산: Math Operation 노드와 조합한 수치 계산</li>
+    <li>임계값: Comparison 노드의 비교 기준값 공급</li>
+  </ul>
+
+  <!-- ── 9.5 String ── -->
+  <h3>9.5 String 노드</h3>
+  <h4>String</h4>
+  <p>문자열 상수 값을 출력하는 노드입니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">String</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Value</span> <span class="port-type">string</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Value</td><td class="type-col">string</td><td>문자열 값 출력</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Value</td><td class="type-col">string</td><td>""</td><td>-</td><td>출력할 문자열 값</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>String 노드는 속성에서 입력한 문자열을 그대로 출력 포트로 전달합니다. 파일 경로, 라벨 텍스트, 정규 표현식 패턴 등 문자열 데이터가 필요한 곳에 사용됩니다.</p>
+
+  <p>String Format 노드의 포맷 템플릿과 조합하거나, Print 노드의 라벨로 활용할 수 있습니다. 또한 파일 경로를 동적으로 구성하는 데에도 유용합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>파일 경로 지정: 동적 파일 경로 구성을 위한 기본 문자열 제공</li>
+    <li>라벨/텍스트: 오버레이 텍스트, 창 이름 등 문자열 데이터 공급</li>
+    <li>패턴 매칭: 정규 표현식이나 검색 패턴 문자열 제공</li>
+  </ul>
+
+  <!-- ── 9.6 Bool ── -->
+  <h3>9.6 Bool 노드</h3>
+  <h4>Bool</h4>
+  <p>불리언(true/false) 상수 값을 출력하는 노드입니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Bool</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Value</span> <span class="port-type">bool</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Value</td><td class="type-col">bool</td><td>불리언 값 출력</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Value</td><td class="type-col">bool</td><td>false</td><td>-</td><td>출력할 불리언 값</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Bool 노드는 true 또는 false 상수 값을 출력합니다. Logic Gate 노드의 입력이나 조건부 처리 분기의 제어 신호로 사용됩니다.</p>
+
+  <p>런타임 중에 속성 값을 토글하여 파이프라인의 동작을 실시간으로 변경할 수 있어, 디버깅 시 특정 분기를 활성화/비활성화하는 데 편리합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>스위치 제어: 파이프라인 분기의 활성화/비활성화 제어</li>
+    <li>논리 연산: Logic Gate 노드의 입력값 공급</li>
+    <li>디버깅 플래그: 특정 기능을 런타임에서 on/off 전환</li>
+  </ul>
+
+  <!-- ── 9.7 Point ── -->
+  <h3>9.7 Point 노드</h3>
+  <h4>Point</h4>
+  <p>OpenCV의 2D 정수 좌표 포인트(<code>Point</code>) 값을 생성하여 출력하는 노드입니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Point</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Point</span> <span class="port-type">Point</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Point</td><td class="type-col">Point</td><td>2D 좌표 포인트 값</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>X</td><td class="type-col">int</td><td>0</td><td>int.MinValue ~ int.MaxValue</td><td>X 좌표</td></tr>
+    <tr><td>Y</td><td class="type-col">int</td><td>0</td><td>int.MinValue ~ int.MaxValue</td><td>Y 좌표</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Point 노드는 X, Y 속성에서 설정한 값으로 OpenCvSharp의 <code>Point</code> 구조체를 생성하여 출력합니다. 이미지 좌표, 앵커 포인트, 시작/끝점 등 2D 위치 정보가 필요한 노드에 연결하여 사용합니다.</p>
+
+  <p>Draw 노드에서 도형의 기준점을 지정하거나, ROI 영역의 시작 좌표를 설정하는 데 활용됩니다. 정수 좌표이므로 픽셀 단위의 위치 지정에 적합합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>좌표 지정: 특정 픽셀 위치 또는 관심 지점 지정</li>
+    <li>도형 그리기: Draw 노드에서 기준점/시작점 공급</li>
+    <li>앵커 설정: 모폴로지 연산 등의 앵커 포인트 지정</li>
+  </ul>
+
+  <!-- ── 9.8 Size ── -->
+  <h3>9.8 Size 노드</h3>
+  <h4>Size</h4>
+  <p>OpenCV의 크기 값(<code>Size</code>)을 생성하여 출력하는 노드입니다. Width와 Height 두 개의 속성으로 구성됩니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Size</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Size</span> <span class="port-type">Size</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Size</td><td class="type-col">Size</td><td>크기 값 (Width, Height)</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Width</td><td class="type-col">int</td><td>100</td><td>0 ~ int.MaxValue</td><td>폭</td></tr>
+    <tr><td>Height</td><td class="type-col">int</td><td>100</td><td>0 ~ int.MaxValue</td><td>높이</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Size 노드는 Width와 Height 속성으로 OpenCvSharp의 <code>Size</code> 구조체를 생성합니다. 이미지 리사이즈, 커널 크기, 블러 크기 등 크기 정보가 필요한 다양한 노드에서 사용됩니다.</p>
+
+  <p>예를 들어 Gaussian Blur의 커널 크기나, Resize 노드의 목표 크기를 지정할 때 이 노드를 연결하여 크기 값을 공급할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>커널 크기: 블러, 모폴로지 등 필터 커널 크기 지정</li>
+    <li>이미지 리사이즈: 목표 해상도 크기 지정</li>
+    <li>윈도우 크기: 슬라이딩 윈도우 등의 크기 파라미터</li>
+  </ul>
+
+  <!-- ── 9.9 Scalar ── -->
+  <h3>9.9 Scalar 노드</h3>
+  <h4>Scalar</h4>
+  <p>OpenCV의 4채널 스칼라 값(<code>Scalar</code>)을 생성하여 출력하는 노드입니다. 색상 지정(BGR+Alpha) 등에 주로 사용됩니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Scalar</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Scalar</span> <span class="port-type">Scalar</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Scalar</td><td class="type-col">Scalar</td><td>4채널 스칼라 값</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>V0</td><td class="type-col">double</td><td>0.0</td><td>0.0 ~ 255.0</td><td>컴포넌트 0 (Blue)</td></tr>
+    <tr><td>V1</td><td class="type-col">double</td><td>0.0</td><td>0.0 ~ 255.0</td><td>컴포넌트 1 (Green)</td></tr>
+    <tr><td>V2</td><td class="type-col">double</td><td>0.0</td><td>0.0 ~ 255.0</td><td>컴포넌트 2 (Red)</td></tr>
+    <tr><td>V3</td><td class="type-col">double</td><td>0.0</td><td>0.0 ~ 255.0</td><td>컴포넌트 3 (Alpha)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Scalar 노드는 V0~V3 네 개의 double 속성으로 OpenCvSharp의 <code>Scalar</code> 구조체를 생성합니다. OpenCV에서 Scalar는 주로 색상 값을 표현하는 데 사용되며, BGR 색상 공간에서 V0=Blue, V1=Green, V2=Red, V3=Alpha로 매핑됩니다.</p>
+
+  <p>InRange 노드의 하한/상한 경계값, Draw 노드의 색상, 이미지 마스킹의 채우기 색상 등에 활용됩니다. 각 컴포넌트의 범위는 0.0~255.0으로 설정되어 있어 8비트 이미지의 색상 값을 직관적으로 지정할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>색상 지정: Draw 노드의 도형 색상, 텍스트 색상 지정</li>
+    <li>범위 경계: InRange 색상 필터링의 상한/하한 값</li>
+    <li>채우기 값: 이미지의 특정 영역을 지정 색상으로 채우기</li>
+    <li>배경색: 빈 이미지 생성 시 초기 색상 설정</li>
+  </ul>
+
+  <!-- ── 9.10 Rect ── -->
+  <h3>9.10 Rect 노드</h3>
+  <h4>Rect</h4>
+  <p>OpenCV의 사각형 영역(<code>Rect</code>)을 생성하여 출력하는 노드입니다. X, Y 위치와 Width, Height 크기로 정의됩니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Rect</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Rect</span> <span class="port-type">Rect</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-out">Output</td><td>Rect</td><td class="type-col">Rect</td><td>사각형 영역 (X, Y, Width, Height)</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>X</td><td class="type-col">int</td><td>0</td><td>0 ~ int.MaxValue</td><td>X 위치</td></tr>
+    <tr><td>Y</td><td class="type-col">int</td><td>0</td><td>0 ~ int.MaxValue</td><td>Y 위치</td></tr>
+    <tr><td>Width</td><td class="type-col">int</td><td>100</td><td>0 ~ int.MaxValue</td><td>폭</td></tr>
+    <tr><td>Height</td><td class="type-col">int</td><td>100</td><td>0 ~ int.MaxValue</td><td>높이</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Rect 노드는 X, Y, Width, Height 네 가지 속성으로 OpenCvSharp의 <code>Rect</code> 구조체를 생성합니다. 관심 영역(ROI), 크롭 영역, 바운딩 박스 등 사각형 영역 정보가 필요한 곳에 사용됩니다.</p>
+
+  <p>이미지의 특정 영역을 잘라내는 Crop 노드, ROI 기반 검사, Draw 노드의 사각형 그리기 등에서 영역을 지정하는 데 활용됩니다. X와 Y는 사각형의 좌상단 모서리를 기준으로 합니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>ROI 지정: 검사 관심 영역을 수동으로 지정</li>
+    <li>이미지 크롭: 이미지의 특정 영역만 잘라내기</li>
+    <li>영역 비교: 검출된 바운딩 박스와 기준 영역 비교</li>
+    <li>도형 그리기: Draw 노드에서 사각형 오버레이 위치/크기 지정</li>
+  </ul>
+
+  <!-- ── 9.11 Math Operation ── -->
+  <h3>9.11 Math Operation 노드</h3>
+  <h4>Math Operation</h4>
+  <p>두 개의 double 값에 대해 산술 연산을 수행하는 연산 노드입니다. 덧셈, 뺄셈, 곱셈, 나눗셈, 나머지, 거듭제곱, 최솟값, 최댓값 총 8가지 연산을 지원합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">A</span> <span class="port-type">double</span></div>
+      <div class="port-badge"><span class="port-name">B</span> <span class="port-type">double</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Math Operation</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">double</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>A</td><td class="type-col">double</td><td>첫 번째 피연산자</td></tr>
+    <tr><td class="dir-in">Input</td><td>B</td><td class="type-col">double</td><td>두 번째 피연산자</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">double</td><td>연산 결과</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Operation</td><td class="type-col">MathOp</td><td>Add</td><td>Add, Subtract, Multiply, Divide, Modulo, Power, Min, Max</td><td>수행할 산술 연산 종류</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Math Operation 노드는 입력 포트 A와 B의 값에 대해 선택한 연산을 수행하여 결과를 출력합니다. 지원되는 연산은 Add(A+B), Subtract(A-B), Multiply(A*B), Divide(A/B), Modulo(A%B), Power(A^B), Min(A,B 중 작은 값), Max(A,B 중 큰 값) 8가지입니다.</p>
+
+  <p>Divide와 Modulo 연산에서 B가 0인 경우 결과를 0으로 반환하여 0으로 나누기 에러를 방지합니다. Power 연산은 <code>Math.Pow(A, B)</code>를 사용합니다. 여러 Math Operation 노드를 체인으로 연결하면 복잡한 수식을 구현할 수 있습니다.</p>
+
+  <p>측정 결과의 단위 변환(픽셀 → mm), 검사 판정 기준값 계산, 통계 값 처리 등에 활용됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>단위 변환: 픽셀 단위의 측정값을 실제 단위(mm 등)로 변환</li>
+    <li>보정 계산: 오프셋, 스케일 보정 등 선형 변환</li>
+    <li>통계 처리: 최솟값/최댓값 비교, 범위 계산</li>
+    <li>수식 구현: 여러 노드를 조합하여 복잡한 수학 공식 표현</li>
+  </ul>
+
+  <!-- ── 9.12 Comparison ── -->
+  <h3>9.12 Comparison 노드</h3>
+  <h4>Comparison</h4>
+  <p>두 개의 double 값을 비교하여 불리언 결과를 출력하는 노드입니다. 6가지 비교 연산자를 지원합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">A</span> <span class="port-type">double</span></div>
+      <div class="port-badge"><span class="port-name">B</span> <span class="port-type">double</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Comparison</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">bool</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>A</td><td class="type-col">double</td><td>비교할 첫 번째 값</td></tr>
+    <tr><td class="dir-in">Input</td><td>B</td><td class="type-col">double</td><td>비교할 두 번째 값</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">bool</td><td>비교 결과 (true/false)</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Operator</td><td class="type-col">ComparisonOp</td><td>GreaterThan</td><td>GreaterThan, LessThan, GreaterOrEqual, LessOrEqual, Equal, NotEqual</td><td>비교 연산자</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Comparison 노드는 입력 A와 B를 선택한 연산자로 비교하여 불리언 결과를 출력합니다. GreaterThan(A &gt; B), LessThan(A &lt; B), GreaterOrEqual(A &ge; B), LessOrEqual(A &le; B), Equal(A = B), NotEqual(A &ne; B) 6가지 비교를 지원합니다.</p>
+
+  <p>Equal과 NotEqual 비교는 부동소수점 정밀도를 고려하여 <code>Math.Abs(A - B)</code>와 <code>double.Epsilon</code>을 비교하는 방식으로 구현되어 있습니다. 이를 통해 부동소수점 연산의 미세한 오차로 인한 잘못된 비교 결과를 방지합니다.</p>
+
+  <p>검사 판정 로직에서 핵심적인 역할을 합니다. 예를 들어 측정값이 허용 공차 범위 내인지 확인하거나, 검출 결과의 신뢰도가 임계값 이상인지 판단하는 데 사용됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>품질 판정: 측정값이 허용 범위(공차) 내인지 판단</li>
+    <li>임계값 비교: 검출 신뢰도, 면적, 길이 등이 기준을 충족하는지 확인</li>
+    <li>조건부 분기: 비교 결과를 Logic Gate와 조합하여 복합 조건 구현</li>
+    <li>경고 트리거: 특정 값이 한계를 초과할 때 경고 발생</li>
+  </ul>
+
+  <!-- ── 9.13 Logic Gate ── -->
+  <h3>9.13 Logic Gate 노드</h3>
+  <h4>Logic Gate</h4>
+  <p>두 개의 불리언 입력에 대해 논리 게이트 연산을 수행하는 노드입니다. AND, OR, XOR, NAND, NOR 5가지 게이트를 지원합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">A</span> <span class="port-type">bool</span></div>
+      <div class="port-badge"><span class="port-name">B</span> <span class="port-type">bool</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Logic Gate</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">bool</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>A</td><td class="type-col">bool</td><td>첫 번째 불리언 입력</td></tr>
+    <tr><td class="dir-in">Input</td><td>B</td><td class="type-col">bool</td><td>두 번째 불리언 입력</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">bool</td><td>논리 연산 결과</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Gate</td><td class="type-col">LogicGate</td><td>AND</td><td>AND, OR, XOR, NAND, NOR</td><td>논리 게이트 종류</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Logic Gate 노드는 두 불리언 입력에 대해 선택한 논리 게이트 연산을 수행합니다. AND(A &amp;&amp; B), OR(A || B), XOR(A ^ B), NAND(!(A &amp;&amp; B)), NOR(!(A || B)) 5가지 기본 논리 게이트를 지원합니다.</p>
+
+  <p>Comparison 노드의 출력을 여러 Logic Gate 노드로 조합하면 복합 판정 조건을 구현할 수 있습니다. 예를 들어 "면적이 100 이상 AND 길이가 50 이하"와 같은 다중 조건 검사를 노드 그래프로 시각적으로 표현할 수 있습니다.</p>
+
+  <p>여러 Logic Gate 노드를 캐스케이드로 연결하면 3개 이상의 조건을 조합하는 것도 가능합니다. NAND와 NOR 게이트는 NOT 연산이 필요한 경우에도 활용할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>복합 판정: 여러 비교 조건을 AND/OR로 조합하여 최종 합격/불합격 판정</li>
+    <li>인터락 로직: 여러 조건이 모두 만족될 때만 동작하는 안전 인터락 구현</li>
+    <li>예외 처리: XOR, NAND 등으로 특수 조건 감지</li>
+    <li>NOT 대체: NAND/NOR 게이트를 활용한 논리 반전</li>
+  </ul>
+
+  <!-- ── 9.14 List Create ── -->
+  <h3>9.14 List Create 노드</h3>
+  <h4>List Create</h4>
+  <p>여러 개의 입력 값을 하나의 리스트로 수집하는 노드입니다. 최대 8개의 입력을 받아 <code>List&lt;object&gt;</code>로 출력합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Item 0</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">Item 1</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">...</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">Item 7</span> <span class="port-type">object</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">List Create</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">List</span> <span class="port-type">List&lt;object&gt;</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Item 0</td><td class="type-col">object</td><td>리스트에 추가할 첫 번째 항목</td></tr>
+    <tr><td class="dir-in">Input</td><td>Item 1</td><td class="type-col">object</td><td>리스트에 추가할 두 번째 항목</td></tr>
+    <tr><td class="dir-in">Input</td><td>Item 2</td><td class="type-col">object</td><td>리스트에 추가할 세 번째 항목</td></tr>
+    <tr><td class="dir-in">Input</td><td>Item 3</td><td class="type-col">object</td><td>리스트에 추가할 네 번째 항목</td></tr>
+    <tr><td class="dir-in">Input</td><td>Item 4</td><td class="type-col">object</td><td>리스트에 추가할 다섯 번째 항목</td></tr>
+    <tr><td class="dir-in">Input</td><td>Item 5</td><td class="type-col">object</td><td>리스트에 추가할 여섯 번째 항목</td></tr>
+    <tr><td class="dir-in">Input</td><td>Item 6</td><td class="type-col">object</td><td>리스트에 추가할 일곱 번째 항목</td></tr>
+    <tr><td class="dir-in">Input</td><td>Item 7</td><td class="type-col">object</td><td>리스트에 추가할 여덟 번째 항목</td></tr>
+    <tr><td class="dir-out">Output</td><td>List</td><td class="type-col">List&lt;object&gt;</td><td>수집된 항목들의 리스트</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td colspan="5" style="text-align:center; color:#888;">속성 없음</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>List Create 노드는 최대 8개의 입력 포트(Item 0 ~ Item 7)에 연결된 값을 순서대로 수집하여 하나의 <code>List&lt;object&gt;</code>로 출력합니다. 모든 입력 포트의 타입이 <code>object</code>이므로 정수, 실수, 문자열, Mat 등 어떤 타입의 데이터든 혼합하여 리스트에 포함할 수 있습니다.</p>
+
+  <p>연결되지 않은 포트나 null 값을 가진 포트는 자동으로 건너뛰어, 실제 연결된 항목만으로 리스트가 구성됩니다. 예를 들어 Item 0과 Item 2만 연결하면 2개의 항목으로 구성된 리스트가 생성됩니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>데이터 수집: 여러 노드의 출력을 하나의 리스트로 통합</li>
+    <li>배치 처리: 여러 이미지나 파라미터를 리스트로 묶어 일괄 처리</li>
+    <li>결과 집계: 여러 검사 결과를 하나의 리스트로 수집하여 후속 분석</li>
+  </ul>
+
+  <!-- ── 9.15 String Format ── -->
+  <h3>9.15 String Format 노드</h3>
+  <h4>String Format</h4>
+  <p>포맷 문자열 템플릿에 인자를 삽입하여 결과 문자열을 생성하는 노드입니다. C#의 <code>string.Format</code>과 동일한 {0}, {1} 등의 플레이스홀더를 사용합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">Arg 0</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">Arg 1</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">Arg 2</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">Arg 3</span> <span class="port-type">object</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">String Format</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Result</span> <span class="port-type">string</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>Arg 0</td><td class="type-col">object</td><td>포맷 인자 {0}에 삽입할 값</td></tr>
+    <tr><td class="dir-in">Input</td><td>Arg 1</td><td class="type-col">object</td><td>포맷 인자 {1}에 삽입할 값</td></tr>
+    <tr><td class="dir-in">Input</td><td>Arg 2</td><td class="type-col">object</td><td>포맷 인자 {2}에 삽입할 값</td></tr>
+    <tr><td class="dir-in">Input</td><td>Arg 3</td><td class="type-col">object</td><td>포맷 인자 {3}에 삽입할 값</td></tr>
+    <tr><td class="dir-out">Output</td><td>Result</td><td class="type-col">string</td><td>포맷팅된 결과 문자열</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Format</td><td class="type-col">string</td><td>"{0}"</td><td>-</td><td>포맷 템플릿 ({0}, {1} 등 플레이스홀더 사용)</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>String Format 노드는 C#의 <code>string.Format()</code> 메서드를 노드 인터페이스로 제공합니다. Format 속성에 "{0}, {1}" 형태의 템플릿 문자열을 작성하고, 각 플레이스홀더에 대응하는 Arg 입력 포트에 값을 연결하면 포맷팅된 문자열이 Result 포트로 출력됩니다.</p>
+
+  <p>연결되지 않은 인자 포트는 빈 문자열("")로 대체되므로, 일부 인자만 사용하는 포맷도 문제없이 동작합니다. 최대 4개의 인자({0}~{3})를 지원하며, C#의 포맷 지정자(예: {0:F2}, {1:D4})도 사용할 수 있어 숫자의 소수점 자릿수나 패딩을 제어할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>결과 텍스트 생성: "합격: {0}개, 불합격: {1}개" 형태의 검사 결과 메시지 구성</li>
+    <li>파일명 동적 생성: "result_{0}_{1}.png" 형태의 동적 파일 경로 구성</li>
+    <li>로그 메시지: 측정값과 설명을 조합한 로그 문자열 생성</li>
+    <li>라벨 텍스트: 이미지 오버레이용 동적 텍스트 구성</li>
+  </ul>
+
+  <!-- ── 9.16 Print ── -->
+  <h3>9.16 Print 노드</h3>
+  <h4>Print</h4>
+  <p>어떤 타입의 데이터든 포맷팅하여 텍스트로 표시하는 범용 디버깅 노드입니다. 최대 4개의 입력을 동시에 받아 각각의 값을 타입에 따라 적절한 형식으로 표시합니다. 이미지 기반 미리보기 대신 WPF TextBlock 기반의 텍스트 미리보기를 사용합니다.</p>
+
+  <div class="node-diagram">
+    <div class="port-group-in">
+      <div class="port-badge"><span class="port-name">In 0</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">In 1</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">In 2</span> <span class="port-type">object</span></div>
+      <div class="port-badge"><span class="port-name">In 3</span> <span class="port-type">object</span></div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="node-box cat-value">
+      <div class="node-name">Print</div>
+      <div class="node-cat">Value</div>
+    </div>
+    <span class="arrow">&rarr;</span>
+    <div class="port-group-out">
+      <div class="port-badge"><span class="port-name">Text</span> <span class="port-type">string</span></div>
+    </div>
+  </div>
+
+  <p class="section-label">포트 상세</p>
+  <table>
+    <tr><th>방향</th><th>이름</th><th>타입</th><th>설명</th></tr>
+    <tr><td class="dir-in">Input</td><td>In 0</td><td class="type-col">object</td><td>표시할 첫 번째 값 (모든 타입 가능)</td></tr>
+    <tr><td class="dir-in">Input</td><td>In 1</td><td class="type-col">object</td><td>표시할 두 번째 값</td></tr>
+    <tr><td class="dir-in">Input</td><td>In 2</td><td class="type-col">object</td><td>표시할 세 번째 값</td></tr>
+    <tr><td class="dir-in">Input</td><td>In 3</td><td class="type-col">object</td><td>표시할 네 번째 값</td></tr>
+    <tr><td class="dir-out">Output</td><td>Text</td><td class="type-col">string</td><td>포맷팅된 전체 텍스트</td></tr>
+  </table>
+
+  <p class="section-label">속성</p>
+  <table>
+    <tr><th>속성</th><th>타입</th><th>기본값</th><th>범위</th><th>설명</th></tr>
+    <tr><td>Max Items</td><td class="type-col">int</td><td>20</td><td>1 ~ 200</td><td>배열/리스트 표시 시 최대 항목 수</td></tr>
+    <tr><td>Show Type</td><td class="type-col">bool</td><td>true</td><td>-</td><td>데이터 타입 이름 표시 여부</td></tr>
+    <tr><td>Label 0</td><td class="type-col">string</td><td>""</td><td>-</td><td>Input 0의 커스텀 라벨 (빈 경우 "In 0" 사용)</td></tr>
+    <tr><td>Label 1</td><td class="type-col">string</td><td>""</td><td>-</td><td>Input 1의 커스텀 라벨</td></tr>
+    <tr><td>Label 2</td><td class="type-col">string</td><td>""</td><td>-</td><td>Input 2의 커스텀 라벨</td></tr>
+    <tr><td>Label 3</td><td class="type-col">string</td><td>""</td><td>-</td><td>Input 3의 커스텀 라벨</td></tr>
+  </table>
+
+  <p class="section-label">기능 설명</p>
+  <p>Print 노드는 MVXTester의 범용 디버깅 도구로, 모든 데이터 타입을 사람이 읽기 쉬운 텍스트 형식으로 변환하여 표시합니다. 노드의 미리보기 영역에 <code>SetTextPreview()</code>를 통해 텍스트를 직접 표시하므로, 이미지가 아닌 데이터도 노드에서 바로 확인할 수 있습니다.</p>
+
+  <p>타입별 전용 포맷터를 내장하고 있어, 각 데이터 타입에 최적화된 표시를 제공합니다. Mat 이미지는 크기, 채널 수, 타입, 중심 픽셀 값을 표시합니다. Point, Rect, Size, Scalar 등의 OpenCV 구조체는 각 필드를 명확하게 표시합니다. 배열(int[], double[], Point[], Rect[] 등)은 Count와 함께 각 요소를 인덱스 번호와 함께 나열하며, Max Items 속성으로 표시 항목 수를 제한합니다. byte[]는 16진수 형식으로 표시됩니다.</p>
+
+  <p>연결된 포트만 표시에 포함되며, 각 입력에 커스텀 라벨을 지정할 수 있어 여러 값을 동시에 모니터링할 때 식별이 용이합니다. Show Type 옵션을 켜면 각 값의 타입 이름(int, Mat, Point 등)도 함께 표시됩니다. 포맷팅된 텍스트는 Text 출력 포트로도 전달되어 후속 노드에서 활용할 수 있습니다.</p>
+
+  <p class="section-label">응용 분야</p>
+  <ul>
+    <li>값 모니터링: 파이프라인 중간 결과값을 실시간으로 확인</li>
+    <li>디버깅: 연산 결과, 검출 좌표, 매칭 점수 등을 가시적으로 확인</li>
+    <li>이미지 정보 확인: Mat 이미지의 크기, 채널, 타입 정보 파악</li>
+    <li>배열 내용 확인: 검출 결과 배열의 내용을 항목별로 확인</li>
+  </ul>
+
+</div>
