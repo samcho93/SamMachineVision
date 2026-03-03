@@ -1,10 +1,10 @@
 {
   "openai": {
-    "api_key": "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",
+    "api_key": "",
     "model": "gpt-4o-mini"
   },
   "gemini": {
-    "api_key": "AIzaSyD-4dsPN1YrOApwVLn7MkW2qULapySXZS4",
+    "api_key": "",
     "model": "gemini-2.5-flash"
   },
   "claude": {
